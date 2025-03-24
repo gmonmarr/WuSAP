@@ -1,9 +1,14 @@
-import { useState } from 'react'
+// src/App.jsx
+
+import React from "react";
+import Login from "./pages/Login.jsx";
 
 function App() {
   return (
-    <h1>Hello World</h1>
+    <div>
+      <Login />
+    </div>
   );
 }
 
-export default App
+export default App;
