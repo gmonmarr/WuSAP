@@ -8,9 +8,14 @@ const Login = () => {
   return (
     <Grid container className="app-background" alignItems="center" justifyContent="space-between" style={{ height: "100vh", backgroundColor: "#2C3E73", padding: "0 5%" }}>
       {/* Left Section */}
-      <Grid item xs={5} style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "white" }}>
+      {/* <Grid item xs={5} style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "white" }}>
         <Typography variant="h1" fontWeight="bold">¡Bienvenido!</Typography>
         <Typography variant="h1" fontWeight="900" mt={2}>WuSAP</Typography>
+      </Grid> */}
+
+      <Grid item xs={5} style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "white", paddingLeft: "10%" }}>
+        <Typography variant="h1" fontWeight="bold" >¡Bienvenido!</Typography>
+        <Typography variant="h1" fontWeight="900" mt={2} >WuSAP</Typography>
       </Grid>
       
       {/* Right Section */}
