@@ -4,9 +4,17 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React</title>
+    <title>WuSAP</title>
+    <!-- Add UI5 Core -->
+    <script id="sap-ui-bootstrap"
+      src="https://openui5.hana.ondemand.com/resources/sap-ui-core.js"
+      data-sap-ui-theme="sap_horizon"
+      data-sap-ui-libs="sap.m,sap.ui.core,sap.tnt"
+      data-sap-ui-async="true"
+      data-sap-ui-resourceroots='{"WuSAP": "./"}'>
+    </script>
   </head>
-  <body>
+  <body class="sapUiBody">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

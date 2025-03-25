@@ -1,0 +1,194 @@
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: white;
+  height: 60px;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 0 15px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+}
+
+.navbar-right {
+  display: flex;
+  gap: 10px;
+}
+
+.menu-button {
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  color: #354a5f;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.menu-button:hover {
+  background-color: #f5f5f5;
+}
+
+.menu-icon-ui5 {
+  margin-right: 8px;
+  color: #354a5f;
+}
+
+.menu-text {
+  text-transform: uppercase;
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+.icon-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+  margin: 0 4px;
+}
+
+.icon-button:hover {
+  background-color: #f0f0f0;
+}
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: -280px;
+  width: 280px;
+  height: 100%;
+  background-color: #ffffff;
+  transition: left 0.3s ease;
+  z-index: 200;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar.open {
+  left: 0;
+}
+
+.sidebar-header {
+  padding: 20px;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-title {
+  margin: 0;
+  color: #0a6ed1;
+  font-size: 1.8rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.nav-menu {
+  padding: 10px 0;
+  flex: 1;
+}
+
+.nav-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.nav-menu li {
+  padding: 0;
+  margin: 4px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  color: #333;
+  text-decoration: none;
+  transition: all 0.2s;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.nav-menu li:hover .nav-item {
+  background-color: #f5f7fa;
+  color: #0a6ed1;
+}
+
+.nav-menu li.active .nav-item {
+  background-color: #ebf5fe;
+  color: #0a6ed1;
+  font-weight: 500;
+}
+
+.nav-item-icon {
+  margin-right: 12px;
+}
+
+.sidebar-footer {
+  padding: 15px 20px;
+  font-size: 12px;
+  color: #666;
+  text-align: center;
+  border-top: 1px solid #f0f0f0;
+}
+
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 150;
+  backdrop-filter: blur(2px);
+}
+
+ui5-avatar {
+  margin: 0;
+}
+
+.profile-button {
+  padding: 0;
+}
+
+.nav-icon {
+  color: #354a5f;
+  font-size: 1.2rem;
+}
+
+.icon-button:hover .nav-icon {
+  color: #0a6ed1;
+}
+
+.navbar-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+}
