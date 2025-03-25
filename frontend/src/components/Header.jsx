@@ -9,7 +9,17 @@ const Header = ({ title }) => {
   const navigate = useNavigate();
 
   return (
-    <ui5-bar design="Header" style={{ marginTop: "60px", display: "flex", alignItems: "center" }}>
+    <ui5-bar 
+      design="Header" 
+      style={{ 
+        marginTop: "100px", 
+        display: "flex", 
+        alignItems: "center",
+        boxShadow: "none",
+        border: "none",
+        background: "transparent"
+      }}
+    >
       <ui5-button
         icon="navigation-left-arrow"
         design="Transparent"
@@ -17,7 +27,7 @@ const Header = ({ title }) => {
         onClick={() => navigate(-1)}
         aria-label="Back"
       ></ui5-button>
-      <span style={{ fontWeight: "bold", fontSize: "2rem", color: "#3f51b5" }}>
+      <span style={{ fontWeight: "bold", fontSize: "3rem", color: "#3f51b5" }}>
         {title}
       </span>
     </ui5-bar>
