@@ -9,7 +9,7 @@ const Profile = () => {
       <Navbar />
       <Header title="Perfíl" />
       <div> 
-        <Grid container direction="column" alignItems="center" justifyContent="center" style={{ minHeight: "calc(100vh - 60px)", padding: "0 5%" }}>
+        <Grid container direction="column" alignItems="center" justifyContent="center" style={{ minHeight: "calc(80vh - 3.75rem)", padding: "0 0.3125rem" }}>
           <Grid container direction="row" alignItems="center" justifyContent="center">
             {/* Left Component */}
             <Paper elevation={6} style={{ padding: "2rem", marginRight: "2rem", textAlign: "center", width: "15.625rem", height: "15.625rem", borderRadius: "0.9375rem" }}>
