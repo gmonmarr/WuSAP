@@ -7,6 +7,7 @@ import App from './App';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
 import AddUser from './pages/admin/AddUser';
+import OrdenStatus from './pages/general/OrdenStatus';
 import { InventoryDashboard } from './pages/Proveedor/Inventario';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -18,6 +19,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/profile" element={<Profile />} />
         <Route path="/registrar-usuario" element={<AddUser />} />
         <Route path="/inventario" element={<InventoryDashboard/>} />
+        <Route path="/orden-status" element={<OrdenStatus/>} />
       </Routes>
     </Router>
   </React.StrictMode>

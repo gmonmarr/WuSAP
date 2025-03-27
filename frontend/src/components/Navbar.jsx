@@ -33,7 +33,8 @@ const Navbar = () => {
     { path: '/', label: 'Inicio', icon: 'home' },
     { path: '/registrar-usuario', label: 'Registrar usuario', icon: 'add-employee' },
     { path: '/gestionar-usuarios', label: 'Gestionar usuarios', icon: 'group' },
-    { path: '/dashboard', label: 'Dashboard', icon: 'business-objects-experience' }
+    { path: '/dashboard', label: 'Dashboard', icon: 'business-objects-experience' },
+    { path: '/orden-status', label: 'Ordenes de Producción', icon: 'business-objects-experience' }
   ];
 
   useEffect(() => {
