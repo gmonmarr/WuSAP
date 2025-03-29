@@ -1,3 +1,4 @@
+/* Container for the Add User page, centers the content */
 .add-user-container {
   display: flex;
   justify-content: center;
@@ -7,6 +8,7 @@
   min-height: calc(100vh - 60px);
 }
 
+/* Card that contains the Add User form */
 .add-user-card {
   background: white;
   padding: 2rem;
@@ -16,27 +18,32 @@
   max-width: 600px;
 }
 
+/* Header for the Add User form */
 h2 {
   text-align: center;
   margin-bottom: 1.5rem;
 }
 
+/* Row layout for form inputs */
 .form-row {
   display: flex;
   gap: 1rem;
   margin-bottom: 1rem;
 }
 
+/* Styles for input and select elements */
 ui5-input,
 ui5-select {
   flex: 1;
 }
 
+/* Style for the register button */
 .register-button {
   width: 100%;
   margin-top: 1rem;
 }
 
+/* Style for the back button */
 .back-button {
   margin-bottom: 1rem;
 }

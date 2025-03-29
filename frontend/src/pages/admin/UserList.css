@@ -1,0 +1,19 @@
+/* Container for the User List page */
+.user-list-container {
+  padding: 4rem 2rem; 
+  background-color: #f5f5f5;
+  min-height: calc(100vh - 60px); 
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start; 
+}
+
+/* Header for the User List page */
+h2 {
+  text-align: center;
+  margin-bottom: 2rem; 
+  margin-top: 2rem;
+  font-size: 1.8rem;
+  color: #2C3E73; 
+}

@@ -1,0 +1,54 @@
+/* Container for the entire list */
+.list-component {
+  width: 100%;
+  max-width: 800px; 
+  margin: 0 auto; 
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden; 
+}
+
+/* Individual list item */
+.list-item {
+  padding: 2rem;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between; 
+  align-items: center; 
+  min-height: 120px; 
+  box-sizing: border-box; 
+}
+
+/* Container for the content and button inside a list item */
+.list-item-container {
+  display: flex;
+  flex-direction: row; 
+  gap: 1rem; 
+  flex: 1; 
+  align-items: center; 
+}
+
+/* Content section inside a list item */
+.list-item-content {
+  display: flex;
+  flex-direction: column; 
+  gap: 0.5rem; 
+  word-wrap: break-word; 
+  flex: 1;
+}
+
+/* Button inside a list item */
+.list-item-button {
+  white-space: nowrap; 
+  align-self: center; 
+  margin-left: auto;
+}
+
+/* Override ui5-li default styles */
+ui5-li {
+  --_ui5_listitem_padding: 0;
+  width: 100%;
+  height: auto; 
+  box-sizing: border-box; 
+}
