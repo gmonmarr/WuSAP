@@ -6,6 +6,8 @@ import './UserList.css';
 
 const UserList = () => {
   const [users, setUsers] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedRole, setSelectedRole] = useState('');
 
   useEffect(() => {
     // Simulate fetching user data
@@ -21,6 +23,12 @@ const UserList = () => {
     fetchUsers();
   }, []);
 
+  // Filter users based on the search query and selected role
+  const filteredUsers = users.filter((user) =>
+    user.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+    (selectedRole === '' || user.role === selectedRole)
+  );
+
   const renderUserItem = (user) => (
     <>
       <span>{user.name}</span>
@@ -34,8 +42,27 @@ const UserList = () => {
       <Navbar />
       <div className="user-list-container">
         <h2>Lista de Usuarios</h2>
+        <div className="filter-container">
+          <input
+            type="text"
+            placeholder="Buscar por nombre"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="filter-input"
+          />
+          <select
+            value={selectedRole}
+            onChange={(e) => setSelectedRole(e.target.value)}
+            className="filter-dropdown"
+          >
+            <option value="">Todos los roles</option>
+            <option value="Admin">Admin</option>
+            <option value="Usuario">Usuario</option>
+            <option value="Distribuidor">Distribuidor</option>
+          </select>
+        </div>
         <ListComponent 
-          data={users} 
+          data={filteredUsers} 
           renderItem={renderUserItem} 
           headerText="Lista de Usuarios" 
         />
