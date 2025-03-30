@@ -1,4 +1,6 @@
 /* Container for the Add User page, centers the content */
+/* pages/admin/AddUser.css */
+
 .add-user-container {
   display: flex;
   justify-content: center;

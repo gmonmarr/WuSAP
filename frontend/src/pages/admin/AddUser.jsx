@@ -1,3 +1,5 @@
+// pages/admin/AddUser.jsx
+
 import React, { useState } from 'react';
 import Navbar from '../../components/Navbar';
 import "@ui5/webcomponents/dist/Input.js";

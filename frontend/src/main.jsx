@@ -11,6 +11,7 @@ import OrdenStatus from './pages/general/OrdenStatus';
 import { InventoryDashboard } from './pages/Proveedor/Inventario';
 import UserList from './pages/admin/UserList';
 import { DashboardGeneral } from './pages/Dashboard';
+import OrderPage from './pages/general/OrderPage';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
@@ -24,6 +25,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/orden-status" element={<OrdenStatus/>} />
         <Route path="/lista-usuarios" element={<UserList />} />
         <Route path="/tablero" element={<DashboardGeneral />}/>
+        <Route path="/hacer-pedido" element={<OrderPage />}/>
       </Routes>
     </Router>
   </React.StrictMode>

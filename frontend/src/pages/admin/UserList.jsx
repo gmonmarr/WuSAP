@@ -1,3 +1,5 @@
+// pages/admin/UserList.jsx
+
 import React, { useState, useEffect } from 'react';
 import Navbar from '../../components/Navbar';
 import ListComponent from '../../components/ListComponent';

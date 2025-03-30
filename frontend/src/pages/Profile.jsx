@@ -1,3 +1,5 @@
+// pages/Profile.jsx
+
 import React from "react";
 import { Avatar, Button, Grid, Typography, Paper } from "@mui/material";
 import Navbar from "../components/Navbar";

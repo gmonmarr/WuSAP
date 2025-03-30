@@ -1,3 +1,5 @@
+// components/Navbar.jsx
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import './Navbar.css'; 
@@ -11,6 +13,7 @@ import "@ui5/webcomponents-icons/dist/home.js";
 import "@ui5/webcomponents-icons/dist/add-employee.js";
 import "@ui5/webcomponents-icons/dist/group.js";
 import "@ui5/webcomponents-icons/dist/business-objects-experience.js";
+import "@ui5/webcomponents-icons/dist/cart.js";
 
 const Navbar = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -34,7 +37,8 @@ const Navbar = () => {
     { path: '/registrar-usuario', label: 'Registrar usuario', icon: 'add-employee' },
     { path: '/gestionar-usuarios', label: 'Gestionar usuarios', icon: 'group' },
     { path: '/tablero', label: 'Dashboard', icon: 'business-objects-experience' },
-    { path: '/orden-status', label: 'Ordenes de Producción', icon: 'business-objects-experience' }
+    { path: '/orden-status', label: 'Ordenes de Producción', icon: 'business-objects-experience' },
+    { path: '/hacer-pedido', label: 'Hacer Pedido', icon: 'cart' }
   ];
 
   useEffect(() => {

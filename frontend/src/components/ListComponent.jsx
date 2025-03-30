@@ -1,3 +1,5 @@
+// components/ListComponent.jsx
+
 import React from 'react';
 import "@ui5/webcomponents/dist/List.js";
 import "@ui5/webcomponents/dist/Icon.js";
