@@ -1,49 +1,250 @@
 // src/pages/Login.jsx
 
-import React from "react";
-import { TextField, Button, Checkbox, FormControlLabel, Typography, Paper, Grid } from "@mui/material";
+import React, { useState } from "react";
+import {
+  TextField,
+  Button,
+  Checkbox,
+  FormControlLabel,
+  Typography,
+  Paper,
+  Grid,
+  Box,
+  InputAdornment,
+  IconButton,
+} from "@mui/material";
+import { styled } from "@mui/material/styles";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import "../App.css";
 
-const Login = () => {
-  return (
-    <Grid container className="app-background" alignItems="center" justifyContent="space-between" style={{ height: "100vh", backgroundColor: "#2C3E73", padding: "0 5%" }}>
-      {/* Left Section */}
-      {/* <Grid item xs={5} style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "white" }}>
-        <Typography variant="h1" fontWeight="bold">¡Bienvenido!</Typography>
-        <Typography variant="h1" fontWeight="900" mt={2}>WuSAP</Typography>
-      </Grid> */}
+const StyledPaper = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(6),
+  borderRadius: "24px",
+  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
+  background: "rgba(255, 255, 255, 0.95)",
+  backdropFilter: "blur(10px)",
+  border: "1px solid rgba(255, 255, 255, 0.2)",
+}));
 
-      <Grid item xs={5} style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "white", paddingLeft: "10%" }}>
-        <Typography variant="h1" fontWeight="bold" >¡Bienvenido!</Typography>
-        <Typography variant="h1" fontWeight="900" mt={2} >WuSAP</Typography>
+const StyledTextField = styled(TextField)(({ theme }) => ({
+  "& .MuiOutlinedInput-root": {
+    borderRadius: "12px",
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    "&:hover": {
+      backgroundColor: "rgba(255, 255, 255, 1)",
+    },
+  },
+}));
+
+const Login = () => {
+  const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({
+    username: "",
+    password: "",
+    rememberMe: false,
+  });
+
+  const handleChange = (e) => {
+    const { name, value, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: name === "rememberMe" ? checked : value
+    }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Handle login logic here
+    console.log("Login attempt:", formData);
+  };
+
+  return (
+    <Grid 
+      container 
+      className="app-background" 
+      alignItems="center" 
+      justifyContent="center" 
+      sx={{ 
+        minHeight: "100vh", 
+        background: "linear-gradient(135deg, #2C3E73 0%, #3498db 100%)",
+        padding: { xs: 2, sm: 4 },
+      }}
+    >
+      <Grid item xs={12} md={10} lg={8}>
+        <Grid container spacing={4} alignItems="center">
+          {/* Left Section - Welcome Text */}
+          <Grid item xs={12} md={6}>
+            <Box sx={{ 
+              textAlign: { xs: "center", md: "left" }, 
+              mb: { xs: 4, md: 0 },
+              display: "flex",
+              flexDirection: "column",
+              gap: "0.5rem"
+            }}>
+              <Box sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.5rem",
+                position: "relative",
+                textAlign: { xs: "center", md: "left" },
+                alignItems: { xs: "center", md: "flex-start" },
+                "&::after": {
+                  content: '""',
+                  position: "absolute",
+                  bottom: "-1rem",
+                  left: { xs: "50%", md: "0" },
+                  transform: { xs: "translateX(-50%)", md: "none" },
+                  width: "80px",
+                  height: "4px",
+                  background: "linear-gradient(90deg, #ffffff 0%, rgba(255,255,255,0.5) 100%)",
+                  borderRadius: "2px"
+                }
+              }}>
+                <Typography 
+                  variant="h2" 
+                  color="white"
+                  sx={{ 
+                    fontSize: { xs: "2.5rem", md: "3.5rem" },
+                    fontWeight: 600,
+                    letterSpacing: "-0.02em",
+                    lineHeight: 1.2,
+                    textShadow: "0 2px 10px rgba(0,0,0,0.2)",
+                    width: "100%",
+                    textAlign: "inherit"
+                  }}
+                >
+                  ¡Bienvenido!
+                </Typography>
+                <Typography 
+                  variant="h1"
+                  color="white"
+                  sx={{ 
+                    fontSize: { xs: "3.5rem", md: "5rem" },
+                    fontWeight: 800,
+                    letterSpacing: "-0.02em",
+                    lineHeight: 1,
+                    background: "linear-gradient(135deg, #FFFFFF 0%, rgba(255,255,255,0.8) 100%)",
+                    backgroundClip: "text",
+                    WebkitBackgroundClip: "text",
+                    color: "transparent",
+                    textShadow: "0 4px 20px rgba(0,0,0,0.15)",
+                    width: "100%",
+                    textAlign: "inherit"
+                  }}
+                >
+                  WuSAP
+                </Typography>
+              </Box>
+              <Typography 
+                variant="h6" 
+                color="white" 
+                sx={{ 
+                  mt: 4,
+                  opacity: 0.9,
+                  maxWidth: "400px",
+                  fontSize: { xs: "1rem", md: "1.25rem" },
+                  fontWeight: 400,
+                  lineHeight: 1.6,
+                  letterSpacing: "0.01em"
+                }}
+              >
+                Tu solución integral para la gestión de pedidos y producción
+              </Typography>
+            </Box>
+          </Grid>
+
+          {/* Right Section - Login Form */}
+          <Grid item xs={12} md={6}>
+            <StyledPaper>
+              <Typography 
+                variant="h4" 
+                gutterBottom 
+                sx={{ 
+                  fontWeight: 600,
+                  color: "#2C3E73",
+                  mb: 4,
+                  textAlign: "center"
+                }}
+              >
+                Iniciar Sesión
+              </Typography>
+              
+              <form onSubmit={handleSubmit}>
+                <StyledTextField
+                  fullWidth
+                  label="Nombre de usuario"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleChange}
+                  variant="outlined"
+                  sx={{ mb: 3 }}
+                />
+                
+                <StyledTextField
+                  fullWidth
+                  label="Contraseña"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  value={formData.password}
+                  onChange={handleChange}
+                  variant="outlined"
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={() => setShowPassword(!showPassword)}
+                          edge="end"
+                        >
+                          {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{ mb: 3 }}
+                />
+
+                <FormControlLabel
+                  control={
+                    <Checkbox 
+                      name="rememberMe"
+                      checked={formData.rememberMe}
+                      onChange={handleChange}
+                      color="primary"
+                    />
+                  }
+                  label={
+                    <Typography variant="body2" color="textSecondary">
+                      Mantenerme conectado
+                    </Typography>
+                  }
+                  sx={{ mb: 4 }}
+                />
+
+                <Button
+                  type="submit"
+                  variant="contained"
+                  fullWidth
+                  sx={{
+                    backgroundColor: "#2C3E73",
+                    color: "white",
+                    py: 1.5,
+                    borderRadius: "12px",
+                    fontSize: "1.1rem",
+                    textTransform: "none",
+                    fontWeight: 500,
+                    "&:hover": {
+                      backgroundColor: "#1a263d",
+                    },
+                  }}
+                >
+                  Ingresar
+                </Button>
+              </form>
+            </StyledPaper>
+          </Grid>
+        </Grid>
       </Grid>
-      
-      {/* Right Section */}
-      <Paper elevation={6} style={{ borderRadius: 16, overflow: "hidden", width: "40%", maxWidth: "600px", padding: "6rem", backgroundColor: "white", minHeight: "70vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-        <Typography variant="h5" gutterBottom>Nombre de usuario</Typography>
-        <TextField fullWidth variant="standard" />
-        <Typography variant="h5" gutterBottom style={{ marginTop: "2rem" }}>Contraseña</Typography>
-        <TextField fullWidth variant="standard" type="password" />
-        <Button
-          variant="contained"
-          fullWidth
-          style={{
-            backgroundColor: "#2C3E73",
-            color: "white",
-            marginTop: "2.5rem",
-            padding: "1rem",
-            borderRadius: "50px",
-            fontSize: "1.2rem",
-          }}
-        >
-          Ingresar
-        </Button>
-        <FormControlLabel
-          control={<Checkbox />}
-          label={<Typography variant="body1" color="textSecondary">Mantenerme conectado</Typography>}
-          style={{ marginTop: "2rem", display: "flex", justifyContent: "center" }}
-        />
-      </Paper>
     </Grid>
   );
 };
