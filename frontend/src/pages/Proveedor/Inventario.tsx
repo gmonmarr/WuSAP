@@ -110,7 +110,6 @@ export function InventoryDashboard() {
             width: "45%",
           }}
         >
-          
           {toggleCharts === "lineChart" ? (
             <LineChart
               dimensions={[{ accessor: "month" }]}
@@ -118,7 +117,14 @@ export function InventoryDashboard() {
               dataset={dataset}
               loading={loading}
               style={{
-                height: "150px", // Smaller chart height
+                height: "300px",
+                width: "100%",
+                paddingTop: "1rem",
+                paddingBottom: "1rem"
+              }}
+              chartConfig={{
+                legendPosition: "bottom",
+                margin: { top: 30, right: 30, bottom: 30, left: 30 }
               }}
             />
           ) : (
@@ -127,21 +133,25 @@ export function InventoryDashboard() {
               measures={[{ accessor: "data", label: "Stock Price" }]}
               dataset={dataset}
               loading={loading}
-              chartConfig={{
-                legendPosition: "top", // Move labels to the right
-              }}
-              
               style={{
-                height: "150px", // Smaller chart height
+                height: "300px",
+                width: "100%",
+                paddingTop: "1rem",
+                paddingBottom: "1rem"
+              }}
+              chartConfig={{
+                legendPosition: "bottom",
+                margin: { top: 30, right: 30, bottom: 30, left: 30 }
               }}
             />
           )}
         </Card>
         <Card
           header={
-          <CardHeader titleText="Datos de ventas"  avatar={<Icon name={pieChartIcon} />}/>}
+            <CardHeader titleText="Datos de ventas" avatar={<Icon name={pieChartIcon} />}/>
+          }
           style={{
-            width: "45%", // Set to 100% to utilize the full width of the container
+            width: "45%",
             height: "100%",
           }}
         >
@@ -151,7 +161,16 @@ export function InventoryDashboard() {
             dataset={dataset}
             loading={loading}
             style={{
-              height: "160px", // Smaller chart height
+              height: "300px",
+              width: "100%",
+              paddingTop: "1rem",
+              paddingBottom: "1rem"
+            }}
+            chartConfig={{
+              legendPosition: "bottom",
+              paddingAngle: 2,
+              innerRadius: "60%",
+              margin: { top: 30, right: 30, bottom: 60, left: 30 }
             }}
           />
         </Card>
@@ -212,4 +231,3 @@ export function InventoryDashboard() {
     </div>
   );
 }
-
