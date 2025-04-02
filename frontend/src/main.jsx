@@ -12,7 +12,7 @@ import { InventoryDashboard } from './pages/Proveedor/Inventario';
 import UserList from './pages/admin/UserList';
 import { DashboardGeneral } from './pages/Dashboard';
 import OrderPage from './pages/general/OrderPage';
-
+import OrdenStatusInfo from './pages/general/OrdenStatusInfo';
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <Router>
@@ -26,6 +26,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/lista-usuarios" element={<UserList />} />
         <Route path="/tablero" element={<DashboardGeneral />}/>
         <Route path="/hacer-pedido" element={<OrderPage />}/>
+        <Route path="/orden-status/:ordenId" element={<OrdenStatusInfo />} />
       </Routes>
     </Router>
   </React.StrictMode>

@@ -1,6 +1,7 @@
 // src/pages/Login.jsx
 
 import React, { useState } from "react";
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   TextField,
   Button,
@@ -44,6 +45,7 @@ const Login = () => {
     password: "",
     rememberMe: false,
   });
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value, checked } = e.target;
@@ -57,6 +59,7 @@ const Login = () => {
     e.preventDefault();
     // Handle login logic here
     console.log("Login attempt:", formData);
+    navigate('/tablero');
   };
 
   return (

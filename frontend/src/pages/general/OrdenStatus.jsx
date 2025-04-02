@@ -1,15 +1,17 @@
-// pages/general/OrdenStatus.jsx
-
 import React, { useState } from "react";
 import Header from "../../components/Header";
-import NavBar from "../../components/NavBar";
+import NavBar from "../../components/Navbar";
 import OrdenStatusCard from "../../components/OrdenStatusCard";
 import "@ui5/webcomponents/dist/Card";
 import "@ui5/webcomponents/dist/Label";
 import "@ui5/webcomponents/dist/Input.js";
 import "@ui5/webcomponents-icons/dist/search.js";
+import { useNavigate } from "react-router-dom";
+import "@ui5/webcomponents/dist/Button";
+import "@ui5/webcomponents-icons/dist/detail-view.js";
 
 const OrdenStatus = () => {
+  const navigate = useNavigate();
   const [ordenes] = useState([
     {
       id: 1,
@@ -40,6 +42,11 @@ const OrdenStatus = () => {
     orden.material.toLowerCase().includes(searchQuery.toLowerCase()) ||
     orden.id.toString().includes(searchQuery)
   );
+
+  // Agregar esta función para navegación
+  const verDetallesOrden = (ordenId) => {
+    navigate(`/orden-status/${ordenId}`);
+  };
 
   return (
     <div style={{ minHeight: "100vh", background: "#f5f5f5" }}>
@@ -115,15 +122,32 @@ const OrdenStatus = () => {
           padding: "1.5rem",
           boxShadow: "0 1px 4px rgba(0,0,0,0.1)"
         }}>
-          <div style={{ marginBottom: "2rem" }}>
+          <div style={{ 
+            display: "flex", 
+            justifyContent: "space-between", 
+            alignItems: "center",
+            marginBottom: "1.5rem"
+          }}>
             <h3 style={{ 
               fontSize: "1.25rem", 
-              margin: "0 0 1.5rem 0",
+              margin: 0,
               color: "#333"
             }}>
               Progreso de orden{selectedOrden.id}:
             </h3>
             
+            {/* Nuevo botón para ver detalles */}
+            <ui5-button 
+              icon="detail-view" 
+              design="Transparent"
+              onClick={() => verDetallesOrden(selectedOrden.id)}
+              tooltip="Ver detalles completos"
+            >
+              Ver detalles
+            </ui5-button>
+          </div>
+          
+          <div style={{ marginBottom: "2rem" }}>
             <div style={{ 
               display: "flex", 
               flexDirection: "column",
