@@ -13,6 +13,8 @@ import UserList from './pages/admin/UserList';
 import { DashboardGeneral } from './pages/Dashboard';
 import OrderPage from './pages/general/OrderPage';
 import OrdenStatusInfo from './pages/general/OrdenStatusInfo';
+import AdminMain from './pages/admin/AdminMain';
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <Router>
@@ -27,6 +29,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/tablero" element={<DashboardGeneral />}/>
         <Route path="/hacer-pedido" element={<OrderPage />}/>
         <Route path="/orden-status/:ordenId" element={<OrdenStatusInfo />} />
+        <Route path="/admin" element={<AdminMain />} />
       </Routes>
     </Router>
   </React.StrictMode>

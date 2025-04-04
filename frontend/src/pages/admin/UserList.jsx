@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../../components/Navbar';
 import ListComponent from '../../components/ListComponent';
+import Header from '../../components/Header';
 import "@ui5/webcomponents/dist/Button.js";
 import './UserList.css';
 
@@ -18,6 +19,7 @@ const UserList = () => {
         { id: 1, name: 'Juan Pérez', email: 'juan.perez@example.com', role: 'Admin' },
         { id: 2, name: 'Ana Gómez', email: 'ana.gomez@example.com', role: 'Usuario' },
         { id: 3, name: 'Carlos López', email: 'carlos.lopez@example.com', role: 'Distribuidor' },
+        { id: 4, name: 'Danny Wu', email: 'danny.wu@example.com', role: 'Usuario' }, 
       ];
       setUsers(mockUsers);
     };
@@ -42,8 +44,8 @@ const UserList = () => {
   return (
     <>
       <Navbar />
+      <Header title={"Usuarios"} />
       <div className="user-list-container">
-        <h2>Lista de Usuarios</h2>
         <div className="filter-container">
           <input
             type="text"
@@ -66,7 +68,6 @@ const UserList = () => {
         <ListComponent 
           data={filteredUsers} 
           renderItem={renderUserItem} 
-          headerText="Lista de Usuarios" 
         />
       </div>
     </>

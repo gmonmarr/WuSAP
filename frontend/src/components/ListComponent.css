@@ -13,12 +13,12 @@
 
 /* Individual list item */
 .list-item {
-  padding: 2rem;
+  padding: 1.5rem; /* Adjust padding for better spacing */
   border-bottom: 1px solid #ddd;
   display: flex;
   justify-content: space-between; 
   align-items: center; 
-  min-height: 120px; 
+  min-height: 80px; /* Adjust height for better fit */
   box-sizing: border-box; 
 }
 

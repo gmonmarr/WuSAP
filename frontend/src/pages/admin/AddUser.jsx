@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Navbar from '../../components/Navbar';
+import Header from '../../components/Header';
 import "@ui5/webcomponents/dist/Input.js";
 import "@ui5/webcomponents/dist/Button.js";
 import "@ui5/webcomponents/dist/Select.js";
@@ -32,16 +33,9 @@ const AddUser = () => {
   return (
     <>
       <Navbar />
+      <Header title={"Agregar Usuario"} />
       <div className="add-user-container">
         <div className="add-user-card">
-          <ui5-button
-            design="Transparent"
-            class="back-button"
-            onClick={() => window.history.back()}
-          >
-            ← Volver
-          </ui5-button>
-          <h2>Agregar usuario</h2>
           <form onSubmit={handleSubmit}>
             <div className="form-row">
               <ui5-input
