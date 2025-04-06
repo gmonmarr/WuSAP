@@ -14,6 +14,7 @@ import { DashboardGeneral } from './pages/Dashboard';
 import OrderPage from './pages/general/OrderPage';
 import OrdenStatusInfo from './pages/general/OrdenStatusInfo';
 import AdminMain from './pages/admin/AdminMain';
+import { ProductCatalog } from './pages/ListaProductos';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
@@ -30,6 +31,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/hacer-pedido" element={<OrderPage />}/>
         <Route path="/orden-status/:ordenId" element={<OrdenStatusInfo />} />
         <Route path="/admin" element={<AdminMain />} />
+        <Route path='/lista-productos' element={<ProductCatalog/>} />
       </Routes>
     </Router>
   </React.StrictMode>

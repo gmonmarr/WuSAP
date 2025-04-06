@@ -43,17 +43,17 @@ const dataset = [
 
 const tableData = new Array(500).fill(null).map((_, index) => {
   return {
-    name: `name${index}`,
-    age: Math.floor(Math.random() * 100),
-    friend: { name: `friend.Name${index}`, age: Math.floor(Math.random() * 100) },
+    product: `product${index}`,
+    amount: Math.floor(Math.random() * 100),
+    description: { product: `descripcion.product${index}`, amount: Math.floor(Math.random() * 100) },
   };
 });
 
 const tableColumns = [
-  { Header: "Name", accessor: "name" },
-  { Header: "Age", accessor: "age" },
-  { Header: "Friend Name", accessor: "friend.name" },
-  { Header: "Friend Age", accessor: "friend.age" },
+  { Header: "Product", accessor: "product" },
+  { Header: "Amount", accessor: "amount" },
+  { Header: "Desc producto", accessor: "description.product" },
+  { Header: "Desc cantidad", accessor: "description.amount" },
 ];
 
 export function InventoryDashboard() {
@@ -73,28 +73,29 @@ export function InventoryDashboard() {
     <div
       style={{
         height: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        overflow: "true",
-        paddingLeft:"2rem",
-        paddingRight:"2rem",
-        paddingBottom: "2rem"
+        overflowY: "auto",
+        padding: "0 3rem",
+        boxSizing: "border-box",
       }}
     >
+      {/* Navbar & Header */}
       <Navbar />
-      <Header title="Inventario" />
+      <Header title={"Inventario"}/>
+
+
+      {/* Row 1 */}
       <FlexBox
         direction={FlexBoxDirection.Row}
         justifyContent={FlexBoxJustifyContent.SpaceAround}
         wrap={FlexBoxWrap.Wrap}
         style={{
+          flex: 1,
           width: "100%",
-          height: "40%", // Each row takes up half the viewport
-          padding: "1rem",
+          padding: "2rem",
+          height:"50%",
+          gap: "2rem",
         }}
       >
-        {/* Row 1 */}
         <Card
           header={
             <CardHeader
@@ -106,8 +107,9 @@ export function InventoryDashboard() {
             />
           }
           style={{
-            height: "100%",
-            width: "45%",
+            flex: 1,
+            minWidth: "300px",
+            maxHeight: "45vh",
           }}
         >
           {toggleCharts === "lineChart" ? (
@@ -116,15 +118,10 @@ export function InventoryDashboard() {
               measures={[{ accessor: "data", label: "Stock Price" }]}
               dataset={dataset}
               loading={loading}
-              style={{
-                height: "300px",
-                width: "100%",
-                paddingTop: "1rem",
-                paddingBottom: "1rem"
-              }}
+              style={{ height:"35vh"}}
               chartConfig={{
                 legendPosition: "bottom",
-                margin: { top: 30, right: 30, bottom: 30, left: 30 }
+                margin: { top: 30, right: 30, bottom: 30, left: 30 },
               }}
             />
           ) : (
@@ -133,26 +130,21 @@ export function InventoryDashboard() {
               measures={[{ accessor: "data", label: "Stock Price" }]}
               dataset={dataset}
               loading={loading}
-              style={{
-                height: "300px",
-                width: "100%",
-                paddingTop: "1rem",
-                paddingBottom: "1rem"
-              }}
+              style={{ height:"35vh"}}
               chartConfig={{
                 legendPosition: "bottom",
-                margin: { top: 30, right: 30, bottom: 30, left: 30 }
+                margin: { top: 30, right: 30, bottom: 30, left: 30 },
               }}
             />
           )}
         </Card>
+
         <Card
-          header={
-            <CardHeader titleText="Datos de ventas" avatar={<Icon name={pieChartIcon} />}/>
-          }
+          header={<CardHeader titleText="Datos de ventas" avatar={<Icon name={pieChartIcon} />} />}
           style={{
-            width: "45%",
-            height: "100%",
+            flex: 1,
+            minWidth: "300px",
+            maxHeight: "50vh", 
           }}
         >
           <PieChart
@@ -160,71 +152,73 @@ export function InventoryDashboard() {
             measure={{ accessor: "data" }}
             dataset={dataset}
             loading={loading}
-            style={{
-              height: "300px",
-              width: "100%",
-              paddingTop: "1rem",
-              paddingBottom: "1rem"
-            }}
+            style={{ height:"35vh"}}
             chartConfig={{
               legendPosition: "bottom",
               paddingAngle: 2,
               innerRadius: "60%",
-              margin: { top: 30, right: 30, bottom: 60, left: 30 }
+              margin: { top: 30, right: 30, bottom: 60, left: 30 },
             }}
           />
         </Card>
       </FlexBox>
 
+
+      {/* Row 2 */}
       <FlexBox
         direction={FlexBoxDirection.Row}
         justifyContent={FlexBoxJustifyContent.SpaceAround}
         wrap={FlexBoxWrap.Wrap}
         style={{
           width: "100%",
-          height: "45%",
-          padding: "1rem",
+          flex: 1,
+          padding: "2rem",
+          gap: "2rem",
+          height:"50%"
         }}
       >
-        {/* Row 2 */}
         <Card
           header={
-            <CardHeader
-              titleText="Alertas de inventario"
-              avatar={<Icon name={tableViewIcon} />}
-            />
+            <CardHeader titleText="Alertas de inventario" avatar={<Icon name={tableViewIcon} />} />
           }
           style={{
-            width: "45%",
-            height: "100%",
+            flex: 1,
+            minWidth: "300px",
+            maxHeight: "40vh"
           }}
         >
           <AnalyticalTable
             data={tableData}
             columns={tableColumns}
-            visibleRows={4}
-            style={{ padding: "10px", fontSize: "0.8rem", maxHeight: "300px", overflowY: "auto" }}
-            className="sticky-table"
+            style={{ 
+              padding: "2rem",
+              fontSize: "0.8rem",
+              height: "100%",
+              overflowY: "auto" }} 
           />
         </Card>
+
         <Card
           header={
             <CardHeader
-              titleText="Productos más vendidos"
-              avatar={<Icon name={tableViewIcon} />}
-            />
+      titleText="Productos más vendidos"
+      avatar={<Icon name={tableViewIcon} />}
+    />
           }
           style={{
-            width: "45%",
-            height: "100%",
+            flex: 1,
+            minWidth: "300px",
+            maxHeight: "40vh"
           }}
         >
           <AnalyticalTable
             data={tableData}
             columns={tableColumns}
-            visibleRows={4}
-            style={{ padding: "10px", fontSize: "0.8rem" }} // Smaller font size
-            className="custom-table"
+            style={{ 
+              padding: "2rem",
+              fontSize: "0.8rem",
+              height: "100%",
+              overflowY: "auto" }} 
           />
         </Card>
       </FlexBox>
