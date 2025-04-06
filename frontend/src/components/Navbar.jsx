@@ -34,11 +34,12 @@ const Navbar = () => {
 
   const navItems = [
     { path: '/', label: 'Inicio', icon: 'home' },
+    { path: '/orden', label: 'Hacer Pedido', icon: 'cart' },
+    { path: '/historial-pedido', label: 'Historial de Pedidos', icon: 'business-objects-experience' },
+    { path: '/orden-status', label: 'Ordenes de Producción', icon: 'business-objects-experience' },
     { path: '/registrar-usuario', label: 'Registrar usuario', icon: 'add-employee' },
     { path: '/lista-usuarios', label: 'Gestionar usuarios', icon: 'group' },
-    { path: '/tablero', label: 'Dashboard', icon: 'business-objects-experience' },
-    { path: '/orden-status', label: 'Ordenes de Producción', icon: 'business-objects-experience' },
-    { path: '/hacer-pedido', label: 'Hacer Pedido', icon: 'cart' }
+    { path: '/tablero', label: 'Dashboard', icon: 'business-objects-experience' }
   ];
 
   useEffect(() => {

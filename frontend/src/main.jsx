@@ -15,6 +15,7 @@ import OrderPage from './pages/general/OrderPage';
 import OrdenStatusInfo from './pages/general/OrdenStatusInfo';
 import AdminMain from './pages/admin/AdminMain';
 import { ProductCatalog } from './pages/ListaProductos';
+import OrderHistory from './pages/general/OrderHistory';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
@@ -32,6 +33,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/orden-status/:ordenId" element={<OrdenStatusInfo />} />
         <Route path="/admin" element={<AdminMain />} />
         <Route path='/lista-productos' element={<ProductCatalog/>} />
+        <Route path='/historial-pedido' element={<OrderHistory/>} />
       </Routes>
     </Router>
   </React.StrictMode>
