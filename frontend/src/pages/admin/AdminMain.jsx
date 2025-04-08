@@ -1,3 +1,5 @@
+// src/pages/admin/AdminMain.jsx
+
 import React from 'react';
 import Navbar from '../../components/Navbar';
 import { useNavigate } from 'react-router-dom';

@@ -47,19 +47,18 @@ const alertCount = [1];
 
 export function DashboardGeneral() {
     return (
+ 
         <div 
-            style={{
-                height: "100vh",
-                display: "flex",
-                width: "100%",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "2rem",
-            }}
+        style={{
+            height: "100vh",
+            overflowY: "auto",
+            padding: "0 3rem",
+            boxSizing: "border-box",
+          }}
         >
             <Navbar />
             <Header title={"Tablero"} />
+            
 
        {/* COLUMNA GENERAL QUE CUBRE TODA LA PANTALLA - apoyo para subsecciones */}
         <FlexBox
@@ -67,7 +66,7 @@ export function DashboardGeneral() {
         justifyContent={FlexBoxJustifyContent.SpaceAround}
         style={{
             width: "100%",
-            height: "95%",
+            height: "90vh",
             gap: "1rem",
             padding: "1rem"
         }}>
@@ -145,6 +144,7 @@ export function DashboardGeneral() {
                                     legendPosition: "bottom",
                                     
                                   }}
+                                  style={{height:"60vh"}}
                                  />
                                  
                             </Card>
@@ -189,7 +189,7 @@ export function DashboardGeneral() {
                                   measures={[{ accessor: "data", label: "Stock Price"}]}
                                   dataset={dataset}
                                   style={{
-                                    height: "200px",
+                                    height: "35vh",
                                   }}
                                   chartConfig={{
                                     legendPosition: "top",
@@ -208,21 +208,23 @@ export function DashboardGeneral() {
                             height: "100%",
                         }} >
                                 <Card
-                            header={<CardHeader titleText="Tasa de cumplimiento de proveedores" />}
-                            style={{
-                                width: "100%",
-                                height: "100%",
-                            }}
-                            >
-                            <DonutChart
-                                dimension={{ accessor: "month" }}
-                                measure={{ accessor: "data" }}
-                                dataset={dataset}
+                                header={<CardHeader titleText="Tasa de cumplimiento de proveedores" />}
                                 style={{
-                                height: "220px", 
-                                fontSize: "8px"
+                                    width: "100%",
+                                    height: "100%",
                                 }}
-                            />
+                                >
+                                <DonutChart
+                                    dimension={{ accessor: "month" }}
+                                    measure={{ accessor: "data" }}
+                                    dataset={dataset}
+                                    style={{ height:"35vh", fontSize:"0.5rem"}}
+                                    chartConfig={{
+                                    legendPosition: "bottom",
+                                    innerRadius: "50%",
+                                    
+                                    }}
+                                />
                             </Card>
                     </FlexBox>
                 </FlexBox>
@@ -252,7 +254,7 @@ export function DashboardGeneral() {
                                   ]}
                                   dataset={dataset}
                                   style={{
-                                    height: "180px", 
+                                    height: "30vh", 
                                   }}
                                 />
                     </Card>
