@@ -1,5 +1,3 @@
-// pages/general/OrderPage.jsx
-
 import React, { useState } from "react";
 import {
   Box,
@@ -79,7 +77,7 @@ const CartContainer = styled(Paper)(({ theme }) => ({
   boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
 }));
 
-const OrderPage = () => {
+const OrderProvider = () => {
   const theme = useTheme();
   const [activeStep, setActiveStep] = useState(0);
   const [selectedProducts, setSelectedProducts] = useState([]);
@@ -97,78 +95,78 @@ const OrderPage = () => {
     {
       id: 1,
       name: "Acero Inoxidable",
-      image: "https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?w=500&h=500&fit=crop",
-      description: "Láminas de acero inoxidable de alta calidad",
+      price: 299.99,
+      image: "https://images.unsplash.com/photo-1535813547-3e2d0ee1566a?w=500&h=500&fit=crop",
+      description: "Acero inoxidable de alta calidad para uso industrial",
       unit: "kg",
       minOrder: 1,
       maxOrder: 1000,
       increment: 1,
-      stock: 2000,
       eta: "2-3 días hábiles"
     },
     {
       id: 2,
       name: "Tornillos Hexagonales",
-      image: "https://images.unsplash.com/photo-1581094794329-c8112c4e1f1c?w=500&h=500&fit=crop",
-      description: "Tornillos de grado industrial",
+      price: 0.99,
+      image: "https://images.unsplash.com/photo-1597484662317-9bd7bdda2eb5?w=500&h=500&fit=crop",
+      description: "Tornillos hexagonales de acero galvanizado",
       unit: "piezas",
       minOrder: 1,
       maxOrder: 10000,
       increment: 1,
-      stock: 50000,
       eta: "1 día hábil"
     },
     {
       id: 3,
       name: "Alambre de Cobre",
-      image: "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=500&h=500&fit=crop",
-      description: "Alambre de cobre para instalaciones eléctricas",
-      unit: "metros",
+      price: 45.99,
+      image: "https://images.unsplash.com/photo-1585184394271-4c0a47dc59c9?w=500&h=500&fit=crop",
+      description: "Alambre de cobre para aplicaciones eléctricas",
+      unit: "m",
       minOrder: 1,
       maxOrder: 1000,
       increment: 1,
-      stock: 5000,
       eta: "2 días hábiles"
     },
     {
       id: 4,
       name: "Pintura Industrial",
-      image: "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=500&h=500&fit=crop",
-      description: "Pintura resistente para uso industrial",
-      unit: "litros",
+      price: 89.99,
+      image: "https://images.unsplash.com/photo-1562259929-b4e1fd3aef09?w=500&h=500&fit=crop",
+      description: "Pintura industrial resistente a la corrosión",
+      unit: "L",
       minOrder: 1,
-      maxOrder: 100,
+      maxOrder: 200,
       increment: 1,
-      stock: 500,
       eta: "1-2 días hábiles"
     },
     {
       id: 5,
       name: "Resina Epóxica",
-      image: "https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?w=500&h=500&fit=crop",
-      description: "Resina epóxica para recubrimientos",
+      price: 159.99,
+      image: "https://images.unsplash.com/photo-1589810264340-0ce27bfbf751?w=500&h=500&fit=crop",
+      description: "Resina epóxica de alta resistencia",
       unit: "kg",
       minOrder: 1,
-      maxOrder: 100,
+      maxOrder: 50,
       increment: 1,
-      stock: 300,
       eta: "3-4 días hábiles"
     },
     {
       id: 6,
       name: "Tuercas de Seguridad",
-      image: "https://images.unsplash.com/photo-1581094794329-c8112c4e1f1c?w=500&h=500&fit=crop",
-      description: "Tuercas con sistema de seguridad",
+      price: 0.49,
+      image: "https://images.unsplash.com/photo-1597484662341-b6f46e2e4759?w=500&h=500&fit=crop",
+      description: "Tuercas de seguridad autoblocantes",
       unit: "piezas",
       minOrder: 1,
-      maxOrder: 5000,
+      maxOrder: 20000,
       increment: 1,
-      stock: 20000,
       eta: "1 día hábil"
     }
   ];
 
-  const steps = ["Seleccionar Materiales", "Detalles de Envío", "Confirmar Pedido"];
+  const steps = ["Seleccionar Materiales", "Confirmar Pedido"];
 
   const handleNext = () => {
     setActiveStep((prevStep) => prevStep + 1);
@@ -178,19 +176,11 @@ const OrderPage = () => {
     setActiveStep((prevStep) => prevStep - 1);
   };
 
-  const handleShippingChange = (e) => {
-    setShippingDetails({
-      ...shippingDetails,
-      [e.target.name]: e.target.value,
-    });
-  };
-
   const validateQuantity = (product, quantity) => {
     const numQuantity = Number(quantity);
     if (isNaN(numQuantity)) return "Debe ser un número";
     if (numQuantity < product.minOrder) return `Mínimo ${product.minOrder} ${product.unit}`;
     if (numQuantity > product.maxOrder) return `Máximo ${product.maxOrder} ${product.unit}`;
-    if (numQuantity > product.stock) return `Solo hay ${product.stock} ${product.unit} disponibles`;
     if (numQuantity % product.increment !== 0) return `Incrementos de ${product.increment} ${product.unit}`;
     return null;
   };
@@ -254,6 +244,20 @@ const OrderPage = () => {
     });
   };
 
+  const calculateTotal = () => {
+    return selectedProducts.reduce((total, product) => {
+      return total + (product.price * product.quantity);
+    }, 0);
+  };
+
+  const handleShippingChange = (e) => {
+    const { name, value } = e.target;
+    setShippingDetails(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
   const renderCart = () => {
     return (
       <CartContainer>
@@ -314,6 +318,9 @@ const OrderPage = () => {
                   <Typography variant="body2" color="text.secondary">
                     {product.quantity} {product.unit}
                   </Typography>
+                  <Typography variant="body2" color="primary.main" sx={{ fontWeight: 500 }}>
+                    ${(product.price * product.quantity).toFixed(2)}
+                  </Typography>
                 </Box>
                 <IconButton 
                   size="small"
@@ -334,6 +341,15 @@ const OrderPage = () => {
           borderColor: 'divider',
           backgroundColor: 'background.paper'
         }}>
+          <Typography variant="subtitle1" sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between',
+            fontWeight: 600,
+            mb: 1
+          }}>
+            <span>Total</span>
+            <span>${calculateTotal().toFixed(2)}</span>
+          </Typography>
           <Button
             variant="contained"
             color="primary"
@@ -348,7 +364,7 @@ const OrderPage = () => {
               fontWeight: 500,
             }}
           >
-            Continuar
+            Revisar Pedido
           </Button>
         </Box>
       </CartContainer>
@@ -380,8 +396,11 @@ const OrderPage = () => {
                         <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                           Unidad: {product.unit}
                         </Typography>
-                        <Typography variant="body2" color="success.main" sx={{ mb: 2, fontWeight: 500 }}>
-                          Disponible: {product.stock} {product.unit}
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                          Pedido mínimo: {product.minOrder} {product.unit}
+                        </Typography>
+                        <Typography variant="h5" color="primary" sx={{ fontWeight: 600, mb: 2 }}>
+                          ${product.price}/{product.unit}
                         </Typography>
                         <Box sx={{ mb: 2 }}>
                           <TextField
@@ -395,7 +414,7 @@ const OrderPage = () => {
                             InputProps={{
                               inputProps: { 
                                 min: product.minOrder,
-                                max: Math.min(product.maxOrder, product.stock),
+                                max: product.maxOrder,
                                 step: product.increment
                               }
                             }}
@@ -430,65 +449,131 @@ const OrderPage = () => {
         );
       case 1:
         return (
-          <Box component="form" sx={{ mt: 4 }}>
-            <Grid container spacing={4}>
-              <Grid item xs={12}>
-                <TextField
-                  required
-                  fullWidth
-                  label="Departamento o Área"
-                  name="department"
-                  value={shippingDetails.department}
-                  onChange={handleShippingChange}
-                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: "8px" } }}
-                />
+          <Box sx={{ mt: 4 }}>
+            <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
+              Resumen del Pedido
+            </Typography>
+            <Divider sx={{ my: 3 }} />
+            {selectedProducts.length === 0 ? (
+              <Alert severity="info" sx={{ mb: 3 }}>
+                No hay productos seleccionados. Por favor, seleccione al menos un producto.
+              </Alert>
+            ) : (
+              <Grid container spacing={3}>
+                <Grid item xs={12}>
+                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 500 }}>
+                    Materiales Solicitados
+                  </Typography>
+                  {selectedProducts.map((product) => (
+                    <Box key={product.id} sx={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center',
+                      p: 3,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      borderRadius: 2,
+                      mb: 2,
+                      backgroundColor: 'background.paper',
+                      '&:hover': {
+                        backgroundColor: 'action.hover',
+                      }
+                    }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Box
+                          component="img"
+                          src={product.image}
+                          alt={product.name}
+                          sx={{
+                            width: 80,
+                            height: 80,
+                            objectFit: 'cover',
+                            borderRadius: 1,
+                          }}
+                        />
+                        <Box>
+                          <Typography variant="h6" sx={{ fontWeight: 500 }}>
+                            {product.name}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {product.description}
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
+                            Cantidad: {product.quantity} {product.unit}
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: 'primary.main', mt: 1 }}>
+                            Tiempo estimado de entrega: {product.eta}
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <Box sx={{ textAlign: 'right' }}>
+                        <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+                          ${product.price}/{product.unit}
+                        </Typography>
+                        <Typography variant="h6" color="primary" sx={{ mt: 1 }}>
+                          ${(product.price * product.quantity).toFixed(2)}
+                        </Typography>
+                        <IconButton 
+                          color="error" 
+                          onClick={() => removeFromCart(product.id)}
+                          sx={{ mt: 1 }}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Box>
+                    </Box>
+                  ))}
+                </Grid>
+                <Grid item xs={12}>
+                  <Box sx={{ 
+                    p: 3, 
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    borderRadius: 2,
+                    backgroundColor: 'background.paper'
+                  }}>
+                    <Typography variant="h6" gutterBottom sx={{ fontWeight: 500 }}>
+                      Resumen de Precios
+                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Typography variant="body1">Subtotal</Typography>
+                      <Typography variant="body1">${calculateTotal().toFixed(2)}</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Typography variant="body1">IVA (16%)</Typography>
+                      <Typography variant="body1">${(calculateTotal() * 0.16).toFixed(2)}</Typography>
+                    </Box>
+                    <Divider sx={{ my: 2 }} />
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography variant="h6" sx={{ fontWeight: 600 }}>Total</Typography>
+                      <Typography variant="h6" sx={{ fontWeight: 600, color: 'primary.main' }}>
+                        ${(calculateTotal() * 1.16).toFixed(2)}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, mt: 2 }}>
+                    Notas Adicionales
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={4}
+                    placeholder="Agregue cualquier nota o instrucción especial para su pedido"
+                    name="notes"
+                    value={shippingDetails.notes}
+                    onChange={handleShippingChange}
+                    sx={{ 
+                      "& .MuiOutlinedInput-root": { 
+                        borderRadius: "8px",
+                        backgroundColor: 'background.paper'
+                      }
+                    }}
+                  />
+                </Grid>
               </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  required
-                  fullWidth
-                  label="Ubicación/Piso"
-                  name="location"
-                  value={shippingDetails.location}
-                  onChange={handleShippingChange}
-                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: "8px" } }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  required
-                  fullWidth
-                  label="Solicitado por"
-                  name="requestedBy"
-                  value={shippingDetails.requestedBy}
-                  onChange={handleShippingChange}
-                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: "8px" } }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  required
-                  fullWidth
-                  label="Número de Contacto"
-                  name="contactNumber"
-                  value={shippingDetails.contactNumber}
-                  onChange={handleShippingChange}
-                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: "8px" } }}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  multiline
-                  rows={4}
-                  label="Notas Adicionales"
-                  name="notes"
-                  value={shippingDetails.notes}
-                  onChange={handleShippingChange}
-                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: "8px" } }}
-                />
-              </Grid>
-            </Grid>
+            )}
           </Box>
         );
       case 2:
@@ -513,60 +598,124 @@ const OrderPage = () => {
                       display: 'flex', 
                       justifyContent: 'space-between', 
                       alignItems: 'center',
-                      p: 2,
+                      p: 3,
                       border: '1px solid',
                       borderColor: 'divider',
                       borderRadius: 2,
-                      mb: 2
+                      mb: 2,
+                      backgroundColor: 'background.paper',
+                      '&:hover': {
+                        backgroundColor: 'action.hover',
+                      }
                     }}>
-                      <Box>
-                        <Typography variant="h6" sx={{ fontWeight: 500 }}>
-                          {product.name}
-                        </Typography>
-                        <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-                          Cantidad: {product.quantity} {product.unit}
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: 'primary.main', mt: 1 }}>
-                          Tiempo estimado de entrega: {product.eta}
-                        </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Box
+                          component="img"
+                          src={product.image}
+                          alt={product.name}
+                          sx={{
+                            width: 80,
+                            height: 80,
+                            objectFit: 'cover',
+                            borderRadius: 1,
+                          }}
+                        />
+                        <Box>
+                          <Typography variant="h6" sx={{ fontWeight: 500 }}>
+                            {product.name}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {product.description}
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
+                            Cantidad: {product.quantity} {product.unit}
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: 'primary.main', mt: 1 }}>
+                            Tiempo estimado de entrega: {product.eta}
+                          </Typography>
+                        </Box>
                       </Box>
-                      <IconButton 
-                        color="error" 
-                        onClick={() => removeFromCart(product.id)}
-                        sx={{ ml: 2 }}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
+                      <Box sx={{ textAlign: 'right' }}>
+                        <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+                          ${product.price}/{product.unit}
+                        </Typography>
+                        <Typography variant="h6" color="primary" sx={{ mt: 1 }}>
+                          ${(product.price * product.quantity).toFixed(2)}
+                        </Typography>
+                        <IconButton 
+                          color="error" 
+                          onClick={() => removeFromCart(product.id)}
+                          sx={{ mt: 1 }}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Box>
                     </Box>
                   ))}
                 </Grid>
                 <Grid item xs={12}>
-                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 500 }}>
-                    Detalles de Entrega
-                  </Typography>
                   <Box sx={{ 
                     p: 3, 
                     border: '1px solid',
                     borderColor: 'divider',
-                    borderRadius: 2
+                    borderRadius: 2,
+                    backgroundColor: 'background.paper'
                   }}>
-                    <Typography variant="body1" sx={{ mb: 1 }}>
-                      Departamento: {shippingDetails.department}
+                    <Typography variant="h6" gutterBottom sx={{ fontWeight: 500 }}>
+                      Resumen de Precios
                     </Typography>
-                    <Typography variant="body1" sx={{ mb: 1 }}>
-                      Ubicación: {shippingDetails.location}
-                    </Typography>
-                    <Typography variant="body1" sx={{ mb: 1 }}>
-                      Solicitado por: {shippingDetails.requestedBy}
-                    </Typography>
-                    <Typography variant="body1" sx={{ mb: 1 }}>
-                      Contacto: {shippingDetails.contactNumber}
-                    </Typography>
-                    {shippingDetails.notes && (
-                      <Typography variant="body1" sx={{ mt: 2 }}>
-                        Notas: {shippingDetails.notes}
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Typography variant="body1">Subtotal</Typography>
+                      <Typography variant="body1">${calculateTotal().toFixed(2)}</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Typography variant="body1">IVA (16%)</Typography>
+                      <Typography variant="body1">${(calculateTotal() * 0.16).toFixed(2)}</Typography>
+                    </Box>
+                    <Divider sx={{ my: 2 }} />
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography variant="h6" sx={{ fontWeight: 600 }}>Total</Typography>
+                      <Typography variant="h6" sx={{ fontWeight: 600, color: 'primary.main' }}>
+                        ${(calculateTotal() * 1.16).toFixed(2)}
                       </Typography>
-                    )}
+                    </Box>
+                  </Box>
+                </Grid>
+                <Grid item xs={12}>
+                  <Box sx={{ 
+                    p: 3, 
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    borderRadius: 2,
+                    backgroundColor: 'background.paper'
+                  }}>
+                    <Typography variant="h6" gutterBottom sx={{ fontWeight: 500 }}>
+                      Detalles de Entrega
+                    </Typography>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="body2" color="text.secondary">Departamento</Typography>
+                        <Typography variant="body1">{shippingDetails.department}</Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="body2" color="text.secondary">Ubicación</Typography>
+                        <Typography variant="body1">{shippingDetails.location}</Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="body2" color="text.secondary">Solicitado por</Typography>
+                        <Typography variant="body1">{shippingDetails.requestedBy}</Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="body2" color="text.secondary">Contacto</Typography>
+                        <Typography variant="body1">{shippingDetails.contactNumber}</Typography>
+                      </Grid>
+                      {shippingDetails.notes && (
+                        <Grid item xs={12}>
+                          <Typography variant="body2" color="text.secondary">Notas</Typography>
+                          <Typography variant="body1">{shippingDetails.notes}</Typography>
+                        </Grid>
+                      )}
+                    </Grid>
                   </Box>
                 </Grid>
               </Grid>
@@ -581,10 +730,10 @@ const OrderPage = () => {
   return (
     <div style={{ minHeight: "100vh", background: "#f8f9fa", display: "flex", flexDirection: "column" }}>
       <Navbar />
-      <Header title="Solicitar Materiales del Almacén" />
+      <Header title="Solicitar Material a Proveedor" />
       <Box sx={{ 
         flex: 1,
-        maxWidth: 1400,
+        maxWidth: 1400, // Increased to accommodate the cart
         width: "100%",
         margin: "0 auto", 
         padding: "2rem",
@@ -594,8 +743,8 @@ const OrderPage = () => {
         <StyledPaper sx={{
           display: "flex",
           flexDirection: "column",
-          height: "calc(100vh - 180px)",
-          overflow: "hidden"
+          height: "calc(100vh - 180px)", // Account for navbar and padding
+          overflow: "hidden" // Prevent double scrollbars
         }}>
           <Stepper 
             activeStep={activeStep} 
@@ -670,10 +819,7 @@ const OrderPage = () => {
                 color="primary"
                 onClick={() => {
                   // Handle order submission
-                  console.log("Order submitted", {
-                    products: selectedProducts,
-                    shipping: shippingDetails
-                  });
+                  console.log("Order submitted", selectedProducts);
                 }}
                 disabled={selectedProducts.length === 0}
                 sx={{
@@ -685,17 +831,14 @@ const OrderPage = () => {
                   fontWeight: 500,
                 }}
               >
-                Confirmar Solicitud
+                Confirmar Pedido
               </Button>
             ) : (
               <Button
                 variant="contained"
                 color="primary"
                 onClick={handleNext}
-                disabled={
-                  (activeStep === 0 && selectedProducts.length === 0) ||
-                  (activeStep === 1 && (!shippingDetails.department || !shippingDetails.location || !shippingDetails.requestedBy || !shippingDetails.contactNumber))
-                }
+                disabled={selectedProducts.length === 0}
                 sx={{
                   px: 4,
                   py: 1.5,
@@ -705,7 +848,7 @@ const OrderPage = () => {
                   fontWeight: 500,
                 }}
               >
-                {activeStep === 1 ? "Revisar Solicitud" : "Continuar"}
+                Revisar Pedido
               </Button>
             )}
           </Box>
@@ -715,4 +858,4 @@ const OrderPage = () => {
   );
 };
 
-export default OrderPage; 
+export default OrderProvider; 

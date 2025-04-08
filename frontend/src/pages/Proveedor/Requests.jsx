@@ -32,7 +32,7 @@ import Navbar from '../../components/Navbar';
 import Header from '../../components/Header';
 
 const Requests = () => {
-  // Sample data - replace with API call
+  // Sample data with updated statuses
   const [requests, setRequests] = useState([
     {
       id: 'REQ001',
@@ -40,9 +40,10 @@ const Requests = () => {
       quantity: '100 metros',
       requestedBy: 'Área de Producción',
       date: '2024-04-06',
-      status: 'pending',
+      status: 'in_progress',
       priority: 'alta',
-      details: 'Color: Negro, Peso: 150g/m²'
+      details: 'Color: Negro, Peso: 150g/m²',
+      estimatedDelivery: '2024-04-08'
     },
     {
       id: 'REQ002',
@@ -50,9 +51,10 @@ const Requests = () => {
       quantity: '1000 unidades',
       requestedBy: 'Área de Confección',
       date: '2024-04-06',
-      status: 'in_progress',
+      status: 'on_route',
       priority: 'media',
-      details: 'Tamaño: 18mm, Color: Plateado'
+      details: 'Tamaño: 18mm, Color: Plateado',
+      estimatedDelivery: '2024-04-07'
     },
     {
       id: 'REQ003',
@@ -60,9 +62,10 @@ const Requests = () => {
       quantity: '50 carretes',
       requestedBy: 'Área de Producción',
       date: '2024-04-05',
-      status: 'completed',
+      status: 'delivered',
       priority: 'baja',
-      details: 'Color: Blanco, Tipo: Poliéster'
+      details: 'Color: Blanco, Tipo: Poliéster',
+      deliveryDate: '2024-04-06'
     },
     {
       id: 'REQ004',
@@ -70,9 +73,10 @@ const Requests = () => {
       quantity: '200 unidades',
       requestedBy: 'Área de Confección',
       date: '2024-04-06',
-      status: 'pending',
+      status: 'in_progress',
       priority: 'alta',
-      details: 'Longitud: 20cm, Color: Negro, Tipo: Metal'
+      details: 'Longitud: 20cm, Color: Negro, Tipo: Metal',
+      estimatedDelivery: '2024-04-09'
     },
     {
       id: 'REQ005',
@@ -80,9 +84,10 @@ const Requests = () => {
       quantity: '150 metros',
       requestedBy: 'Área de Producción',
       date: '2024-04-05',
-      status: 'in_progress',
+      status: 'on_route',
       priority: 'alta',
-      details: 'Peso: 14oz, Color: Índigo'
+      details: 'Peso: 14oz, Color: Índigo',
+      estimatedDelivery: '2024-04-07'
     },
     {
       id: 'REQ006',
@@ -163,7 +168,11 @@ const Requests = () => {
   const handleStatusChange = (requestId, newStatus) => {
     setRequests(requests.map(request => 
       request.id === requestId 
-        ? { ...request, status: newStatus }
+        ? { 
+            ...request, 
+            status: newStatus,
+            ...(newStatus === 'delivered' ? { deliveryDate: new Date().toISOString().split('T')[0] } : {})
+          }
         : request
     ));
   };
@@ -175,14 +184,12 @@ const Requests = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'completed':
+      case 'delivered':
         return 'success';
-      case 'in_progress':
+      case 'on_route':
         return 'warning';
-      case 'pending':
+      case 'in_progress':
         return 'info';
-      case 'returned':
-        return 'error';
       default:
         return 'default';
     }
@@ -190,14 +197,12 @@ const Requests = () => {
 
   const getStatusLabel = (status) => {
     switch (status) {
-      case 'completed':
-        return 'Completado';
+      case 'delivered':
+        return 'Entregado';
+      case 'on_route':
+        return 'En Ruta';
       case 'in_progress':
         return 'En Proceso';
-      case 'pending':
-        return 'Pendiente';
-      case 'returned':
-        return 'Retornado';
       default:
         return status;
     }
@@ -323,17 +328,14 @@ const Requests = () => {
                     <ToggleButton value="all">
                       Todas
                     </ToggleButton>
-                    <ToggleButton value="pending">
-                      Pendientes
-                    </ToggleButton>
                     <ToggleButton value="in_progress">
                       En Proceso
                     </ToggleButton>
-                    <ToggleButton value="completed">
-                      Completadas
+                    <ToggleButton value="on_route">
+                      En Ruta
                     </ToggleButton>
-                    <ToggleButton value="returned">
-                      Retornadas
+                    <ToggleButton value="delivered">
+                      Entregado
                     </ToggleButton>
                   </ToggleButtonGroup>
                 </Box>
@@ -462,46 +464,34 @@ const Requests = () => {
                           <Typography variant="body2" color="text.secondary">
                             Solicitado por: {request.requestedBy} | Fecha: {request.date}
                           </Typography>
-                          {request.status === 'returned' && (
-                            <Typography variant="body2" color="error" sx={{ mt: 0.5 }}>
-                              Motivo de retorno: {request.returnReason}
-                            </Typography>
-                          )}
+                          <Typography variant="body2" color="text.secondary">
+                            {request.status === 'delivered' 
+                              ? `Entregado el: ${request.deliveryDate}`
+                              : `Entrega estimada: ${request.estimatedDelivery}`}
+                          </Typography>
                         </Box>
                       }
                       sx={{ mr: 2 }}
                     />
                     <Box sx={{ display: 'flex', gap: 1 }}>
-                      {request.status !== 'completed' && request.status !== 'returned' && (
-                        <>
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            color="warning"
-                            onClick={() => handleStatusChange(request.id, 'in_progress')}
-                            startIcon={<PendingIcon />}
-                          >
-                            En Proceso
-                          </Button>
-                          <Button
-                            size="small"
-                            variant="contained"
-                            color="success"
-                            onClick={() => handleStatusChange(request.id, 'completed')}
-                            startIcon={<CheckCircleIcon />}
-                          >
-                            Completar
-                          </Button>
-                        </>
-                      )}
-                      {request.status === 'completed' && (
+                      {request.status === 'in_progress' && (
                         <Button
                           size="small"
                           variant="outlined"
-                          color="error"
-                          onClick={() => handleStatusChange(request.id, 'returned')}
+                          color="warning"
+                          onClick={() => handleStatusChange(request.id, 'on_route')}
                         >
-                          Marcar Retornado
+                          Marcar En Ruta
+                        </Button>
+                      )}
+                      {request.status === 'on_route' && (
+                        <Button
+                          size="small"
+                          variant="contained"
+                          color="success"
+                          onClick={() => handleStatusChange(request.id, 'delivered')}
+                        >
+                          Marcar Entregado
                         </Button>
                       )}
                       <IconButton

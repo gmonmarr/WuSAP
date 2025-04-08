@@ -20,6 +20,8 @@ import {
   FormControl,
   InputLabel,
   Grid,
+  ToggleButtonGroup,
+  ToggleButton,
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import Navbar from '../../components/Navbar';
@@ -37,60 +39,49 @@ const OrderHistory = () => {
   const yesterday = formatDate(new Date(currentDate.getTime() - 24 * 60 * 60 * 1000));
   const threeDaysAgo = formatDate(new Date(currentDate.getTime() - 3 * 24 * 60 * 60 * 1000));
   const lastWeek = formatDate(new Date(currentDate.getTime() - 6 * 24 * 60 * 60 * 1000));
-  const twoWeeksAgo = formatDate(new Date(currentDate.getTime() - 14 * 24 * 60 * 60 * 1000));
-  const lastMonth = formatDate(new Date(currentDate.getTime() - 25 * 24 * 60 * 60 * 1000));
 
-  // Sample data with realistic dates
+  // Sample data with updated statuses
   const [orders] = useState([
     {
-      id: '001',
+      id: 'REQ001',
       date: today,
-      status: 'Pendiente',
+      status: 'in_progress',
       total: '$1,500.00',
       items: 3,
+      estimatedDelivery: formatDate(new Date(currentDate.getTime() + 2 * 24 * 60 * 60 * 1000))
     },
     {
-      id: '002',
+      id: 'REQ002',
       date: today,
-      status: 'En proceso',
+      status: 'on_route',
       total: '$2,300.00',
       items: 5,
+      estimatedDelivery: formatDate(new Date(currentDate.getTime() + 1 * 24 * 60 * 60 * 1000))
     },
     {
-      id: '003',
+      id: 'REQ003',
       date: yesterday,
-      status: 'Completado',
+      status: 'delivered',
       total: '$800.00',
       items: 2,
+      deliveryDate: today
     },
     {
-      id: '004',
+      id: 'REQ004',
       date: threeDaysAgo,
-      status: 'Completado',
+      status: 'delivered',
       total: '$1,200.00',
       items: 4,
+      deliveryDate: yesterday
     },
     {
-      id: '005',
+      id: 'REQ005',
       date: lastWeek,
-      status: 'Completado',
+      status: 'delivered',
       total: '$3,500.00',
       items: 7,
-    },
-    {
-      id: '006',
-      date: twoWeeksAgo,
-      status: 'Completado',
-      total: '$950.00',
-      items: 2,
-    },
-    {
-      id: '007',
-      date: lastMonth,
-      status: 'Completado',
-      total: '$4,200.00',
-      items: 8,
-    },
+      deliveryDate: threeDaysAgo
+    }
   ]);
 
   const [page, setPage] = useState(0);
@@ -107,8 +98,8 @@ const OrderHistory = () => {
     setPage(0);
   };
 
-  const handleStatusFilterChange = (event) => {
-    setStatusFilter(event.target.value);
+  const handleStatusFilterChange = (event, newValue) => {
+    setStatusFilter(newValue);
     setPage(0);
   };
 
@@ -119,14 +110,27 @@ const OrderHistory = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Completado':
+      case 'delivered':
         return 'success';
-      case 'En proceso':
+      case 'on_route':
         return 'warning';
-      case 'Pendiente':
+      case 'in_progress':
         return 'info';
       default:
         return 'default';
+    }
+  };
+
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case 'delivered':
+        return 'Entregado';
+      case 'on_route':
+        return 'En Ruta';
+      case 'in_progress':
+        return 'En Proceso';
+      default:
+        return status;
     }
   };
 
@@ -191,24 +195,43 @@ const OrderHistory = () => {
               Historial de Pedidos
             </Typography>
             <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-              Consulta y da seguimiento a tus pedidos anteriores
+              Consulta el estado de tus pedidos
             </Typography>
 
-            <Grid container spacing={2} sx={{ mb: 3 }}>
-              <Grid item xs={12} sm={6} md={4}>
-                <FormControl fullWidth size="small">
-                  <InputLabel>Estado del Pedido</InputLabel>
-                  <Select
-                    value={statusFilter}
-                    label="Estado del Pedido"
-                    onChange={handleStatusFilterChange}
-                  >
-                    <MenuItem value="all">Todos</MenuItem>
-                    <MenuItem value="Completado">Completado</MenuItem>
-                    <MenuItem value="En proceso">En proceso</MenuItem>
-                    <MenuItem value="Pendiente">Pendiente</MenuItem>
-                  </Select>
-                </FormControl>
+            <Grid container spacing={2} alignItems="center">
+              <Grid item xs={12} md={4}>
+                <Typography variant="subtitle2" gutterBottom sx={{ ml: 0.5 }}>
+                  Estado
+                </Typography>
+                <ToggleButtonGroup
+                  value={statusFilter}
+                  exclusive
+                  onChange={handleStatusFilterChange}
+                  aria-label="filtro de estado"
+                  size="small"
+                  sx={{
+                    display: 'flex',
+                    '& .MuiToggleButton-root': {
+                      flex: 1,
+                      borderRadius: '4px !important',
+                      mx: 0.2,
+                      textTransform: 'none'
+                    }
+                  }}
+                >
+                  <ToggleButton value="all">
+                    Todos
+                  </ToggleButton>
+                  <ToggleButton value="in_progress">
+                    En Proceso
+                  </ToggleButton>
+                  <ToggleButton value="on_route">
+                    En Ruta
+                  </ToggleButton>
+                  <ToggleButton value="delivered">
+                    Entregado
+                  </ToggleButton>
+                </ToggleButtonGroup>
               </Grid>
               <Grid item xs={12} sm={6} md={4}>
                 <FormControl fullWidth size="small">
@@ -233,10 +256,11 @@ const OrderHistory = () => {
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 'bold' }}>ID Pedido</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Fecha</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Fecha de Solicitud</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Estado</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Total</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Artículos</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Fecha de Entrega</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Acciones</TableCell>
                 </TableRow>
               </TableHead>
@@ -246,16 +270,21 @@ const OrderHistory = () => {
                   .map((order) => (
                     <TableRow key={order.id} hover>
                       <TableCell>{order.id}</TableCell>
-                      <TableCell>{formatDisplayDate(order.date)}</TableCell>
+                      <TableCell>{order.date}</TableCell>
                       <TableCell>
                         <Chip
-                          label={order.status}
+                          label={getStatusLabel(order.status)}
                           color={getStatusColor(order.status)}
                           size="small"
                         />
                       </TableCell>
                       <TableCell>{order.total}</TableCell>
                       <TableCell>{order.items}</TableCell>
+                      <TableCell>
+                        {order.status === 'delivered' 
+                          ? order.deliveryDate 
+                          : `Estimada: ${order.estimatedDelivery}`}
+                      </TableCell>
                       <TableCell>
                         <IconButton
                           color="primary"
