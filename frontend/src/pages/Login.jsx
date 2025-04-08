@@ -18,6 +18,7 @@ import { styled } from "@mui/material/styles";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import "../App.css";
+import { handleLogin } from "../components/Functions.js";
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(6),
@@ -55,11 +56,22 @@ const Login = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log("Login attempt:", formData);
-    navigate('/tablero');
+  
+    try {
+      const result = await handleLogin(formData.username, formData.password);
+      console.log("Login response:", result);
+  
+      if (result.success) {
+        navigate('/tablero');
+      } else {
+        alert("Credenciales incorrectas.");
+      }
+    } catch (error) {
+      console.error("Login failed:", error);
+      alert("Error al iniciar sesión. Intenta de nuevo.");
+    }
   };
 
   return (
