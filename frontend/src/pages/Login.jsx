@@ -46,25 +46,38 @@ const Login = () => {
     password: "",
     rememberMe: false,
   });
+  const [errors, setErrors] = useState({ username: false, password: false });
   const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: name === "rememberMe" ? checked : value
+      [name]: name === "rememberMe" ? checked : value,
     }));
+    setErrors((prev) => ({ ...prev, [name]: false })); // Clear error when user types
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
+    // Validate inputs
+    const newErrors = {
+      username: formData.username.trim() === "",
+      password: formData.password.trim() === "",
+    };
+    setErrors(newErrors);
+
+    if (newErrors.username || newErrors.password) {
+      return alert("El nombre de usario y/o contrasteña no pueden estar vacíos.");
+    }
+
     try {
       const result = await handleLogin(formData.username, formData.password);
       console.log("Login response:", result);
-  
+
       if (result.success) {
-        navigate('/tablero');
+        navigate("/tablero");
       } else {
         alert("Credenciales incorrectas.");
       }
@@ -193,6 +206,8 @@ const Login = () => {
                   value={formData.username}
                   onChange={handleChange}
                   variant="outlined"
+                  error={errors.username}
+                  helperText={errors.username && "Este campo no puede estar vacío"}
                   sx={{ mb: 3 }}
                 />
                 
@@ -204,6 +219,8 @@ const Login = () => {
                   value={formData.password}
                   onChange={handleChange}
                   variant="outlined"
+                  error={errors.password}
+                  helperText={errors.password && "Este campo no puede estar vacío"}
                   InputProps={{
                     endAdornment: (
                       <InputAdornment position="end">

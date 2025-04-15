@@ -41,19 +41,33 @@ const UserList = () => {
     </>
   );
 
+  const clearSearch = () => {
+    setSearchQuery('');
+  };
+
   return (
     <>
       <Navbar />
       <Header title={"Usuarios"} />
       <div className="user-list-container">
         <div className="filter-container">
-          <input
-            type="text"
-            placeholder="Buscar por nombre"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="filter-input"
-          />
+          <div className="search-input-container">
+            <input
+              type="text"
+              placeholder="Buscar por nombre"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="filter-input"
+            />
+            {searchQuery && (
+              <button
+                onClick={clearSearch}
+                className="clear-button"
+              >
+                ✕
+              </button>
+            )}
+          </div>
           <select
             value={selectedRole}
             onChange={(e) => setSelectedRole(e.target.value)}
