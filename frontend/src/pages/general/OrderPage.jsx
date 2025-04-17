@@ -25,6 +25,7 @@ import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import Navbar from "../../components/Navbar";
 import Header from "../../components/Header";
+import AvisoPerdidaInfo from "../../components/AvisoPerdidaInfo";
 
 // Styled components
 const StyledPaper = styled(Paper)(({ theme }) => ({
@@ -580,6 +581,7 @@ const OrderPage = () => {
 
   return (
     <div style={{ minHeight: "100vh", background: "#f8f9fa", display: "flex", flexDirection: "column" }}>
+      <AvisoPerdidaInfo />
       <Navbar />
       <Header title="Solicitar Materiales del Almacén" />
       <Box sx={{ 
