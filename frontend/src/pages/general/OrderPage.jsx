@@ -86,6 +86,8 @@ const OrderPage = () => {
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [quantities, setQuantities] = useState({});
   const [error, setError] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [orderSubmitted, setOrderSubmitted] = useState(false);
   const [shippingDetails, setShippingDetails] = useState({
     department: "",
     location: "",
@@ -579,6 +581,37 @@ const OrderPage = () => {
     }
   };
 
+  const handleCheckout = async () => {
+    setIsSubmitting(true);
+    try {
+      // Here you would typically make an API call to your backend
+      console.log("Order submitted:", {
+        products: selectedProducts,
+        shippingDetails,
+      });
+      
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setOrderSubmitted(true);
+      // Clear the cart and reset the form
+      setSelectedProducts([]);
+      setQuantities({});
+      setShippingDetails({
+        department: "",
+        location: "",
+        requestedBy: "",
+        contactNumber: "",
+        notes: "",
+      });
+      setActiveStep(0);
+    } catch (error) {
+      console.error("Error submitting order:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div style={{ minHeight: "100vh", background: "#f8f9fa", display: "flex", flexDirection: "column" }}>
       <AvisoPerdidaInfo />
@@ -670,14 +703,8 @@ const OrderPage = () => {
               <Button
                 variant="contained"
                 color="primary"
-                onClick={() => {
-                  // Handle order submission
-                  console.log("Order submitted", {
-                    products: selectedProducts,
-                    shipping: shippingDetails
-                  });
-                }}
-                disabled={selectedProducts.length === 0}
+                onClick={handleCheckout}
+                disabled={selectedProducts.length === 0 || isSubmitting}
                 sx={{
                   px: 4,
                   py: 1.5,
@@ -687,7 +714,7 @@ const OrderPage = () => {
                   fontWeight: 500,
                 }}
               >
-                Confirmar Solicitud
+                {isSubmitting ? "Procesando..." : "Confirmar Solicitud"}
               </Button>
             ) : (
               <Button
