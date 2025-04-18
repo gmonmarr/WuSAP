@@ -15,9 +15,17 @@ export const login = async (req, res) => {
 
 export const register = async (req, res) => {
   const { name, lastName, email, cellphone, password, role } = req.body;
+  const createdByID = req.user?.employeeID; // ✅ pulled from decoded JWT
+
+  if (!createdByID) {
+    return res.status(403).json({
+      success: false,
+      message: "No autorizado para registrar usuarios.",
+    });
+  }
 
   try {
-    const result = await registerUser(name, lastName, email, cellphone, password, role);
+    const result = await registerUser(createdByID, name, lastName, email, cellphone, password, role);
     res.status(201).json(result);
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });

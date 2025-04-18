@@ -4,8 +4,9 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
-import { connectToHana } from './db/hana.js';
 import authRoutes from './routes/authRoutes.js';
+import { logAPIAccess } from './middleware/logMiddleware.js';
+import { verifyToken } from './middleware/authMiddleware.js';
 
 dotenv.config();
 
@@ -18,6 +19,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Routes
+app.use(logAPIAccess); // ESTE DEBE ESTAR ANTES DE LAS RUTAS
 app.use('/api', authRoutes);
 
 // Test Route
@@ -30,16 +32,9 @@ app.use('*', (req, res) => {
   res.status(404).json({ message: 'Ruta no encontrada' });
 });
 
-// Start Server
-connectToHana()
-  .then(() => {
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-    });
-  })
-  .catch((err) => {
-    console.error('❌ Failed to connect to SAP HANA:', err);
-    process.exit(1);
-  });
+// Start server
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
 
 export default app;
