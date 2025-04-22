@@ -1,51 +1,169 @@
 /* Container for the Add User page, centers the content */
 /* pages/admin/AddUser.css */
 
+/* Estilos generales */
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow-y: auto;
+}
+
+.content-wrapper {
+  padding-top: 0;
+  min-height: calc(100vh - 120px);
+  background-color: #f7f7f7;
+  overflow-y: auto;
+  position: relative;
+}
+
 .add-user-container {
   display: flex;
   justify-content: center;
-  align-items: center;
-  padding: 2rem;
-  background-color: #f5f5f5;
-  min-height: calc(100vh - 60px);
+  padding: 0.5rem;
+  max-width: 960px;
+  margin: 0 auto;
+  overflow-y: auto;
+  height: auto;
 }
 
-/* Card that contains the Add User form */
 .add-user-card {
-  background: white;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   width: 100%;
-  max-width: 600px;
+  max-width: 800px;
+  margin: 0 auto;
+  margin-top: 0.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  overflow-y: auto;
+  max-height: none;
 }
 
-/* Header for the Add User form */
-h2 {
-  text-align: center;
-  margin-bottom: 1.5rem;
+.card-content {
+  padding: 1rem;
+  overflow-y: auto;
 }
 
-/* Row layout for form inputs */
+/* Secciones del formulario */
+.form-section {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.form-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0.5rem;
+}
+
+ui5-title {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #354a5f;
+  font-size: 14px;
+}
+
+/* Filas y grupos de inputs */
 .form-row {
   display: flex;
   gap: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
 }
 
-/* Styles for input and select elements */
+.form-group {
+  flex: 1;
+  min-width: 220px;
+  margin-bottom: 0.25rem;
+}
+
+.form-group.full-width {
+  flex-basis: 100%;
+  width: 100%;
+}
+
+/* Etiquetas e inputs */
+ui5-label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+  color: #354a5f;
+  font-size: 12px;
+}
+
 ui5-input,
 ui5-select {
-  flex: 1;
+  width: 100%;
+  margin-bottom: 0.25rem;
 }
 
-/* Style for the register button */
-.register-button {
-  width: 100%;
+/* Mensajes de error */
+.error-message {
+  color: #b00;
+  font-size: 0.7rem;
+  margin-top: 0.2rem;
+  margin-left: 0.25rem;
+}
+
+/* Message Strip */
+.message-strip {
+  margin-bottom: 1rem;
+  border-radius: 4px;
+}
+
+/* Botones */
+.button-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
   margin-top: 1rem;
 }
 
-/* Style for the back button */
-.back-button {
-  margin-bottom: 1rem;
+ui5-button {
+  min-width: 120px;
+}
+
+/* Media queries específicas para 1920x1080 */
+@media (min-width: 1080px) and (max-width: 1920px) {
+  .add-user-container {
+    padding: 0.5rem;
+    height: auto;
+  }
+  
+  .add-user-card {
+    max-height: none;
+  }
+  
+  .form-section {
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+  
+  .form-row {
+    margin-bottom: 0.75rem;
+  }
+}
+
+/* Estilos responsivos para dispositivos pequeños */
+@media (max-width: 768px) {
+  .add-user-container {
+    padding: 0.5rem;
+    height: auto;
+  }
+  
+  .form-row {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .form-group {
+    flex: 1 1 100%;
+  }
+  
+  .button-row {
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+  }
+  
+  ui5-button {
+    width: 100%;
+  }
 }

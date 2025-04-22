@@ -23,6 +23,7 @@ import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import Navbar from "../../components/Navbar";
 import Header from "../../components/Header";
+import AvisoPerdidaInfo from "../../components/AvisoPerdidaInfo";
 
 // Styled components
 const StyledPaper = styled(Paper)(({ theme }) => ({
@@ -83,6 +84,8 @@ const OrderProvider = () => {
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [quantities, setQuantities] = useState({});
   const [error, setError] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [orderSubmitted, setOrderSubmitted] = useState(false);
   const [shippingDetails, setShippingDetails] = useState({
     department: "",
     location: "",
@@ -256,6 +259,39 @@ const OrderProvider = () => {
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleCheckout = async () => {
+    setIsSubmitting(true);
+    try {
+      // Here you would typically make an API call to your backend
+      console.log("Order submitted:", {
+        products: selectedProducts,
+        shippingDetails,
+        total: calculateTotal(),
+        totalWithTax: calculateTotal() * 1.16
+      });
+      
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setOrderSubmitted(true);
+      // Clear the cart and reset the form
+      setSelectedProducts([]);
+      setQuantities({});
+      setShippingDetails({
+        department: "",
+        location: "",
+        requestedBy: "",
+        contactNumber: "",
+        notes: "",
+      });
+      setActiveStep(0);
+    } catch (error) {
+      console.error("Error submitting order:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const renderCart = () => {
@@ -729,11 +765,12 @@ const OrderProvider = () => {
 
   return (
     <div style={{ minHeight: "100vh", background: "#f8f9fa", display: "flex", flexDirection: "column" }}>
+      <AvisoPerdidaInfo />
       <Navbar />
       <Header title="Solicitar Material a Proveedor" />
       <Box sx={{ 
         flex: 1,
-        maxWidth: 1400, // Increased to accommodate the cart
+        maxWidth: 1400,
         width: "100%",
         margin: "0 auto", 
         padding: "2rem",
@@ -743,8 +780,8 @@ const OrderProvider = () => {
         <StyledPaper sx={{
           display: "flex",
           flexDirection: "column",
-          height: "calc(100vh - 180px)", // Account for navbar and padding
-          overflow: "hidden" // Prevent double scrollbars
+          height: "calc(100vh - 180px)",
+          overflow: "hidden"
         }}>
           <Stepper 
             activeStep={activeStep} 
@@ -817,11 +854,8 @@ const OrderProvider = () => {
               <Button
                 variant="contained"
                 color="primary"
-                onClick={() => {
-                  // Handle order submission
-                  console.log("Order submitted", selectedProducts);
-                }}
-                disabled={selectedProducts.length === 0}
+                onClick={handleCheckout}
+                disabled={selectedProducts.length === 0 || isSubmitting}
                 sx={{
                   px: 4,
                   py: 1.5,
@@ -831,7 +865,7 @@ const OrderProvider = () => {
                   fontWeight: 500,
                 }}
               >
-                Confirmar Pedido
+                {isSubmitting ? "Procesando..." : "Confirmar Pedido"}
               </Button>
             ) : (
               <Button

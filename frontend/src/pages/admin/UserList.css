@@ -36,6 +36,11 @@ h2 {
   color: #747474; /* Set the same text color */
 }
 
+/* Add padding to the input to avoid overlap with the clear button */
+.filter-input {
+  padding-right: 2rem;
+}
+
 /* Container for the filter inputs */
 .filter-container {
   display: flex;
@@ -43,6 +48,25 @@ h2 {
   margin-bottom: 1.5rem;
   width: 100%;
   max-width: 400px;
+}
+
+/* Container for the search input and clear button */
+.search-input-container {
+  position: relative;
+  width: 100%;
+}
+
+/* Style for the clear button */
+.clear-button {
+  position: absolute;
+  right: 0.5rem;
+  top: 33%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: #747474;
 }
 
 /* Scrollable list container */
