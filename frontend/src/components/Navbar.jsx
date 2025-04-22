@@ -79,9 +79,6 @@ const Navbar = () => {
     { path: '/orden-status', label: 'Ordenes de Producción', icon: 'business-objects-experience' },
     { path: '/registrar-usuario', label: 'Registrar usuario', icon: 'add-employee' },
     { path: '/lista-usuarios', label: 'Gestionar usuarios', icon: 'group' },
-    { path: '/order', label: 'Solicitar Materiales', icon: 'cart' },
-    { path: '/order-history', label: 'Historial de Pedidos', icon: 'business-objects-experience' },
-    { path: '/order-provider', label: 'Pedidos a Proveedor', icon: 'cart' },
   ];
 
   return (
