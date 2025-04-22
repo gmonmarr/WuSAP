@@ -422,58 +422,68 @@ const OrderProvider = () => {
                         image={product.image}
                         alt={product.name}
                       />
-                      <CardContent sx={{ p: 3, flexGrow: 1 }}>
+                      <CardContent sx={{ 
+                        p: 3, 
+                        flexGrow: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        height: '100%'
+                      }}>
                         <Typography gutterBottom variant="h5" component="div" sx={{ fontWeight: 600 }}>
                           {product.name}
                         </Typography>
                         <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
                           {product.description}
                         </Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                          Unidad: {product.unit}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                          Pedido mínimo: {product.minOrder} {product.unit}
-                        </Typography>
-                        <Typography variant="h5" color="primary" sx={{ fontWeight: 600, mb: 2 }}>
-                          ${product.price}/{product.unit}
-                        </Typography>
-                        <Box sx={{ mb: 2 }}>
-                          <TextField
-                            fullWidth
-                            label={`Cantidad (${product.unit})`}
-                            type="number"
-                            value={quantities[product.id] || ''}
-                            onChange={(e) => handleQuantityChange(product.id, e.target.value)}
-                            error={!!error[product.id]}
-                            helperText={error[product.id]}
-                            InputProps={{
-                              inputProps: { 
-                                min: product.minOrder,
-                                max: product.maxOrder,
-                                step: product.increment
-                              }
-                            }}
-                            sx={{ "& .MuiOutlinedInput-root": { borderRadius: "8px" } }}
-                          />
+                        <Box sx={{ flexGrow: 1 }}>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                            Unidad: {product.unit}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                            Pedido mínimo: {product.minOrder} {product.unit}
+                          </Typography>
                         </Box>
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          fullWidth
-                          size="large"
-                          startIcon={<AddShoppingCartIcon />}
-                          onClick={() => addToCart(product)}
-                          sx={{
-                            py: 1.5,
-                            borderRadius: "8px",
-                            textTransform: "none",
-                            fontSize: "1rem",
-                            fontWeight: 500,
-                          }}
-                        >
-                          Agregar al Pedido
-                        </Button>
+                        <Box sx={{ mt: 'auto' }}>
+                          <Typography variant="h5" color="primary" sx={{ fontWeight: 600, mb: 2 }}>
+                            ${product.price}/{product.unit}
+                          </Typography>
+                          <Box sx={{ mb: 2 }}>
+                            <TextField
+                              fullWidth
+                              label={`Cantidad (${product.unit})`}
+                              type="number"
+                              value={quantities[product.id] || ''}
+                              onChange={(e) => handleQuantityChange(product.id, e.target.value)}
+                              error={!!error[product.id]}
+                              helperText={error[product.id]}
+                              InputProps={{
+                                inputProps: { 
+                                  min: product.minOrder,
+                                  max: product.maxOrder,
+                                  step: product.increment
+                                }
+                              }}
+                              sx={{ "& .MuiOutlinedInput-root": { borderRadius: "8px" } }}
+                            />
+                          </Box>
+                          <Button
+                            variant="contained"
+                            color="primary"
+                            fullWidth
+                            size="large"
+                            startIcon={<AddShoppingCartIcon />}
+                            onClick={() => addToCart(product)}
+                            sx={{
+                              py: 1.5,
+                              borderRadius: "8px",
+                              textTransform: "none",
+                              fontSize: "1rem",
+                              fontWeight: 500,
+                            }}
+                          >
+                            Agregar al Pedido
+                          </Button>
+                        </Box>
                       </CardContent>
                     </ProductCard>
                   </Grid>
