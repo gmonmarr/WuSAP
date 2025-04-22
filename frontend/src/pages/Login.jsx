@@ -18,7 +18,7 @@ import { styled } from "@mui/material/styles";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import "../App.css";
-import { handleLogin } from "../components/Functions.js";
+import { authService } from "../services/api.js";
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(6),
@@ -42,11 +42,11 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    username: "",
+    email: "",
     password: "",
     rememberMe: false,
   });
-  const [errors, setErrors] = useState({ username: false, password: false });
+  const [errors, setErrors] = useState({ email: false, password: false });
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -63,27 +63,31 @@ const Login = () => {
 
     // Validate inputs
     const newErrors = {
-      username: formData.username.trim() === "",
+      email: formData.email.trim() === "",
       password: formData.password.trim() === "",
     };
     setErrors(newErrors);
 
-    if (newErrors.username || newErrors.password) {
-      return alert("El nombre de usario y/o contrasteña no pueden estar vacíos.");
+    if (newErrors.email || newErrors.password) {
+      return alert("El correo y/o contraseña no pueden estar vacíos.");
     }
 
     try {
-      const result = await handleLogin(formData.username, formData.password);
+      const result = await authService.login(formData.email, formData.password);
       console.log("Login response:", result);
 
-      if (result.success) {
+      if (result && result.success) {
+        // El token ya ha sido guardado por el servicio de autenticación
+        console.log("Inicio de sesión exitoso, redirigiendo...");
         navigate("/tablero");
       } else {
-        alert("Credenciales incorrectas.");
+        alert(result.message || "Credenciales incorrectas.");
       }
     } catch (error) {
       console.error("Login failed:", error);
-      alert("Error al iniciar sesión. Intenta de nuevo.");
+      const errorMessage = error.response?.data?.message || 
+                           "Error al iniciar sesión. Intenta de nuevo.";
+      alert(errorMessage);
     }
   };
 
@@ -201,13 +205,13 @@ const Login = () => {
               <form onSubmit={handleSubmit}>
                 <StyledTextField
                   fullWidth
-                  label="Nombre de usuario"
-                  name="username"
-                  value={formData.username}
+                  label="Correo electrónico"
+                  name="email"
+                  value={formData.email}
                   onChange={handleChange}
                   variant="outlined"
-                  error={errors.username}
-                  helperText={errors.username && "Este campo no puede estar vacío"}
+                  error={errors.email}
+                  helperText={errors.email && "Este campo no puede estar vacío"}
                   sx={{ mb: 3 }}
                 />
                 

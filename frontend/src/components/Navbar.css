@@ -194,3 +194,33 @@ ui5-avatar {
   right: 0;
   z-index: 100;
 }
+
+.logout-container {
+  padding: 10px 15px;
+  margin-top: auto;
+  border-top: 1px solid #f0f0f0;
+}
+
+.logout-button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 12px 20px;
+  background-color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #d93025;
+  text-align: left;
+  transition: all 0.2s;
+}
+
+.logout-button:hover {
+  background-color: rgba(217, 48, 37, 0.08);
+}
+
+.logout-button .nav-item-icon {
+  margin-right: 12px;
+  color: #d93025;
+}
