@@ -144,7 +144,6 @@ const Requests = () => {
   ]);
 
   const [filter, setFilter] = useState('all');
-  const [priorityFilter, setPriorityFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -152,12 +151,6 @@ const Requests = () => {
   const handleFilterChange = (event, newFilter) => {
     if (newFilter !== null) {
       setFilter(newFilter);
-    }
-  };
-
-  const handlePriorityFilterChange = (event, newFilter) => {
-    if (newFilter !== null) {
-      setPriorityFilter(newFilter);
     }
   };
 
@@ -208,25 +201,11 @@ const Requests = () => {
     }
   };
 
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'alta':
-        return 'error';
-      case 'media':
-        return 'warning';
-      case 'baja':
-        return 'success';
-      default:
-        return 'default';
-    }
-  };
-
   const filteredRequests = requests.filter(request => {
     const matchesStatusFilter = filter === 'all' || request.status === filter;
-    const matchesPriorityFilter = priorityFilter === 'all' || request.priority === priorityFilter;
     const matchesSearch = request.material.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          request.id.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesStatusFilter && matchesPriorityFilter && matchesSearch;
+    return matchesStatusFilter && matchesSearch;
   });
 
   return (
@@ -257,7 +236,7 @@ const Requests = () => {
             display: 'flex',
             flexDirection: 'column',
             height: '100%',
-            maxHeight: 'calc(100vh - 180px)', // Adjust for navbar and header
+            maxHeight: 'calc(100vh - 180px)',
             overflow: 'hidden'
           }}
         >
@@ -339,68 +318,6 @@ const Requests = () => {
                     </ToggleButton>
                   </ToggleButtonGroup>
                 </Box>
-
-                <Box>
-                  <Typography variant="subtitle2" gutterBottom sx={{ ml: 0.5 }}>
-                    Prioridad
-                  </Typography>
-                  <ToggleButtonGroup
-                    value={priorityFilter}
-                    exclusive
-                    onChange={handlePriorityFilterChange}
-                    aria-label="filtro de prioridad"
-                    size="small"
-                    sx={{
-                      display: 'flex',
-                      '& .MuiToggleButton-root': {
-                        flex: 1,
-                        borderRadius: '4px !important',
-                        mx: 0.2,
-                        textTransform: 'none',
-                        '&.Mui-selected': {
-                          color: 'white',
-                          '&[value="alta"]': {
-                            backgroundColor: 'error.main',
-                            '&:hover': {
-                              backgroundColor: 'error.dark',
-                            }
-                          },
-                          '&[value="media"]': {
-                            backgroundColor: 'warning.main',
-                            '&:hover': {
-                              backgroundColor: 'warning.dark',
-                            }
-                          },
-                          '&[value="baja"]': {
-                            backgroundColor: 'success.main',
-                            '&:hover': {
-                              backgroundColor: 'success.dark',
-                            }
-                          },
-                          '&[value="all"]': {
-                            backgroundColor: 'primary.main',
-                            '&:hover': {
-                              backgroundColor: 'primary.dark',
-                            }
-                          }
-                        }
-                      }
-                    }}
-                  >
-                    <ToggleButton value="all">
-                      Todas
-                    </ToggleButton>
-                    <ToggleButton value="alta">
-                      Alta
-                    </ToggleButton>
-                    <ToggleButton value="media">
-                      Media
-                    </ToggleButton>
-                    <ToggleButton value="baja">
-                      Baja
-                    </ToggleButton>
-                  </ToggleButtonGroup>
-                </Box>
               </Grid>
             </Grid>
           </Box>
@@ -447,12 +364,6 @@ const Requests = () => {
                             label={getStatusLabel(request.status)}
                             color={getStatusColor(request.status)}
                             size="small"
-                          />
-                          <Chip
-                            label={`Prioridad ${request.priority}`}
-                            color={getPriorityColor(request.priority)}
-                            size="small"
-                            variant="outlined"
                           />
                         </Box>
                       }
@@ -537,9 +448,6 @@ const Requests = () => {
                 </Typography>
                 <Typography variant="body1" gutterBottom>
                   Estado: {getStatusLabel(selectedRequest.status)}
-                </Typography>
-                <Typography variant="body1" gutterBottom>
-                  Prioridad: {selectedRequest.priority}
                 </Typography>
                 <Typography variant="body1" gutterBottom>
                   Detalles adicionales: {selectedRequest.details}
