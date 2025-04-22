@@ -89,8 +89,7 @@ const OrderPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderSubmitted, setOrderSubmitted] = useState(false);
   const [shippingDetails, setShippingDetails] = useState({
-    department: "",
-    location: "",
+    sucursal: "",
     requestedBy: "",
     contactNumber: "",
     notes: "",
@@ -437,58 +436,63 @@ const OrderPage = () => {
             <Grid container spacing={4}>
               <Grid item xs={12}>
                 <TextField
-                  required
                   fullWidth
-                  label="Departamento o Área"
-                  name="department"
-                  value={shippingDetails.department}
+                  label="Sucursal"
+                  name="sucursal"
+                  value={shippingDetails.sucursal}
                   onChange={handleShippingChange}
-                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: "8px" } }}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
                   required
-                  fullWidth
-                  label="Ubicación/Piso"
-                  name="location"
-                  value={shippingDetails.location}
-                  onChange={handleShippingChange}
-                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: "8px" } }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '8px',
+                    },
+                  }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField
-                  required
                   fullWidth
                   label="Solicitado por"
                   name="requestedBy"
                   value={shippingDetails.requestedBy}
                   onChange={handleShippingChange}
-                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: "8px" } }}
+                  required
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '8px',
+                    },
+                  }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField
-                  required
                   fullWidth
                   label="Número de Contacto"
                   name="contactNumber"
                   value={shippingDetails.contactNumber}
                   onChange={handleShippingChange}
-                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: "8px" } }}
+                  required
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '8px',
+                    },
+                  }}
                 />
               </Grid>
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  multiline
-                  rows={4}
                   label="Notas Adicionales"
                   name="notes"
                   value={shippingDetails.notes}
                   onChange={handleShippingChange}
-                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: "8px" } }}
+                  multiline
+                  rows={3}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '8px',
+                    },
+                  }}
                 />
               </Grid>
             </Grid>
@@ -545,7 +549,7 @@ const OrderPage = () => {
                 </Grid>
                 <Grid item xs={12}>
                   <Typography variant="h6" gutterBottom sx={{ fontWeight: 500 }}>
-                    Detalles de Entrega
+                    Detalles de Envío
                   </Typography>
                   <Box sx={{ 
                     p: 3, 
@@ -554,20 +558,17 @@ const OrderPage = () => {
                     borderRadius: 2
                   }}>
                     <Typography variant="body1" sx={{ mb: 1 }}>
-                      Departamento: {shippingDetails.department}
+                      <strong>Sucursal:</strong> {shippingDetails.sucursal}
                     </Typography>
                     <Typography variant="body1" sx={{ mb: 1 }}>
-                      Ubicación: {shippingDetails.location}
+                      <strong>Solicitado por:</strong> {shippingDetails.requestedBy}
                     </Typography>
                     <Typography variant="body1" sx={{ mb: 1 }}>
-                      Solicitado por: {shippingDetails.requestedBy}
-                    </Typography>
-                    <Typography variant="body1" sx={{ mb: 1 }}>
-                      Contacto: {shippingDetails.contactNumber}
+                      <strong>Contacto:</strong> {shippingDetails.contactNumber}
                     </Typography>
                     {shippingDetails.notes && (
                       <Typography variant="body1" sx={{ mt: 2 }}>
-                        Notas: {shippingDetails.notes}
+                        <strong>Notas:</strong> {shippingDetails.notes}
                       </Typography>
                     )}
                   </Box>
@@ -598,8 +599,7 @@ const OrderPage = () => {
       setSelectedProducts([]);
       setQuantities({});
       setShippingDetails({
-        department: "",
-        location: "",
+        sucursal: "",
         requestedBy: "",
         contactNumber: "",
         notes: "",
@@ -723,7 +723,7 @@ const OrderPage = () => {
                 onClick={handleNext}
                 disabled={
                   (activeStep === 0 && selectedProducts.length === 0) ||
-                  (activeStep === 1 && (!shippingDetails.department || !shippingDetails.location || !shippingDetails.requestedBy || !shippingDetails.contactNumber))
+                  (activeStep === 1 && (!shippingDetails.sucursal || !shippingDetails.requestedBy || !shippingDetails.contactNumber))
                 }
                 sx={{
                   px: 4,
