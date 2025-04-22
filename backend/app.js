@@ -6,7 +6,8 @@ import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
 import authRoutes from './routes/authRoutes.js';
 import { logAPIAccess } from './middleware/logMiddleware.js';
-import { verifyToken } from './middleware/authMiddleware.js';
+import productRoutes from './routes/productRoutes.js';
+import inventoryRoutes from './routes/inventoryRoutes.js';
 
 dotenv.config();
 
@@ -29,6 +30,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Routes
 app.use(logAPIAccess); // ESTE DEBE ESTAR ANTES DE LAS RUTAS
 app.use('/api', authRoutes);
+app.use('/api', productRoutes);
+app.use('/api', inventoryRoutes);
 
 // Test Route
 app.get('/api/test', (req, res) => {

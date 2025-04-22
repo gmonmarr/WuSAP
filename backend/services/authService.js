@@ -35,6 +35,7 @@ export const loginUser = async (email, password) => {
               employeeID: user.EMPLOYEEID,
               email: user.EMAIL,
               role: user.ROLE,
+              storeID: user.STOREID,
             },
             process.env.JWT_SECRET,
             { expiresIn: process.env.JWT_EXPIRATION }
@@ -117,7 +118,7 @@ export const registerUser = async (createdByID, name, lastName, email, cellphone
     await new Promise((resolve, reject) => {
       conn.prepare(logSql, (err, stmt) => {
         if (err) return reject(err);
-        stmt.exec([createdByID, "Employees", newEmployeeID, "CREATE"], (err) => {
+        stmt.exec([createdByID, "Employees", newEmployeeID, "INSERT"], (err) => {
           if (err) return reject(err);
           resolve();
         });
