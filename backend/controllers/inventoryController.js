@@ -16,15 +16,6 @@ import {
     }
   };
   
-  export const getActiveInventory = async (req, res) => {
-    try {
-      const data = await getContinuedInventory();
-      res.json(data);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  };
-  
   export const getStoreInventory = async (req, res) => {
     try {
       const storeID = req.user.storeID;

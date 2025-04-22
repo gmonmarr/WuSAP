@@ -10,8 +10,8 @@ import {
 
 const router = express.Router();
 
-router.get('/product/', verifyToken, getProducts);
-router.get('/product/active', verifyToken, getActiveProducts);
-router.post('/product/', verifyToken, postProduct);
+router.get('/product/', verifyToken, getProducts); // ver productos registrados en DB
+router.get('/product/active', verifyToken, getActiveProducts); // ver productos que están activos (no descontinuada la venta)
+router.post('/product/', verifyToken, postProduct); // crear un producto nuevo en la DB 
 
 export default router;

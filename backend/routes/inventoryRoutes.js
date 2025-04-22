@@ -11,9 +11,8 @@ import {
 
 const router = express.Router();
 
-router.get('/inventory/', verifyToken, getInventory);
-router.get('/inventory/active', verifyToken, getActiveInventory);
-router.get('/inventory/store', verifyToken, getStoreInventory);
-router.post('/inventory/', verifyToken, postInventory);
+router.get('/inventory/', verifyToken, getInventory); // ver todo lo que está en inventario
+router.get('/inventory/store', verifyToken, getStoreInventory); // ver lo que está en el inventario de una tienda (depende de la JWT token, ahí cada quien tiene una tienda ID)
+router.post('/inventory/', verifyToken, postInventory); // crear producto en el inventario
 
 export default router;

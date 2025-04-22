@@ -16,22 +16,6 @@ export const getAllInventory = async () => {
   }
 };
 
-export const getContinuedInventory = async () => {
-  const conn = await pool.acquire();
-  try {
-    return await new Promise((resolve, reject) => {
-      conn.exec(
-        `SELECT I.* FROM WUSAP.Inventory I
-         JOIN WUSAP.Products P ON I.productID = P.productID
-         WHERE P.isDiscontinued = FALSE`,
-        (err, result) => err ? reject(err) : resolve(result)
-      );
-    });
-  } finally {
-    pool.release(conn);
-  }
-};
-
 export const getInventoryByStore = async (storeID) => {
   const conn = await pool.acquire();
   try {
