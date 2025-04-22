@@ -17,6 +17,7 @@ import "@ui5/webcomponents-icons/dist/request.js";
 import "@ui5/webcomponents-icons/dist/status-positive.js";
 import "@ui5/webcomponents-icons/dist/status-critical.js";
 import "@ui5/webcomponents-icons/dist/status-negative.js";
+import { Dialog, DialogTitle, DialogContent, Box, Grid, Typography, List, ListItem, ListItemText, DialogActions, Button } from "@mui/material";
 
 const OrdenStatusInfo = () => {
   const { ordenId } = useParams();
@@ -76,6 +77,16 @@ const OrdenStatusInfo = () => {
     if (orden.progreso === 100) return "#107e3e"; // Verde para completado
     if (orden.progreso >= 50) return "#0a6ed1"; // Azul para en progreso
     return "#6a6d70"; // Gris para estados iniciales
+  };
+
+  const [open, setOpen] = useState(false);
+
+  const handleOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
   };
 
   return (
@@ -369,6 +380,77 @@ const OrdenStatusInfo = () => {
           </ui5-card>
         </div>
       </div>
+
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          Detalles de la Orden {orden.id}
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 2 }}>
+            <Grid container spacing={3}>
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" gutterBottom>
+                  Orden: {orden.id}
+                </Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="body1" gutterBottom>
+                  Fecha: {orden.fechaPedido}
+                </Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="body1" gutterBottom>
+                  Estado: {orden.estado}
+                </Typography>
+              </Grid>
+              {orden.estado === 'delivered' && (
+                <Grid item xs={12}>
+                  <Typography variant="body1" gutterBottom>
+                    Fecha de entrega: {orden.fechaPedido}
+                  </Typography>
+                </Grid>
+              )}
+              {orden.estado !== 'delivered' && (
+                <Grid item xs={12}>
+                  <Typography variant="body1" gutterBottom>
+                    Entrega estimada: {orden.fechaPedido}
+                  </Typography>
+                </Grid>
+              )}
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" gutterBottom>
+                  Productos:
+                </Typography>
+                <List>
+                  {orden.ultimosMovimientos.map((movimiento, index) => (
+                    <ListItem key={index}>
+                      <ListItemText
+                        primary={movimiento.descripcion}
+                        secondary={`Responsable: ${movimiento.persona}`}
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              </Grid>
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" gutterBottom>
+                  Total: ${orden.cantidad.split(' ')[0]}
+                </Typography>
+              </Grid>
+            </Grid>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose}>
+            Cerrar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };

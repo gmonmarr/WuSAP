@@ -14,35 +14,76 @@ import "@ui5/webcomponents-icons/dist/detail-view.js";
 
 const OrdenStatus = () => {
   const navigate = useNavigate();
-  const [ordenes] = useState([
+  const [orders, setOrders] = useState([
     {
-      id: 1,
-      numOrden: "# NI1937",
-      material: "Material1",
-      progreso: 100
+      id: 'ORD001',
+      name: 'ORD001',
+      date: '2024-04-01',
+      status: 'delivered',
+      deliveryDate: '2024-04-03',
+      products: [
+        { name: 'Acero Inoxidable', quantity: 100, unit: 'kg' },
+        { name: 'Tornillos Hexagonales', quantity: 500, unit: 'piezas' }
+      ],
+      total: 15000
     },
     {
-      id: 2,
-      numOrden: "# NI1821",
-      material: "Material2",
-      progreso: 75
+      id: 'ORD002',
+      name: 'ORD002',
+      date: '2024-04-02',
+      status: 'on_route',
+      estimatedDelivery: '2024-04-04',
+      products: [
+        { name: 'Alambre de Cobre', quantity: 200, unit: 'metros' },
+        { name: 'Pintura Industrial', quantity: 50, unit: 'litros' }
+      ],
+      total: 12000
     },
     {
-      id: 3,
-      numOrden: "# NI2342",
-      material: "Material3",
-      progreso: 50
+      id: 'ORD003',
+      name: 'ORD003',
+      date: '2024-04-03',
+      status: 'in_progress',
+      estimatedDelivery: '2024-04-05',
+      products: [
+        { name: 'Resina Epóxica', quantity: 30, unit: 'kg' },
+        { name: 'Tuercas de Seguridad', quantity: 1000, unit: 'piezas' }
+      ],
+      total: 8000
+    },
+    {
+      id: 'ORD004',
+      name: 'ORD004',
+      date: '2024-04-04',
+      status: 'delivered',
+      deliveryDate: '2024-04-06',
+      products: [
+        { name: 'Acero Inoxidable', quantity: 150, unit: 'kg' },
+        { name: 'Pintura Industrial', quantity: 30, unit: 'litros' }
+      ],
+      total: 11000
+    },
+    {
+      id: 'ORD005',
+      name: 'ORD005',
+      date: '2024-04-05',
+      status: 'on_route',
+      estimatedDelivery: '2024-04-07',
+      products: [
+        { name: 'Tornillos Hexagonales', quantity: 800, unit: 'piezas' },
+        { name: 'Alambre de Cobre', quantity: 150, unit: 'metros' }
+      ],
+      total: 9500
     }
   ]);
   
-  const [selectedOrden, setSelectedOrden] = useState(ordenes[0]);
+  const [selectedOrden, setSelectedOrden] = useState(orders[0]);
   const [searchQuery, setSearchQuery] = useState("");
   
   // Filtrar órdenes basadas en la búsqueda
-  const filteredOrdenes = ordenes.filter(orden => 
-    orden.numOrden.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    orden.material.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    orden.id.toString().includes(searchQuery)
+  const filteredOrdenes = orders.filter(orden => 
+    orden.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    orden.id.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Agregar esta función para navegación
@@ -96,8 +137,8 @@ const OrdenStatus = () => {
               >
                 <OrdenStatusCard
                   ordenNumber={orden.id}
-                  numOrden={orden.numOrden}
-                  material={orden.material}
+                  numOrden={orden.name}
+                  material={orden.products.map(p => `${p.name} (${p.quantity} ${p.unit})`).join(', ')}
                   isSelected={selectedOrden.id === orden.id}
                 />
               </div>
@@ -135,7 +176,7 @@ const OrdenStatus = () => {
               margin: 0,
               color: "#333"
             }}>
-              Progreso de orden{selectedOrden.id}:
+              Progreso de orden {selectedOrden.id}:
             </h3>
             
             {/* Nuevo botón para ver detalles */}
@@ -213,7 +254,7 @@ const OrdenStatus = () => {
                       fontWeight: "600",
                       color: "#3f51b5"
                     }}>
-                      {selectedOrden.progreso}%
+                      ${selectedOrden.total.toLocaleString()}
                     </div>
                   </div>
                 </div>
@@ -265,7 +306,7 @@ const OrdenStatus = () => {
               fontSize: "1rem",
               color: "#333"
             }}>
-              Comentarios:
+              Materiales:
             </ui5-label>
             <div style={{ 
               minHeight: "100px", 
@@ -275,11 +316,11 @@ const OrdenStatus = () => {
               color: "#666",
               fontSize: "0.9rem"
             }}>
-              {selectedOrden.id === 1 ? 
-                "La orden está completa y lista para entrega." : 
-                selectedOrden.id === 2 ? 
-                "Progreso al 75%. En espera de materiales adicionales." : 
-                "Iniciando proceso de producción. Avance del 50%."}
+              {selectedOrden.products.map((product, index) => (
+                <div key={index} style={{ marginBottom: "0.5rem" }}>
+                  {product.name}: {product.quantity} {product.unit}
+                </div>
+              ))}
             </div>
           </div>
         </div>
