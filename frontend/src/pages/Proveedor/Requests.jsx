@@ -241,43 +241,42 @@ const Requests = () => {
           }}
         >
           <Box sx={{ mb: 4, flexShrink: 0 }}>
-            <Typography variant="h4" component="h1" gutterBottom sx={{ color: '#2C3E73', fontWeight: 600 }}>
-              Solicitudes de Material
-            </Typography>
             <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
               Gestiona las solicitudes de material del almacén
             </Typography>
 
-            <Grid container spacing={2} alignItems="center">
-              <Grid item xs={12} md={4}>
-                <Typography variant="subtitle2" gutterBottom sx={{ ml: 0.5 }}>
-                  Buscar
-                </Typography>
-                <TextField
-                  fullWidth
-                  size="small"
-                  placeholder="Buscar por ID o material..."
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon />
-                      </InputAdornment>
-                    ),
-                  }}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2,
-                    }
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12} md={8}>
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="subtitle2" gutterBottom sx={{ ml: 0.5 }}>
+            <Grid container spacing={0}>
+              <Grid item xs={12}>
+                <Box sx={{ display: 'flex', mb: 1 }}>
+                  <Typography variant="subtitle2" sx={{ ml: 1, width: '300px' }}>
+                    Buscar
+                  </Typography>
+                  <Typography variant="subtitle2" sx={{ ml: 3 }}>
                     Estado
                   </Typography>
+                </Box>
+                
+                <Box sx={{ display: 'flex', gap: 3 }}>
+                  <TextField
+                    size="small"
+                    placeholder="Buscar por ID o material..."
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchIcon />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                      },
+                      width: '300px'
+                    }}  
+                  />
+                  
                   <ToggleButtonGroup
                     value={filter}
                     exclusive
@@ -285,20 +284,25 @@ const Requests = () => {
                     aria-label="filtro de estado"
                     size="small"
                     sx={{
-                      display: 'flex',
-                      flexWrap: 'wrap',
+                      flex: 1,
+                      height: '40px',
                       '& .MuiToggleButton-root': {
-                        flex: '1 0 auto',
                         borderRadius: '4px !important',
-                        mx: 0.2,
-                        px: 2,
-                        py: 0.5,
+                        mx: 0.5,
+                        px: 3,
+                        py: 1,
+                        backgroundColor: '#ffffff',
+                        color: 'text.primary',
                         textTransform: 'none',
+                        border: '1px solid #e0e0e0',
+                        '&:hover': {
+                          backgroundColor: '#f5f5f5',
+                        },
                         '&.Mui-selected': {
-                          backgroundColor: theme => theme.palette.primary.main,
+                          backgroundColor: '#1976d2',
                           color: 'white',
                           '&:hover': {
-                            backgroundColor: theme => theme.palette.primary.dark,
+                            backgroundColor: '#1565c0',
                           }
                         }
                       }

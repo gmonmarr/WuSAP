@@ -24,6 +24,7 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import Navbar from "../../components/Navbar";
 import Header from "../../components/Header";
 import AvisoPerdidaInfo from "../../components/AvisoPerdidaInfo";
+import ProductCard from "../../components/ProductCard";
 
 // Styled components
 const StyledPaper = styled(Paper)(({ theme }) => ({
@@ -32,19 +33,6 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
   borderRadius: "16px",
   boxShadow: "0 8px 24px rgba(0, 0, 0, 0.08)",
   background: "#ffffff",
-}));
-
-const ProductCard = styled(Card)(({ theme }) => ({
-  height: "100%",
-  display: "flex",
-  flexDirection: "column",
-  transition: "all 0.3s ease",
-  borderRadius: "12px",
-  overflow: "hidden",
-  "&:hover": {
-    transform: "translateY(-8px)",
-    boxShadow: "0 12px 28px rgba(0, 0, 0, 0.12)",
-  },
 }));
 
 const StyledCardMedia = styled(CardMedia)(({ theme }) => ({
@@ -416,76 +404,13 @@ const OrderProvider = () => {
               <Grid container spacing={4}>
                 {products.map((product) => (
                   <Grid item xs={12} sm={6} md={4} key={product.id}>
-                    <ProductCard>
-                      <StyledCardMedia
-                        component="img"
-                        image={product.image}
-                        alt={product.name}
-                      />
-                      <CardContent sx={{ 
-                        p: 3, 
-                        flexGrow: 1,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        height: '100%'
-                      }}>
-                        <Typography gutterBottom variant="h5" component="div" sx={{ fontWeight: 600 }}>
-                          {product.name}
-                        </Typography>
-                        <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-                          {product.description}
-                        </Typography>
-                        <Box sx={{ flexGrow: 1 }}>
-                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                            Unidad: {product.unit}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                            Pedido mínimo: {product.minOrder} {product.unit}
-                          </Typography>
-                        </Box>
-                        <Box sx={{ mt: 'auto' }}>
-                          <Typography variant="h5" color="primary" sx={{ fontWeight: 600, mb: 2 }}>
-                            ${product.price}/{product.unit}
-                          </Typography>
-                          <Box sx={{ mb: 2 }}>
-                            <TextField
-                              fullWidth
-                              label={`Cantidad (${product.unit})`}
-                              type="number"
-                              value={quantities[product.id] || ''}
-                              onChange={(e) => handleQuantityChange(product.id, e.target.value)}
-                              error={!!error[product.id]}
-                              helperText={error[product.id]}
-                              InputProps={{
-                                inputProps: { 
-                                  min: product.minOrder,
-                                  max: product.maxOrder,
-                                  step: product.increment
-                                }
-                              }}
-                              sx={{ "& .MuiOutlinedInput-root": { borderRadius: "8px" } }}
-                            />
-                          </Box>
-                          <Button
-                            variant="contained"
-                            color="primary"
-                            fullWidth
-                            size="large"
-                            startIcon={<AddShoppingCartIcon />}
-                            onClick={() => addToCart(product)}
-                            sx={{
-                              py: 1.5,
-                              borderRadius: "8px",
-                              textTransform: "none",
-                              fontSize: "1rem",
-                              fontWeight: 500,
-                            }}
-                          >
-                            Agregar al Pedido
-                          </Button>
-                        </Box>
-                      </CardContent>
-                    </ProductCard>
+                    <ProductCard
+                      product={product}
+                      quantity={quantities[product.id]}
+                      error={error[product.id]}
+                      onQuantityChange={handleQuantityChange}
+                      onAddToCart={addToCart}
+                    />
                   </Grid>
                 ))}
               </Grid>

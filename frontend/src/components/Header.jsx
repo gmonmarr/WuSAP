@@ -22,23 +22,7 @@ return (
             background: "transparent"
         }}
     >
-    <div style={{ transform: "scale(1.7)", position: "absolute", left: "40px" }}> {/* Position arrow at the very left */}
-        <ui5-button
-            icon="navigation-left-arrow"
-            design="Transparent"
-            slot="startContent"
-            onClick={() => navigate(-1)}
-            aria-label="Back"
-            style={{ 
-                color: "#3f51b5", 
-                transition: "background-color 0.3s ease, color 0.3s ease", 
-                border: "none" 
-            }}
-        ></ui5-button>
-    </div>
-
-
-        <span style={{ fontWeight: "bold", fontSize: "2rem", color: "#3f51b5" }}>
+        <span style={{ fontWeight: "bold", fontSize: "2rem", color: "#2C3E73" }}>
             {title}
         </span>
     </ui5-bar>
