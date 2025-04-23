@@ -16,11 +16,13 @@ import {
   useTheme,
   IconButton,
   Alert,
+  InputAdornment,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import SearchIcon from '@mui/icons-material/Search';
 import Navbar from "../../components/Navbar";
 import Header from "../../components/Header";
 import AvisoPerdidaInfo from "../../components/AvisoPerdidaInfo";
@@ -44,26 +46,28 @@ const StyledCardMedia = styled(CardMedia)(({ theme }) => ({
   },
 }));
 
+const CartContainer = styled(Paper)(({ theme }) => ({
+  minWidth: '280px',
+  maxWidth: '350px',
+  maxHeight: '500px',
+  display: 'flex',
+  flexDirection: 'column',
+  borderRadius: '8px',
+  overflow: 'hidden',
+  backgroundColor: theme.palette.background.paper,
+  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+  border: '1px solid #e0e0e0',
+}));
+
 const CartItem = styled(Box)(({ theme }) => ({
   display: 'flex',
   justifyContent: 'space-between',
-  alignItems: 'start',
-  padding: theme.spacing(1.5),
+  alignItems: 'center',
+  padding: theme.spacing(1, 1.5),
   borderBottom: `1px solid ${theme.palette.divider}`,
   '&:last-child': {
     borderBottom: 'none',
   },
-}));
-
-const CartContainer = styled(Paper)(({ theme }) => ({
-  width: '300px',
-  height: '100%',
-  display: 'flex',
-  flexDirection: 'column',
-  borderRadius: '16px',
-  overflow: 'hidden',
-  backgroundColor: theme.palette.background.paper,
-  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
 }));
 
 const OrderProvider = () => {
@@ -74,6 +78,7 @@ const OrderProvider = () => {
   const [error, setError] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderSubmitted, setOrderSubmitted] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const [shippingDetails, setShippingDetails] = useState({
     department: "",
     location: "",
@@ -282,11 +287,20 @@ const OrderProvider = () => {
     }
   };
 
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value);
+  };
+
+  const filteredProducts = products.filter((product) =>
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.description.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const renderCart = () => {
     return (
       <CartContainer>
         <Box sx={{ 
-          p: 2, 
+          p: 1.5, 
           borderBottom: '1px solid',
           borderColor: 'divider',
           backgroundColor: 'primary.main',
@@ -295,40 +309,38 @@ const OrderProvider = () => {
           alignItems: 'center',
           gap: 1
         }}>
-          <ShoppingCartIcon />
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          <ShoppingCartIcon fontSize="small" />
+          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
             Carrito
           </Typography>
-          <Typography variant="body2" sx={{ ml: 'auto' }}>
+          <Typography variant="caption" sx={{ ml: 'auto', backgroundColor: 'rgba(255,255,255,0.2)', px: 1, py: 0.5, borderRadius: '12px' }}>
             {selectedProducts.length} items
           </Typography>
         </Box>
         
         <Box sx={{ 
-          flex: 1,
+          maxHeight: '350px',
           overflow: 'auto',
           "&::-webkit-scrollbar": {
-            width: "6px",
-            height: "6px",
+            width: "4px",
           },
           "&::-webkit-scrollbar-track": {
             background: "#f1f1f1",
-            borderRadius: "3px",
           },
           "&::-webkit-scrollbar-thumb": {
-            background: "#888",
-            borderRadius: "3px",
+            background: "#bbb",
+            borderRadius: "4px",
             "&:hover": {
-              background: "#666",
+              background: "#999",
             },
           },
         }}>
           {selectedProducts.length === 0 ? (
             <Box sx={{ p: 3, textAlign: 'center', color: 'text.secondary' }}>
-              <Typography variant="body1">
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>
                 El carrito está vacío
               </Typography>
-              <Typography variant="body2" sx={{ mt: 1 }}>
+              <Typography variant="caption" sx={{ mt: 0.5, display: 'block' }}>
                 Agregue productos para comenzar
               </Typography>
             </Box>
@@ -336,21 +348,22 @@ const OrderProvider = () => {
             selectedProducts.map((product) => (
               <CartItem key={product.id}>
                 <Box sx={{ flex: 1 }}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
                     {product.name}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {product.quantity} {product.unit}
-                  </Typography>
-                  <Typography variant="body2" color="primary.main" sx={{ fontWeight: 500 }}>
-                    ${(product.price * product.quantity).toFixed(2)}
-                  </Typography>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Typography variant="caption" color="text.secondary">
+                      {product.quantity} {product.unit}
+                    </Typography>
+                    <Typography variant="body2" color="primary.main" sx={{ fontWeight: 500 }}>
+                      ${(product.price * product.quantity).toFixed(2)}
+                    </Typography>
+                  </Box>
                 </Box>
                 <IconButton 
                   size="small"
                   color="error"
                   onClick={() => removeFromCart(product.id)}
-                  sx={{ mt: -0.5 }}
                 >
                   <DeleteIcon fontSize="small" />
                 </IconButton>
@@ -359,38 +372,36 @@ const OrderProvider = () => {
           )}
         </Box>
         
-        <Box sx={{ 
-          p: 2,
-          borderTop: '1px solid',
-          borderColor: 'divider',
-          backgroundColor: 'background.paper'
-        }}>
-          <Typography variant="subtitle1" sx={{ 
-            display: 'flex', 
-            justifyContent: 'space-between',
-            fontWeight: 600,
-            mb: 1
-          }}>
-            <span>Total</span>
-            <span>${calculateTotal().toFixed(2)}</span>
-          </Typography>
-          <Button
-            variant="contained"
-            color="primary"
-            fullWidth
-            disabled={selectedProducts.length === 0}
-            onClick={handleNext}
-            sx={{
-              py: 1,
-              borderRadius: "8px",
-              textTransform: "none",
-              fontSize: "0.9rem",
-              fontWeight: 500,
-            }}
-          >
-            Revisar Pedido
-          </Button>
-        </Box>
+        {selectedProducts.length > 0 && (
+          <Box sx={{ p: 1.5, borderTop: '1px solid', borderColor: 'divider' }}>
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              mb: 2 
+            }}>
+              <Typography variant="subtitle2">Total</Typography>
+              <Typography variant="subtitle1" color="primary.main" sx={{ fontWeight: 600 }}>
+                ${calculateTotal().toFixed(2)}
+              </Typography>
+            </Box>
+            <Button
+              variant="contained"
+              color="primary"
+              fullWidth
+              onClick={handleNext}
+              sx={{
+                py: 1,
+                borderRadius: "6px",
+                textTransform: "none",
+                fontSize: "0.9rem",
+                fontWeight: 500,
+              }}
+            >
+              Revisar Pedido
+            </Button>
+          </Box>
+        )}
       </CartContainer>
     );
   };
@@ -399,11 +410,11 @@ const OrderProvider = () => {
     switch (step) {
       case 0:
         return (
-          <Box sx={{ display: 'flex', gap: 3 }}>
+          <Box sx={{ display: 'flex', gap: 4 }}>
             <Box sx={{ flex: 1 }}>
-              <Grid container spacing={4}>
-                {products.map((product) => (
-                  <Grid item xs={12} sm={6} md={4} key={product.id}>
+              <Grid container spacing={3}>
+                {filteredProducts.map((product) => (
+                  <Grid item xs={12} sm={6} md={4} lg={3} key={product.id}>
                     <ProductCard
                       product={product}
                       quantity={quantities[product.id]}
@@ -413,25 +424,46 @@ const OrderProvider = () => {
                     />
                   </Grid>
                 ))}
+                {filteredProducts.length === 0 && (
+                  <Grid item xs={12}>
+                    <Box sx={{ 
+                      p: 4, 
+                      textAlign: 'center', 
+                      backgroundColor: 'background.paper',
+                      borderRadius: '8px',
+                      border: '1px dashed',
+                      borderColor: 'divider',
+                    }}>
+                      <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
+                        No se encontraron productos
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Intente con otro término de búsqueda
+                      </Typography>
+                    </Box>
+                  </Grid>
+                )}
               </Grid>
             </Box>
-            {renderCart()}
+            <Box sx={{ minWidth: '280px', maxWidth: '350px', alignSelf: 'flex-start', position: 'sticky', top: 0 }}>
+              {renderCart()}
+            </Box>
           </Box>
         );
       case 1:
         return (
-          <Box sx={{ mt: 4 }}>
-            <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
               Resumen del Pedido
             </Typography>
-            <Divider sx={{ my: 3 }} />
+            <Divider sx={{ mb: 4 }} />
             {selectedProducts.length === 0 ? (
               <Alert severity="info" sx={{ mb: 3 }}>
                 No hay productos seleccionados. Por favor, seleccione al menos un producto.
               </Alert>
             ) : (
-              <Grid container spacing={3}>
-                <Grid item xs={12}>
+              <Grid container spacing={4}>
+                <Grid item xs={12} lg={8}>
                   <Typography variant="h6" gutterBottom sx={{ fontWeight: 500 }}>
                     Materiales Solicitados
                   </Typography>
@@ -450,7 +482,7 @@ const OrderProvider = () => {
                         backgroundColor: 'action.hover',
                       }
                     }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, width: '100%' }}>
                         <Box
                           component="img"
                           src={product.image}
@@ -462,46 +494,51 @@ const OrderProvider = () => {
                             borderRadius: 1,
                           }}
                         />
-                        <Box>
+                        <Box sx={{ flex: 1 }}>
                           <Typography variant="h6" sx={{ fontWeight: 500 }}>
                             {product.name}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
                             {product.description}
                           </Typography>
-                          <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
-                            Cantidad: {product.quantity} {product.unit}
-                          </Typography>
-                          <Typography variant="body2" sx={{ color: 'primary.main', mt: 1 }}>
-                            Tiempo estimado de entrega: {product.eta}
-                          </Typography>
+                          <Box sx={{ display: 'flex', mt: 1, gap: 4 }}>
+                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                              Cantidad: {product.quantity} {product.unit}
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: 'primary.main' }}>
+                              Tiempo estimado de entrega: {product.eta}
+                            </Typography>
+                          </Box>
                         </Box>
-                      </Box>
-                      <Box sx={{ textAlign: 'right' }}>
-                        <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-                          ${product.price}/{product.unit}
-                        </Typography>
-                        <Typography variant="h6" color="primary" sx={{ mt: 1 }}>
-                          ${(product.price * product.quantity).toFixed(2)}
-                        </Typography>
-                        <IconButton 
-                          color="error" 
-                          onClick={() => removeFromCart(product.id)}
-                          sx={{ mt: 1 }}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
+                        <Box sx={{ textAlign: 'right', minWidth: '120px' }}>
+                          <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+                            ${product.price}/{product.unit}
+                          </Typography>
+                          <Typography variant="h6" color="primary" sx={{ mt: 1 }}>
+                            ${(product.price * product.quantity).toFixed(2)}
+                          </Typography>
+                          <IconButton 
+                            color="error" 
+                            onClick={() => removeFromCart(product.id)}
+                            sx={{ mt: 1 }}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Box>
                       </Box>
                     </Box>
                   ))}
                 </Grid>
-                <Grid item xs={12}>
+                <Grid item xs={12} lg={4}>
                   <Box sx={{ 
                     p: 3, 
                     border: '1px solid',
                     borderColor: 'divider',
                     borderRadius: 2,
-                    backgroundColor: 'background.paper'
+                    backgroundColor: 'background.paper',
+                    mb: 3,
+                    position: 'sticky',
+                    top: 0
                   }}>
                     <Typography variant="h6" gutterBottom sx={{ fontWeight: 500 }}>
                       Resumen de Precios
@@ -522,26 +559,34 @@ const OrderProvider = () => {
                       </Typography>
                     </Box>
                   </Box>
-                </Grid>
-                <Grid item xs={12}>
-                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, mt: 2 }}>
-                    Notas Adicionales
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    multiline
-                    rows={4}
-                    placeholder="Agregue cualquier nota o instrucción especial para su pedido"
-                    name="notes"
-                    value={shippingDetails.notes}
-                    onChange={handleShippingChange}
-                    sx={{ 
-                      "& .MuiOutlinedInput-root": { 
-                        borderRadius: "8px",
-                        backgroundColor: 'background.paper'
-                      }
-                    }}
-                  />
+                  
+                  <Box sx={{ 
+                    p: 3, 
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    borderRadius: 2,
+                    backgroundColor: 'background.paper',
+                    mb: 3
+                  }}>
+                    <Typography variant="h6" gutterBottom sx={{ fontWeight: 500 }}>
+                      Notas Adicionales
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      multiline
+                      rows={4}
+                      placeholder="Agregue cualquier nota o instrucción especial para su pedido"
+                      name="notes"
+                      value={shippingDetails.notes}
+                      onChange={handleShippingChange}
+                      sx={{ 
+                        "& .MuiOutlinedInput-root": { 
+                          borderRadius: "8px",
+                          backgroundColor: 'background.paper'
+                        }
+                      }}
+                    />
+                  </Box>
                 </Grid>
               </Grid>
             )}
@@ -705,17 +750,17 @@ const OrderProvider = () => {
       <Header title="Solicitar Material a Proveedor" />
       <Box sx={{ 
         flex: 1,
-        maxWidth: 1400,
+        maxWidth: 1600,
         width: "100%",
         margin: "0 auto", 
-        padding: "2rem",
+        padding: "1.5rem 2rem",
         display: "flex",
         flexDirection: "column"
       }}>
         <StyledPaper sx={{
           display: "flex",
           flexDirection: "column",
-          height: "calc(100vh - 180px)",
+          height: "calc(100vh - 150px)",
           overflow: "hidden"
         }}>
           <Stepper 
@@ -738,10 +783,75 @@ const OrderProvider = () => {
             ))}
           </Stepper>
 
+          {activeStep === 0 && (
+            <Box sx={{ 
+              px: 3, 
+              py: 2, 
+              display: 'flex', 
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+              backgroundColor: 'white'
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography variant="h6" sx={{ fontWeight: 500, color: 'primary.main' }}>
+                  Catálogo de Productos
+                </Typography>
+                <Typography 
+                  variant="caption" 
+                  sx={{ 
+                    ml: 2, 
+                    color: 'text.secondary',
+                    backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: 4,
+                    border: '1px solid',
+                    borderColor: 'divider'
+                  }}
+                >
+                  {filteredProducts.length} productos
+                </Typography>
+              </Box>
+              <Box sx={{ width: '300px' }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  placeholder="Buscar productos..."
+                  variant="outlined"
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon color="action" />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '8px',
+                      backgroundColor: '#f9f9f9',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.04)',
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        boxShadow: '0 4px 8px rgba(0,0,0,0.08)',
+                      },
+                      '&.Mui-focused': {
+                        boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                      }
+                    },
+                  }}
+                />
+              </Box>
+            </Box>
+          )}
+
           <Box sx={{ 
             flex: 1,
             overflow: "auto",
-            p: 2,
+            p: "1.5rem 2rem",
             "&::-webkit-scrollbar": {
               width: "8px",
               height: "8px",

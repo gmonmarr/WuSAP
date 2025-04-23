@@ -63,58 +63,95 @@ export function DashboardGeneral() {
        {/* COLUMNA GENERAL QUE CUBRE TODA LA PANTALLA - apoyo para subsecciones */}
         <FlexBox
         direction={FlexBoxDirection.Row}
-        justifyContent={FlexBoxJustifyContent.SpaceAround}
+        justifyContent={FlexBoxJustifyContent.SpaceBetween}
         style={{
             width: "100%",
             height: "90vh",
-            gap: "1rem",
-            padding: "1rem"
+            padding: "0.5rem"
         }}>
             
         {/* COLUMNA GENERAL IZQUIERDA - (2 rows, primera dos columnas, segunda el resto una columna) */}
             <FlexBox
                 direction={FlexBoxDirection.Column}
-                justifyContent={FlexBoxJustifyContent.SpaceAround}
+                justifyContent={FlexBoxJustifyContent.Start}
                 style={{
                     width: "30%",
                     height: "100%", 
-                    padding: "0.5rem"
+                    paddingRight: "0.5rem"
                 }}>
 
                 {/* ROW 1 - DOS BOTONES */}
                 <FlexBox
                     direction={FlexBoxDirection.Row}
-                    justifyContent={FlexBoxJustifyContent.SpaceAround}
+                    justifyContent={FlexBoxJustifyContent.Start}
                     style={{
                         width: "100%",
-                        height: "15%",
-                        gap: "1rem",
+                        height: "auto",
+                        marginBottom: "1rem"
                     }}
                 >
-                    <FlexBox direction={FlexBoxDirection.Column}
-                    justifyContent={FlexBoxJustifyContent.SpaceAround}
+                    <FlexBox direction={FlexBoxDirection.Row}
                     style={{
-                        width: "50%",
-                        height: "100%",
+                        width: "100%",
+                        gap: "1rem",
                     }} 
                     >
-                    
-                    <Button design="Default">Inventario</Button>
-                    <Button design="Default">Seguimiento</Button>
+                        <Button 
+                            design="Transparent" 
+                            style={{
+                                width: "100%",
+                                height: "48px",
+                                border: "1px solid #e5e5e5",
+                                borderRadius: "4px",
+                                backgroundColor: "#fff",
+                                fontWeight: "normal",
+                                boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
+                            }}
+                        >
+                            Inventario
+                        </Button>
+                        
+                        <Button 
+                            design="Transparent" 
+                            style={{
+                                width: "100%",
+                                height: "48px",
+                                border: "1px solid #e5e5e5",
+                                borderRadius: "4px",
+                                backgroundColor: "#fff",
+                                fontWeight: "normal",
+                                boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
+                            }}
+                        >
+                            Seguimiento
+                        </Button>
                     </FlexBox>
+                </FlexBox>
 
-                    <FlexBox direction={FlexBoxDirection.Column}
-                    justifyContent={FlexBoxJustifyContent.SpaceAround}
+                {/* ROW 1.5 - ALERTS */}
+                <FlexBox
+                    direction={FlexBoxDirection.Row}
+                    justifyContent={FlexBoxJustifyContent.Start}
                     style={{
-                        width: "50%",
-                        height: "100%", 
-                    }} 
+                        width: "100%",
+                        height: "auto",
+                        marginBottom: "1rem"
+                    }}
+                >
+                    <Button 
+                        design="Negative" 
+                        style={{
+                            width: "100%",
+                            height: "48px",
+                            borderRadius: "4px",
+                            fontWeight: "normal",
+                            backgroundColor: "#fff0f0",
+                            color: "#d32f2f",
+                            boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
+                        }}
                     >
-                    <Button design="Negative" style={{minHeight: "75px"}}>{alertCount} Alertas</Button>
-                    </FlexBox>
-                    
-                    
-
+                        {alertCount} Alertas
+                    </Button>
                 </FlexBox>
             
                 {/* ROW 2- 1 columna con el resto del espacio */}
@@ -124,34 +161,30 @@ export function DashboardGeneral() {
                     style={{
                     width: "100%",
                     height: "85%", 
-                    paddingTop: "1rem",
                     }}
                 >
                     
-                        <Card 
-                            header={<CardHeader titleText="Ciclo de tiempo de pedido" />}
-                            
-                            style={{
-                                width: "100%",
-                                height: "100%",
-                            }}
-                            >
-                                <BarChart 
-                                 dimensions={[{ accessor: "month" }]}
-                                 measures={[{ accessor: "data", label: "Stock Price"}]}
-                                 dataset={dataset}
-                                 chartConfig={{
-                                    legendPosition: "bottom",
-                                    
-                                  }}
-                                  style={{height:"60vh"}}
-                                 />
-                                 
-                            </Card>
-
-
-
-
+                    <Card 
+                        header={<CardHeader titleText="Ciclo de tiempo de pedido" />}
+                        style={{
+                            width: "100%",
+                            height: "100%",
+                            borderRadius: "8px",
+                            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                            border: "1px solid #e5e5e5",
+                        }}
+                        >
+                            <BarChart 
+                                dimensions={[{ accessor: "month" }]}
+                                measures={[{ accessor: "data", label: "Stock Price"}]}
+                                dataset={dataset}
+                                chartConfig={{
+                                legendPosition: "bottom",
+                                }}
+                                style={{height:"60vh"}}
+                                />
+                                
+                    </Card>
                 </FlexBox>
           </FlexBox>
 
@@ -163,7 +196,7 @@ export function DashboardGeneral() {
                     width: "70%",
                     height: "100%", 
                     gap: "1rem",
-                    padding: "0.5rem"
+                    paddingLeft: "1rem"
                 }}>
 
                 {/* Row 1: 2 columnas */}
@@ -178,27 +211,27 @@ export function DashboardGeneral() {
                 >
                     <Card 
                     header={<CardHeader titleText="Ciclo de tiempo de pedido" />}
-                    
                     style={{
                         width: "65%",
                         height: "100%",
+                        borderRadius: "8px",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                        border: "1px solid #e5e5e5",
                     }}
                     >
                         <LineChart
-                                  dimensions={[{ accessor: "month" }]}
-                                  measures={[{ accessor: "data", label: "Stock Price"}]}
-                                  dataset={dataset}
-                                  style={{
-                                    height: "35vh",
-                                  }}
-                                  chartConfig={{
-                                    legendPosition: "top",
-                                  }}
-                                />
+                            dimensions={[{ accessor: "month" }]}
+                            measures={[{ accessor: "data", label: "Stock Price"}]}
+                            dataset={dataset}
+                            style={{
+                                height: "35vh",
+                            }}
+                            chartConfig={{
+                                legendPosition: "top",
+                            }}
+                            />
                     </Card>
                     
-                    
-
                     { /* ROW 2 primera columna */}
                     <FlexBox 
                         direction={FlexBoxDirection.Column}
@@ -207,25 +240,27 @@ export function DashboardGeneral() {
                             width: "35%",
                             height: "100%",
                         }} >
-                                <Card
-                                header={<CardHeader titleText="Tasa de cumplimiento de proveedores" />}
-                                style={{
-                                    width: "100%",
-                                    height: "100%",
+                            <Card
+                            header={<CardHeader titleText="Tasa de cumplimiento de proveedores" />}
+                            style={{
+                                width: "100%",
+                                height: "100%",
+                                borderRadius: "8px",
+                                boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                                border: "1px solid #e5e5e5",
+                            }}
+                            >
+                            <DonutChart
+                                dimension={{ accessor: "month" }}
+                                measure={{ accessor: "data" }}
+                                dataset={dataset}
+                                style={{ height:"35vh", fontSize:"0.5rem"}}
+                                chartConfig={{
+                                legendPosition: "bottom",
+                                innerRadius: "50%",
                                 }}
-                                >
-                                <DonutChart
-                                    dimension={{ accessor: "month" }}
-                                    measure={{ accessor: "data" }}
-                                    dataset={dataset}
-                                    style={{ height:"35vh", fontSize:"0.5rem"}}
-                                    chartConfig={{
-                                    legendPosition: "bottom",
-                                    innerRadius: "50%",
-                                    
-                                    }}
-                                />
-                            </Card>
+                            />
+                        </Card>
                     </FlexBox>
                 </FlexBox>
             
@@ -236,7 +271,6 @@ export function DashboardGeneral() {
                     style={{
                     width: "100%",
                     height: "45%", 
-                    paddingTop: "1rem",
                     }}
                 >
                     <Card
@@ -244,21 +278,23 @@ export function DashboardGeneral() {
                     style={{
                         width: "100%",
                         height: "100%",
+                        borderRadius: "8px",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                        border: "1px solid #e5e5e5",
                     }}
                     >
                         <ColumnChart
-                                  dimensions={[{ accessor: "month" }]}
-                                  measures={[
-                                    { accessor: "data", label: "Stock Price - Set 1" },
-                                    { accessor: "data2", label: "Stock Price - Set 2" }
-                                  ]}
-                                  dataset={dataset}
-                                  style={{
-                                    height: "30vh", 
-                                  }}
-                                />
+                            dimensions={[{ accessor: "month" }]}
+                            measures={[
+                                { accessor: "data", label: "Stock Price - Set 1" },
+                                { accessor: "data2", label: "Stock Price - Set 2" }
+                            ]}
+                            dataset={dataset}
+                            style={{
+                                height: "30vh", 
+                            }}
+                            />
                     </Card>
-                    
                 </FlexBox>
           </FlexBox>
           </FlexBox>

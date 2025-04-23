@@ -7,6 +7,7 @@ import {
   TextField,
   Button,
   Box,
+  Chip,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
@@ -17,21 +18,43 @@ const StyledCard = styled(Card)(({ theme }) => ({
   display: "flex",
   flexDirection: "column",
   transition: "all 0.3s ease",
-  borderRadius: "12px",
+  borderRadius: "8px",
   overflow: "hidden",
+  border: "1px solid #f0f0f0",
+  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
   "&:hover": {
-    transform: "translateY(-8px)",
-    boxShadow: "0 12px 28px rgba(0, 0, 0, 0.12)",
+    transform: "translateY(-5px)",
+    boxShadow: "0 8px 16px rgba(0, 0, 0, 0.1)",
   },
 }));
 
 const StyledCardMedia = styled(CardMedia)(({ theme }) => ({
-  height: "240px",
+  height: "180px",
   objectFit: "cover",
   transition: "transform 0.3s ease",
   "&:hover": {
     transform: "scale(1.05)",
   },
+}));
+
+const ProductHeader = styled(Box)(({ theme }) => ({
+  display: "flex",
+  flexDirection: "column",
+  marginBottom: theme.spacing(2),
+}));
+
+const ProductDetail = styled(Box)(({ theme }) => ({
+  display: "flex",
+  flexDirection: "column",
+  gap: theme.spacing(0.5),
+  marginBottom: theme.spacing(2),
+}));
+
+const ProductActions = styled(Box)(({ theme }) => ({
+  marginTop: "auto",
+  display: "flex",
+  flexDirection: "column",
+  gap: theme.spacing(1.5),
 }));
 
 const ProductCard = ({
@@ -49,82 +72,111 @@ const ProductCard = ({
         image={product.image}
         alt={product.name}
       />
-      <CardContent
-        sx={{
-          p: 3,
-          flexGrow: 1,
-          display: "flex",
-          flexDirection: "column",
-          height: "100%",
-        }}
-      >
-        <Typography
-          gutterBottom
-          variant="h5"
-          component="div"
-          sx={{ fontWeight: 600 }}
-        >
-          {product.name}
-        </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-          {product.description}
-        </Typography>
-        <Box sx={{ flexGrow: 1 }}>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-            Unidad: {product.unit}
+      <CardContent sx={{ p: 2, flexGrow: 1, display: "flex", flexDirection: "column" }}>
+        <ProductHeader>
+          <Typography 
+            variant="h6" 
+            component="div" 
+            sx={{ 
+              fontWeight: 600, 
+              fontSize: "1.1rem",
+              mb: 0.5
+            }}
+          >
+            {product.name}
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Pedido mínimo: {product.minOrder} {product.unit}
+          <Typography 
+            variant="body2" 
+            color="text.secondary" 
+            sx={{ 
+              display: '-webkit-box',
+              overflow: 'hidden',
+              WebkitBoxOrient: 'vertical',
+              WebkitLineClamp: 2,
+              lineHeight: '1.4em',
+              height: '2.8em'
+            }}
+          >
+            {product.description}
           </Typography>
-          {showStock && (
-            <Typography variant="body2" color="success.main" sx={{ mb: 2, fontWeight: 500 }}>
-              Disponible: {product.stock} {product.unit}
+        </ProductHeader>
+        
+        <ProductDetail>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="body2" color="text.secondary">
+              Unidad: {product.unit}
             </Typography>
-          )}
-        </Box>
-        <Box sx={{ mt: "auto" }}>
-          <Typography variant="h5" color="primary" sx={{ fontWeight: 600, mb: 2 }}>
+            {showStock && (
+              <Chip 
+                label={`Stock: ${product.stock}`} 
+                color="success" 
+                size="small"
+                variant="outlined"
+                sx={{ height: '20px', fontSize: '0.7rem' }}
+              />
+            )}
+          </Box>
+          <Typography variant="body2" color="text.secondary">
+            Mínimo: {product.minOrder} {product.unit}
+          </Typography>
+        </ProductDetail>
+        
+        <ProductActions>
+          <Typography 
+            variant="h6" 
+            color="primary" 
+            sx={{ 
+              fontWeight: 600, 
+              textAlign: 'right',
+              fontSize: '1.2rem'
+            }}
+          >
             ${product.price}/{product.unit}
           </Typography>
-          <Box sx={{ mb: 2 }}>
-            <TextField
-              fullWidth
-              label={`Cantidad (${product.unit})`}
-              type="number"
-              value={quantity || ""}
-              onChange={(e) => onQuantityChange(product.id, e.target.value)}
-              error={!!error}
-              helperText={error}
-              InputProps={{
-                inputProps: {
-                  min: product.minOrder,
-                  max: showStock 
-                    ? Math.min(product.maxOrder, product.stock) 
-                    : product.maxOrder,
-                  step: product.increment,
-                },
-              }}
-              sx={{ "& .MuiOutlinedInput-root": { borderRadius: "8px" } }}
-            />
-          </Box>
+          
+          <TextField
+            size="small"
+            placeholder={`Cantidad (${product.unit})`}
+            type="number"
+            value={quantity || ""}
+            onChange={(e) => onQuantityChange(product.id, e.target.value)}
+            error={!!error}
+            helperText={error}
+            InputProps={{
+              inputProps: {
+                min: product.minOrder,
+                max: showStock 
+                  ? Math.min(product.maxOrder, product.stock) 
+                  : product.maxOrder,
+                step: product.increment,
+              },
+            }}
+            sx={{ 
+              "& .MuiOutlinedInput-root": { 
+                borderRadius: "6px",
+                fontSize: "0.9rem"
+              }
+            }}
+          />
+          
           <Button
             variant="contained"
             color="primary"
             fullWidth
-            size="large"
+            size="medium"
             startIcon={<AddShoppingCartIcon />}
             onClick={() => onAddToCart(product)}
             sx={{
-              py: 1.5,
-              borderRadius: "8px",
+              py: 1,
+              borderRadius: "6px",
               textTransform: "none",
-              fontSize: "1rem",
+              fontSize: "0.9rem",
               fontWeight: 500,
             }}
           >
-            Agregar al Pedido
+            Agregar
           </Button>
-        </Box>
+        </ProductActions>
       </CardContent>
     </StyledCard>
   );
