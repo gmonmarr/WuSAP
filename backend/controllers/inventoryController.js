@@ -2,7 +2,6 @@
 
 import { 
     getAllInventory,
-    getContinuedInventory,
     getInventoryByStore,
     assignInventoryToStore
   } from '../services/inventoryService.js';

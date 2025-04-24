@@ -4,7 +4,6 @@ import express from 'express';
 import { verifyToken } from '../middleware/authMiddleware.js';
 import {
   getInventory,
-  getActiveInventory,
   getStoreInventory,
   postInventory
 } from '../controllers/inventoryController.js';

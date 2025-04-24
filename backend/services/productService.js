@@ -16,7 +16,7 @@ export const getAllProducts = async () => {
   }
 };
 
-export const getActiveProducts = async () => {
+export const getActiveProductsService = async () => {
   const conn = await pool.acquire();
   try {
     return await new Promise((resolve, reject) => {

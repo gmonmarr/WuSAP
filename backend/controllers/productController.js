@@ -1,6 +1,6 @@
 import {
     getAllProducts,
-    getActiveProducts,
+    getActiveProductsService,
     addProduct
   } from '../services/productService.js';
   
@@ -15,7 +15,7 @@ import {
   
   export const getActiveProducts = async (req, res) => {
     try {
-      const data = await getActiveProducts();
+      const data = await getActiveProductsService();
       res.json(data);
     } catch (error) {
       res.status(500).json({ message: error.message });
