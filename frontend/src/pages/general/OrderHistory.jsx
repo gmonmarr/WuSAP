@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import {
-  Container,
+  Box,
   Typography,
   Paper,
   Table,
@@ -14,7 +14,6 @@ import {
   TablePagination,
   Chip,
   IconButton,
-  Box,
   Select,
   MenuItem,
   FormControl,
@@ -22,12 +21,27 @@ import {
   Grid,
   ToggleButtonGroup,
   ToggleButton,
+  Divider,
+  useTheme,
 } from '@mui/material';
+import { styled } from '@mui/material/styles';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import Navbar from '../../components/Navbar';
 import Header from '../../components/Header';
+import AvisoPerdidaInfo from "../../components/AvisoPerdidaInfo";
+
+// Styled components
+const StyledPaper = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(4),
+  margin: theme.spacing(2),
+  borderRadius: "16px",
+  boxShadow: "0 8px 24px rgba(0, 0, 0, 0.08)",
+  background: "#ffffff",
+}));
 
 const OrderHistory = () => {
+  const theme = useTheme();
+  
   // Get current date for sample data
   const currentDate = new Date();
   const formatDate = (date) => {
@@ -99,8 +113,10 @@ const OrderHistory = () => {
   };
 
   const handleStatusFilterChange = (event, newValue) => {
-    setStatusFilter(newValue);
-    setPage(0);
+    if (newValue !== null) {
+      setStatusFilter(newValue);
+      setPage(0);
+    }
   };
 
   const handleTimeFilterChange = (event) => {
@@ -185,21 +201,46 @@ const OrderHistory = () => {
   };
 
   return (
-    <div>
+    <div style={{ minHeight: "100vh", background: "#f8f9fa", display: "flex", flexDirection: "column" }}>
+      <AvisoPerdidaInfo />
       <Navbar />
       <Header title="Historial de Pedidos" />
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="h4" component="h1" gutterBottom sx={{ color: '#2C3E73', fontWeight: 600 }}>
-              Historial de Pedidos
-            </Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+      <Box sx={{ 
+        flex: 1,
+        maxWidth: 1600,
+        width: "100%",
+        margin: "0 auto", 
+        padding: "1.5rem 2rem",
+        display: "flex",
+        flexDirection: "column"
+      }}>
+        <StyledPaper sx={{
+          display: "flex",
+          flexDirection: "column",
+          height: "calc(100vh - 150px)",
+          overflow: "hidden"
+        }}>
+          <Box sx={{ 
+            p: { xs: 2, md: 2 }, 
+            pt: { xs: 1, md: 1.5 },
+            pb: 2,
+            borderBottom: '1px solid', 
+            borderColor: 'divider' 
+          }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
               Consulta el estado de tus pedidos
             </Typography>
 
-            <Grid container spacing={2} alignItems="center">
-              <Grid item xs={12} md={4}>
+            <Divider sx={{ mb: 2 }} />
+
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: { xs: 'column', md: 'row' }, 
+              justifyContent: 'space-between',
+              alignItems: { xs: 'stretch', md: 'center' },
+              gap: 2
+            }}>
+              <Box sx={{ flex: { md: '1' } }}>
                 <Typography variant="subtitle2" gutterBottom sx={{ ml: 0.5 }}>
                   Estado
                 </Typography>
@@ -211,11 +252,14 @@ const OrderHistory = () => {
                   size="small"
                   sx={{
                     display: 'flex',
+                    width: '100%',
                     '& .MuiToggleButton-root': {
                       flex: 1,
                       borderRadius: '4px !important',
                       mx: 0.2,
-                      textTransform: 'none'
+                      textTransform: 'none',
+                      fontWeight: 500,
+                      py: 1,
                     }
                   }}
                 >
@@ -232,14 +276,22 @@ const OrderHistory = () => {
                     Entregado
                   </ToggleButton>
                 </ToggleButtonGroup>
-              </Grid>
-              <Grid item xs={12} sm={6} md={4}>
+              </Box>
+              <Box sx={{ 
+                width: { xs: '100%', md: '250px' }, 
+                mt: { xs: 2, md: 3.5 }
+              }}>
                 <FormControl fullWidth size="small">
                   <InputLabel>Periodo de Tiempo</InputLabel>
                   <Select
                     value={timeFilter}
                     label="Periodo de Tiempo"
                     onChange={handleTimeFilterChange}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '8px',
+                      },
+                    }}
                   >
                     <MenuItem value="all">Todo el historial</MenuItem>
                     <MenuItem value="today">Hoy</MenuItem>
@@ -247,69 +299,139 @@ const OrderHistory = () => {
                     <MenuItem value="month">Último mes</MenuItem>
                   </Select>
                 </FormControl>
-              </Grid>
-            </Grid>
+              </Box>
+            </Box>
           </Box>
           
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 'bold' }}>ID Pedido</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Fecha de Solicitud</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Estado</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Total</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Artículos</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Fecha de Entrega</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Acciones</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredOrders
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((order) => (
-                    <TableRow key={order.id} hover>
-                      <TableCell>{order.id}</TableCell>
-                      <TableCell>{order.date}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={getStatusLabel(order.status)}
-                          color={getStatusColor(order.status)}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>{order.total}</TableCell>
-                      <TableCell>{order.items}</TableCell>
-                      <TableCell>
-                        {order.status === 'delivered' 
-                          ? order.deliveryDate 
-                          : `Estimada: ${order.estimatedDelivery}`}
-                      </TableCell>
-                      <TableCell>
-                        <IconButton
-                          color="primary"
-                          size="small"
-                          onClick={() => {/* Handle view details */}}
-                        >
-                          <VisibilityIcon />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <TablePagination
-            component="div"
-            count={filteredOrders.length}
-            page={page}
-            onPageChange={handleChangePage}
-            rowsPerPage={rowsPerPage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-            rowsPerPageOptions={[5, 10, 25]}
-          />
-        </Paper>
-      </Container>
+          <Box sx={{ 
+            flex: 1,
+            overflow: "auto",
+            p: "1.5rem 2rem",
+            "&::-webkit-scrollbar": {
+              width: "8px",
+              height: "8px",
+            },
+            "&::-webkit-scrollbar-track": {
+              background: "#f1f1f1",
+              borderRadius: "4px",
+            },
+            "&::-webkit-scrollbar-thumb": {
+              background: "#888",
+              borderRadius: "4px",
+              "&:hover": {
+                background: "#666",
+              },
+            },
+          }}>
+            <TableContainer sx={{ borderRadius: '8px', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)' }}>
+              <Table sx={{ minWidth: 700 }}>
+                <TableHead>
+                  <TableRow sx={{ backgroundColor: 'background.paper' }}>
+                    <TableCell sx={{ fontWeight: 'bold', py: 2 }}>ID Pedido</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', py: 2 }}>Fecha de Solicitud</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', py: 2 }}>Estado</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', py: 2 }}>Total</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', py: 2 }}>Artículos</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', py: 2 }}>Fecha de Entrega</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', py: 2 }}>Acciones</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filteredOrders
+                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    .map((order) => (
+                      <TableRow 
+                        key={order.id} 
+                        hover
+                        sx={{ 
+                          cursor: 'pointer',
+                          '&:hover': {
+                            backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                          },
+                          transition: 'background-color 0.2s',
+                        }}
+                      >
+                        <TableCell sx={{ borderLeft: `4px solid ${theme.palette[getStatusColor(order.status)].main}`, py: 2 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            {order.id}
+                          </Typography>
+                        </TableCell>
+                        <TableCell sx={{ py: 2 }}>{formatDisplayDate(order.date)}</TableCell>
+                        <TableCell sx={{ py: 2 }}>
+                          <Chip
+                            label={getStatusLabel(order.status)}
+                            color={getStatusColor(order.status)}
+                            size="small"
+                            sx={{ fontWeight: 500, minWidth: '90px', justifyContent: 'center' }}
+                          />
+                        </TableCell>
+                        <TableCell sx={{ py: 2, color: theme.palette.primary.main, fontWeight: 500 }}>{order.total}</TableCell>
+                        <TableCell sx={{ py: 2 }}>{order.items}</TableCell>
+                        <TableCell sx={{ py: 2 }}>
+                          {order.status === 'delivered' 
+                            ? formatDisplayDate(order.deliveryDate)
+                            : <Typography variant="body2" sx={{ fontStyle: 'italic', color: 'text.secondary' }}>
+                                Estimada: {formatDisplayDate(order.estimatedDelivery)}
+                              </Typography>
+                          }
+                        </TableCell>
+                        <TableCell sx={{ py: 2 }}>
+                          <IconButton
+                            color="primary"
+                            size="small"
+                            onClick={() => {/* Handle view details */}}
+                            sx={{ 
+                              borderRadius: '8px',
+                              transition: 'background-color 0.2s',
+                              '&:hover': {
+                                backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                              }
+                            }}
+                          >
+                            <VisibilityIcon />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Box>
+          
+          <Box sx={{ 
+            display: "flex", 
+            justifyContent: "flex-end", 
+            p: 2,
+            borderTop: "1px solid",
+            borderColor: "divider",
+            backgroundColor: "background.paper"
+          }}>
+            <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', mr: 2, color: 'text.secondary' }}>
+              Total: {filteredOrders.length} pedidos
+            </Typography>
+            <TablePagination
+              component="div"
+              count={filteredOrders.length}
+              page={page}
+              onPageChange={handleChangePage}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              rowsPerPageOptions={[5, 10, 25]}
+              labelRowsPerPage="Filas por página:"
+              labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+              sx={{
+                '.MuiTablePagination-toolbar': {
+                  paddingLeft: 2,
+                },
+                '.MuiTablePagination-selectLabel, .MuiTablePagination-select, .MuiTablePagination-selectIcon, .MuiTablePagination-input, .MuiTablePagination-actions': {
+                  color: 'text.secondary',
+                  fontSize: '0.875rem',
+                },
+              }}
+            />
+          </Box>
+        </StyledPaper>
+      </Box>
     </div>
   );
 };

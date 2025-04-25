@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import {
-  Container,
   Typography,
   Paper,
   Box,
@@ -21,17 +20,28 @@ import {
   DialogContent,
   DialogActions,
   Grid,
-  Divider
+  Divider,
+  useTheme
 } from '@mui/material';
+import { styled } from '@mui/material/styles';
 import SearchIcon from '@mui/icons-material/Search';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import PendingIcon from '@mui/icons-material/Pending';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Navbar from '../../components/Navbar';
 import Header from '../../components/Header';
+import AvisoPerdidaInfo from "../../components/AvisoPerdidaInfo";
+
+// Styled components
+const StyledPaper = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(4),
+  margin: theme.spacing(2),
+  borderRadius: "16px",
+  boxShadow: "0 8px 24px rgba(0, 0, 0, 0.08)",
+  background: "#ffffff",
+}));
 
 const Requests = () => {
+  const theme = useTheme();
+  
   // Sample data with updated statuses
   const [requests, setRequests] = useState([
     {
@@ -183,6 +193,12 @@ const Requests = () => {
         return 'warning';
       case 'in_progress':
         return 'info';
+      case 'returned':
+        return 'error';
+      case 'pending':
+        return 'secondary';
+      case 'completed':
+        return 'success';
       default:
         return 'default';
     }
@@ -196,6 +212,12 @@ const Requests = () => {
         return 'En Ruta';
       case 'in_progress':
         return 'En Proceso';
+      case 'returned':
+        return 'Devuelto';
+      case 'pending':
+        return 'Pendiente';
+      case 'completed':
+        return 'Completado';
       default:
         return status;
     }
@@ -211,156 +233,170 @@ const Requests = () => {
   return (
     <div style={{ 
       minHeight: '100vh', 
+      background: "#f8f9fa",
       display: 'flex', 
       flexDirection: 'column',
       overflow: 'hidden'
     }}>
+      <AvisoPerdidaInfo />
       <Navbar />
       <Header title="Solicitudes de Material" />
-      <Container 
-        maxWidth="lg" 
-        sx={{ 
-          mt: 4, 
-          mb: 4,
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden'
-        }}
-      >
-        <Paper 
-          elevation={3} 
-          sx={{ 
-            p: 4, 
-            borderRadius: 2,
-            display: 'flex',
-            flexDirection: 'column',
-            height: '100%',
-            maxHeight: 'calc(100vh - 180px)',
-            overflow: 'hidden'
-          }}
-        >
-          <Box sx={{ mb: 4, flexShrink: 0 }}>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+      <Box sx={{ 
+        flex: 1,
+        maxWidth: 1600,
+        width: "100%",
+        margin: "0 auto", 
+        padding: "1.5rem 2rem",
+        display: "flex",
+        flexDirection: "column"
+      }}>
+        <StyledPaper sx={{
+          display: "flex",
+          flexDirection: "column",
+          height: "calc(100vh - 150px)",
+          overflow: "hidden"
+        }}>
+          <Box sx={{ 
+            p: { xs: 2, md: 2 }, 
+            pt: { xs: 1, md: 1.5 },
+            pb: 2,
+            borderBottom: '1px solid', 
+            borderColor: 'divider' 
+          }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
               Gestiona las solicitudes de material del almacén
             </Typography>
 
-            <Grid container spacing={0}>
-              <Grid item xs={12}>
-                <Box sx={{ display: 'flex', mb: 1 }}>
-                  <Typography variant="subtitle2" sx={{ ml: 1, width: '300px' }}>
-                    Buscar
-                  </Typography>
-                  <Typography variant="subtitle2" sx={{ ml: 3 }}>
-                    Estado
-                  </Typography>
-                </Box>
-                
-                <Box sx={{ display: 'flex', gap: 3 }}>
-                  <TextField
-                    size="small"
-                    placeholder="Buscar por ID o material..."
-                    value={searchTerm}
-                    onChange={handleSearchChange}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <SearchIcon />
-                        </InputAdornment>
-                      ),
-                    }}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
-                      },
-                      width: '300px'
-                    }}  
-                  />
-                  
-                  <ToggleButtonGroup
-                    value={filter}
-                    exclusive
-                    onChange={handleFilterChange}
-                    aria-label="filtro de estado"
-                    size="small"
-                    sx={{
+            <Divider sx={{ mb: 2 }} />
+
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: { xs: 'column', md: 'row' }, 
+              justifyContent: 'space-between',
+              alignItems: { xs: 'stretch', md: 'center' },
+              gap: 2
+            }}>
+              <Box sx={{ flex: { md: '1' } }}>
+                <Typography variant="subtitle2" gutterBottom sx={{ ml: 0.5 }}>
+                  Estado
+                </Typography>
+                <ToggleButtonGroup
+                  value={filter}
+                  exclusive
+                  onChange={handleFilterChange}
+                  aria-label="filtro de estado"
+                  size="small"
+                  sx={{
+                    display: 'flex',
+                    width: '100%',
+                    '& .MuiToggleButton-root': {
                       flex: 1,
-                      height: '40px',
-                      '& .MuiToggleButton-root': {
-                        borderRadius: '4px !important',
-                        mx: 0.5,
-                        px: 3,
-                        py: 1,
-                        backgroundColor: '#ffffff',
-                        color: 'text.primary',
-                        textTransform: 'none',
-                        border: '1px solid #e0e0e0',
-                        '&:hover': {
-                          backgroundColor: '#f5f5f5',
-                        },
-                        '&.Mui-selected': {
-                          backgroundColor: '#1976d2',
-                          color: 'white',
-                          '&:hover': {
-                            backgroundColor: '#1565c0',
-                          }
-                        }
+                      borderRadius: '4px !important',
+                      mx: 0.2,
+                      textTransform: 'none',
+                      fontWeight: 500,
+                      py: 1,
+                    }
+                  }}
+                >
+                  <ToggleButton value="all">
+                    Todas
+                  </ToggleButton>
+                  <ToggleButton value="in_progress">
+                    En Proceso
+                  </ToggleButton>
+                  <ToggleButton value="on_route">
+                    En Ruta
+                  </ToggleButton>
+                  <ToggleButton value="delivered">
+                    Entregado
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              </Box>
+              <Box sx={{ 
+                width: { xs: '100%', md: '300px' }, 
+                mt: { xs: 2, md: 3.5 }
+              }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  placeholder="Buscar por ID o material..."
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '8px',
+                      backgroundColor: '#f9f9f9',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.04)',
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        boxShadow: '0 4px 8px rgba(0,0,0,0.08)',
+                      },
+                      '&.Mui-focused': {
+                        boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
                       }
-                    }}
-                  >
-                    <ToggleButton value="all">
-                      Todas
-                    </ToggleButton>
-                    <ToggleButton value="in_progress">
-                      En Proceso
-                    </ToggleButton>
-                    <ToggleButton value="on_route">
-                      En Ruta
-                    </ToggleButton>
-                    <ToggleButton value="delivered">
-                      Entregado
-                    </ToggleButton>
-                  </ToggleButtonGroup>
-                </Box>
-              </Grid>
-            </Grid>
+                    },
+                  }}
+                />
+              </Box>
+            </Box>
           </Box>
 
           <Box sx={{ 
             flex: 1,
-            overflow: 'auto',
-            minHeight: 0,
-            '&::-webkit-scrollbar': {
-              width: '8px',
+            overflow: "auto",
+            p: "1.5rem 2rem",
+            "&::-webkit-scrollbar": {
+              width: "8px",
+              height: "8px",
             },
-            '&::-webkit-scrollbar-track': {
-              backgroundColor: 'rgba(0,0,0,0.1)',
-              borderRadius: '4px',
+            "&::-webkit-scrollbar-track": {
+              background: "#f1f1f1",
+              borderRadius: "4px",
             },
-            '&::-webkit-scrollbar-thumb': {
-              backgroundColor: 'rgba(0,0,0,0.2)',
-              borderRadius: '4px',
-              '&:hover': {
-                backgroundColor: 'rgba(0,0,0,0.3)',
+            "&::-webkit-scrollbar-thumb": {
+              background: "#888",
+              borderRadius: "4px",
+              "&:hover": {
+                background: "#666",
               },
             },
           }}>
             <List sx={{ py: 0 }}>
               {filteredRequests.map((request, index) => (
-                <React.Fragment key={request.id}>
+                <Paper 
+                  key={request.id} 
+                  elevation={1}
+                  sx={{ 
+                    mb: 2, 
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                    borderLeft: `4px solid ${theme.palette[getStatusColor(request.status)].main}`,
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 6px 12px rgba(0,0,0,0.1)'
+                    }
+                  }}
+                >
                   <ListItem
                     sx={{
-                      bgcolor: 'background.paper',
-                      borderRadius: 1,
-                      mb: 1,
-                      '&:hover': {
-                        bgcolor: 'action.hover',
-                      },
+                      p: 2,
+                      display: 'flex',
+                      flexDirection: { xs: 'column', sm: 'row' },
+                      alignItems: { xs: 'flex-start', sm: 'center' }
                     }}
                   >
                     <ListItemText
                       primary={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1, flexWrap: 'wrap' }}>
                           <Typography variant="subtitle1" component="span" sx={{ fontWeight: 600 }}>
                             {request.id}
                           </Typography>
@@ -368,33 +404,61 @@ const Requests = () => {
                             label={getStatusLabel(request.status)}
                             color={getStatusColor(request.status)}
                             size="small"
+                            sx={{ fontWeight: 500, minWidth: '90px', justifyContent: 'center' }}
+                          />
+                          <Chip
+                            label={`Prioridad: ${request.priority.charAt(0).toUpperCase() + request.priority.slice(1)}`}
+                            color={request.priority === 'alta' ? 'error' : request.priority === 'media' ? 'warning' : 'default'}
+                            size="small"
+                            variant="outlined"
+                            sx={{ fontWeight: 500 }}
                           />
                         </Box>
                       }
                       secondary={
                         <Box sx={{ mt: 1 }}>
-                          <Typography variant="body2" component="span">
+                          <Typography variant="body1" component="span" sx={{ fontWeight: 500 }}>
                             {request.material} - {request.quantity}
                           </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            Solicitado por: {request.requestedBy} | Fecha: {request.date}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {request.status === 'delivered' 
-                              ? `Entregado el: ${request.deliveryDate}`
-                              : `Entrega estimada: ${request.estimatedDelivery}`}
-                          </Typography>
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: { xs: 1, md: 3 }, mt: 1 }}>
+                            <Typography variant="body2" color="text.secondary">
+                              <strong>Solicitado por:</strong> {request.requestedBy}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              <strong>Fecha:</strong> {request.date}
+                            </Typography>
+                            <Typography 
+                              variant="body2" 
+                              color={request.status === 'delivered' ? 'success.main' : 'text.secondary'}
+                              sx={{ fontWeight: request.status === 'delivered' ? 500 : 400 }}
+                            >
+                              {request.status === 'delivered' 
+                                ? <><strong>Entregado el:</strong> {request.deliveryDate}</>
+                                : <><strong>Entrega estimada:</strong> {request.estimatedDelivery || 'No disponible'}</>}
+                            </Typography>
+                          </Box>
                         </Box>
                       }
                       sx={{ mr: 2 }}
                     />
-                    <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Box sx={{ 
+                      display: 'flex', 
+                      gap: 1, 
+                      mt: { xs: 2, sm: 0 },
+                      ml: { xs: 0, sm: 'auto' },
+                      alignSelf: { xs: 'flex-end', sm: 'center' }
+                    }}>
                       {request.status === 'in_progress' && (
                         <Button
                           size="small"
                           variant="outlined"
                           color="warning"
                           onClick={() => handleStatusChange(request.id, 'on_route')}
+                          sx={{ 
+                            borderRadius: '8px',
+                            textTransform: 'none',
+                            fontWeight: 500
+                          }}
                         >
                           Marcar En Ruta
                         </Button>
@@ -405,6 +469,11 @@ const Requests = () => {
                           variant="contained"
                           color="success"
                           onClick={() => handleStatusChange(request.id, 'delivered')}
+                          sx={{ 
+                            borderRadius: '8px',
+                            textTransform: 'none',
+                            fontWeight: 500
+                          }}
                         >
                           Marcar Entregado
                         </Button>
@@ -412,59 +481,220 @@ const Requests = () => {
                       <IconButton
                         size="small"
                         onClick={() => handleRequestClick(request)}
+                        sx={{ 
+                          borderRadius: '8px',
+                          transition: 'background-color 0.2s',
+                          '&:hover': {
+                            backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                          },
+                          ml: 1
+                        }}
                       >
                         <ExpandMoreIcon />
                       </IconButton>
                     </Box>
                   </ListItem>
-                  {index < filteredRequests.length - 1 && <Divider />}
-                </React.Fragment>
+                </Paper>
               ))}
+              {filteredRequests.length === 0 && (
+                <Box sx={{ 
+                  py: 8, 
+                  textAlign: 'center', 
+                  backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                  borderRadius: '8px',
+                  border: '1px dashed',
+                  borderColor: 'divider',
+                }}>
+                  <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
+                    No se encontraron solicitudes
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Intente con otros filtros o términos de búsqueda
+                  </Typography>
+                </Box>
+              )}
             </List>
           </Box>
-        </Paper>
-      </Container>
+          
+          <Box sx={{ 
+            display: "flex", 
+            justifyContent: "space-between", 
+            px: 1.5,
+            py: 0.75,
+            borderTop: "1px solid",
+            borderColor: "divider",
+            backgroundColor: "background.paper"
+          }}>
+            <Typography 
+              variant="caption" 
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                color: 'text.secondary',
+                fontSize: '0.8rem'
+              }}
+            >
+              {filteredRequests.length} solicitudes
+            </Typography>
+            <Button 
+              variant="text" 
+              color="primary"
+              size="small"
+              onClick={() => setFilter('all')}
+              sx={{ 
+                textTransform: 'none', 
+                fontSize: '0.8rem',
+                py: 0,
+                px: 0.75,
+                minWidth: 'auto'
+              }}
+            >
+              Ver todas
+            </Button>
+          </Box>
+        </StyledPaper>
+      </Box>
 
       <Dialog
         open={detailsOpen}
         onClose={() => setDetailsOpen(false)}
         maxWidth="sm"
         fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: '12px',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)'
+          }
+        }}
       >
         {selectedRequest && (
           <>
-            <DialogTitle>
-              Detalles de la Solicitud {selectedRequest.id}
+            <DialogTitle sx={{ 
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+              py: 2.5
+            }}>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                Detalles de la Solicitud
+              </Typography>
+              <Chip
+                label={getStatusLabel(selectedRequest.status)}
+                color={getStatusColor(selectedRequest.status)}
+                size="small"
+                sx={{ mt: 1 }}
+              />
             </DialogTitle>
-            <DialogContent>
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="subtitle1" gutterBottom>
-                  Material: {selectedRequest.material}
-                </Typography>
-                <Typography variant="body1" gutterBottom>
-                  Cantidad: {selectedRequest.quantity}
-                </Typography>
-                <Typography variant="body1" gutterBottom>
-                  Solicitado por: {selectedRequest.requestedBy}
-                </Typography>
-                <Typography variant="body1" gutterBottom>
-                  Fecha: {selectedRequest.date}
-                </Typography>
-                <Typography variant="body1" gutterBottom>
-                  Estado: {getStatusLabel(selectedRequest.status)}
-                </Typography>
-                <Typography variant="body1" gutterBottom>
-                  Detalles adicionales: {selectedRequest.details}
-                </Typography>
-                {selectedRequest.status === 'returned' && (
-                  <Typography variant="body1" color="error" gutterBottom>
-                    Motivo de retorno: {selectedRequest.returnReason}
+            <DialogContent sx={{ pt: 3 }}>
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 600, color: theme.palette.primary.main }}>
+                    {selectedRequest.id} - {selectedRequest.material}
                   </Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="text.secondary">Cantidad</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 500 }}>{selectedRequest.quantity}</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="text.secondary">Solicitado por</Typography>
+                  <Typography variant="body1">{selectedRequest.requestedBy}</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="text.secondary">Fecha de solicitud</Typography>
+                  <Typography variant="body1">{selectedRequest.date}</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="text.secondary">
+                    {selectedRequest.status === 'delivered' ? 'Fecha de entrega' : 'Entrega estimada'}
+                  </Typography>
+                  <Typography 
+                    variant="body1" 
+                    color={selectedRequest.status === 'delivered' ? 'success.main' : 'inherit'}
+                    sx={{ fontWeight: selectedRequest.status === 'delivered' ? 500 : 400 }}
+                  >
+                    {selectedRequest.status === 'delivered' 
+                      ? selectedRequest.deliveryDate 
+                      : selectedRequest.estimatedDelivery || 'No disponible'}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="body2" color="text.secondary">Detalles adicionales</Typography>
+                  <Paper 
+                    variant="outlined" 
+                    sx={{ 
+                      p: 2, 
+                      mt: 1, 
+                      backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                      borderRadius: '8px' 
+                    }}
+                  >
+                    <Typography variant="body1">{selectedRequest.details}</Typography>
+                  </Paper>
+                </Grid>
+                {selectedRequest.status === 'returned' && (
+                  <Grid item xs={12}>
+                    <Typography variant="body2" color="error">Motivo de retorno</Typography>
+                    <Paper 
+                      variant="outlined" 
+                      sx={{ 
+                        p: 2, 
+                        mt: 1, 
+                        backgroundColor: 'rgba(211, 47, 47, 0.04)',
+                        borderColor: 'error.light',
+                        borderRadius: '8px' 
+                      }}
+                    >
+                      <Typography variant="body1" color="error.main">{selectedRequest.returnReason}</Typography>
+                    </Paper>
+                  </Grid>
                 )}
-              </Box>
+              </Grid>
             </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setDetailsOpen(false)}>
+            <DialogActions sx={{ p: 2.5, borderTop: '1px solid', borderColor: 'divider' }}>
+              {selectedRequest.status === 'in_progress' && (
+                <Button
+                  variant="outlined"
+                  color="warning"
+                  onClick={() => {
+                    handleStatusChange(selectedRequest.id, 'on_route');
+                    setDetailsOpen(false);
+                  }}
+                  sx={{ 
+                    mr: 1,
+                    borderRadius: '8px',
+                    textTransform: 'none',
+                    fontWeight: 500
+                  }}
+                >
+                  Marcar En Ruta
+                </Button>
+              )}
+              {selectedRequest.status === 'on_route' && (
+                <Button
+                  variant="contained"
+                  color="success"
+                  onClick={() => {
+                    handleStatusChange(selectedRequest.id, 'delivered');
+                    setDetailsOpen(false);
+                  }}
+                  sx={{ 
+                    mr: 1,
+                    borderRadius: '8px',
+                    textTransform: 'none',
+                    fontWeight: 500
+                  }}
+                >
+                  Marcar Entregado
+                </Button>
+              )}
+              <Button 
+                onClick={() => setDetailsOpen(false)}
+                sx={{ 
+                  borderRadius: '8px',
+                  textTransform: 'none',
+                  fontWeight: 500
+                }}
+              >
                 Cerrar
               </Button>
             </DialogActions>
