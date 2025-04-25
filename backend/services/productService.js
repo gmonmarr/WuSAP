@@ -21,7 +21,7 @@ export const getActiveProductsService = async () => {
   try {
     return await new Promise((resolve, reject) => {
       conn.exec(
-        `SELECT * FROM WUSAP.Products WHERE isDiscontinued = FALSE`,
+        `SELECT * FROM WUSAP.Products WHERE discontinued = FALSE`,
         (err, result) => err ? reject(err) : resolve(result)
       );
     });
@@ -33,35 +33,42 @@ export const getActiveProductsService = async () => {
 export const addProduct = async (name, suggestedPrice, unit, employeeID = 0) => {
   const conn = await pool.acquire();
   try {
-    const sql = `INSERT INTO WUSAP.Products (name, suggestedPrice, unit) VALUES (?, ?, ?)`;
+    // Insert into Products table
+    const insertSql = `INSERT INTO WUSAP.Products (name, suggestedPrice, unit) VALUES (?, ?, ?)`;
     await new Promise((resolve, reject) => {
-      conn.prepare(sql, (err, stmt) => {
+      conn.prepare(insertSql, (err, stmt) => {
         if (err) return reject(err);
         stmt.exec([name, suggestedPrice, unit], (err) => err ? reject(err) : resolve());
       });
     });
 
-    const [{ RECORDID }] = await new Promise((resolve, reject) => {
-      conn.exec(`SELECT CURRENT_IDENTITY_VALUE() AS recordID FROM DUMMY`, (err, result) =>
-        err ? reject(err) : resolve(result)
+    // Get inserted product ID
+    const result = await new Promise((resolve, reject) => {
+      conn.exec(`SELECT CURRENT_IDENTITY_VALUE() AS productID FROM DUMMY`, (err, res) =>
+        err ? reject(err) : resolve(res[0])
       );
     });
 
-    // Log insert into TableLogs
+    const newProductID = result.PRODUCTID;
+
+    // Log the insert into TableLogs
+    const logSql = `
+      INSERT INTO WUSAP.TableLogs (employeeID, tableName, recordID, action)
+      VALUES (?, ?, ?, ?)
+    `;
     await new Promise((resolve, reject) => {
-      conn.prepare(
-        `INSERT INTO WUSAP.TableLogs (tableLogID, employeeID, tableName, recordID, "action", "timestamp") VALUES (0, ?, 'Products', ?, 'INSERT', CURRENT_TIMESTAMP)`,
-        (err, stmt) => {
-          if (err) return reject(err);
-          stmt.exec([employeeID, RECORDID], (err) => err ? reject(err) : resolve());
-        }
-      );
+      conn.prepare(logSql, (err, stmt) => {
+        if (err) return reject(err);
+        stmt.exec([employeeID, "Products", newProductID, "INSERT"], (err) =>
+          err ? reject(err) : resolve()
+        );
+      });
     });
 
     return {
       success: true,
       message: 'Producto agregado exitosamente',
-      productID: RECORDID
+      productID: newProductID
     };
   } finally {
     pool.release(conn);
