@@ -249,6 +249,14 @@ const OrderPage = () => {
     });
   };
 
+  const calculateTotal = () => {
+    return selectedProducts.reduce((total, product) => {
+      // Si el producto no tiene precio, asumimos un valor por defecto de 0
+      const price = product.price || 0;
+      return total + (price * product.quantity);
+    }, 0);
+  };
+
   const renderCart = () => {
     return (
       <CartContainer>
