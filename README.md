@@ -20,7 +20,7 @@ WuSAP es un sistema de gestión de materiales diseñado para facilitar el seguim
 
 1. Clonar el repositorio:
 ```bash
-git clone [URL_DEL_REPOSITORIO]
+git clone https://github.com/gmonmarr/WuSAP.git
 cd WuSAP
 ```
 
@@ -57,9 +57,13 @@ cd backend
 
 2. Crear un archivo `.env` en la raíz del backend con las siguientes variables:
 ```
-PORT=3000
-MONGODB_URI=mongodb://localhost:27017/wusap
-JWT_SECRET=tu_secreto_aqui
+HANA_SERVER_NODE=[ligaHANAapi:443]
+HANA_USER=[USUARIOHANA]
+HANA_PASSWORD=[CONTRASEÑAHANA]
+HANA_SCHEMA=WUSAP
+
+JWT_SECRET=[secretoJWT]
+JWT_EXPIRATION=8h
 ```
 
 ## Ejecución del Proyecto
@@ -94,23 +98,86 @@ El backend estará disponible en `http://localhost:3000`
 
 ```
 WuSAP/
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── general/
-│   │   │   └── Proveedor/
-│   │   ├── pages/
-│   │   └── App.jsx
+├── backend
+│   ├── app.js
+│   ├── controllers
+│   │   ├── authController.js
+│   │   ├── inventoryController.js
+│   │   └── productController.js
+│   ├── db
+│   │   └── hanaPool.js
+│   ├── middleware
+│   │   ├── authMiddleware.js
+│   │   ├── handleValidation.js
+│   │   ├── logMiddleware.js
+│   │   └── validation.js
+│   ├── models
+│   ├── node_modules
+│   ├── package-lock.json
 │   ├── package.json
+│   ├── routes
+│   │   ├── authRoutes.js
+│   │   ├── inventoryRoutes.js
+│   │   └── productRoutes.js
+│   └── services
+│       ├── authService.js
+│       ├── inventoryService.js
+│       └── productService.js
+├── Documentos
+│   ├── Documento de Administración.pdf
+│   ├── Plan de Pruebas.pdf
+│   └── SRS - Documento de Requerimientos con apego en estándares internacionales.pdf
+├── frontend
+│   ├── eslint.config.js
+│   ├── index.html
+│   ├── node_modules
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── README.md
+│   ├── src
+│   │   ├── App.css
+│   │   ├── App.jsx
+│   │   ├── components
+│   │   │   ├── AvisoPerdidaInfo.jsx
+│   │   │   ├── Header.jsx
+│   │   │   ├── ListComponent.css
+│   │   │   ├── ListComponent.jsx
+│   │   │   ├── Modal.jsx
+│   │   │   ├── Navbar.css
+│   │   │   ├── Navbar.jsx
+│   │   │   ├── OrdenStatusCard.jsx
+│   │   │   └── ProductCard.jsx
+│   │   ├── hooks
+│   │   │   └── useBlocker.jsx
+│   │   ├── main.jsx
+│   │   ├── pages
+│   │   │   ├── admin
+│   │   │   │   ├── AddUser.css
+│   │   │   │   ├── AddUser.jsx
+│   │   │   │   ├── AdminMain.css
+│   │   │   │   ├── AdminMain.jsx
+│   │   │   │   ├── UserList.css
+│   │   │   │   └── UserList.jsx
+│   │   │   ├── Dashboard.tsx
+│   │   │   ├── general
+│   │   │   │   ├── DashVentas.txt
+│   │   │   │   ├── OrdenStatus.jsx
+│   │   │   │   ├── OrdenStatusInfo.jsx
+│   │   │   │   ├── OrderHistory.jsx
+│   │   │   │   └── OrderPage.jsx
+│   │   │   ├── ListaProductos.txt
+│   │   │   ├── Login.jsx
+│   │   │   ├── Profile.jsx
+│   │   │   └── Proveedor
+│   │   │       ├── Inventario.tsx
+│   │   │       ├── OrderProvider.jsx
+│   │   │       └── Requests.jsx
+│   │   └── services
+│   │       └── api.js
 │   └── vite.config.js
-├── backend/
-│   ├── src/
-│   │   ├── controllers/
-│   │   ├── models/
-│   │   ├── routes/
-│   │   └── server.js
-│   └── package.json
 └── README.md
+
+20 directories, 59 files
 ```
 
 ## Componentes Principales
@@ -134,29 +201,12 @@ WuSAP/
 ### Frontend
 - React
 - Material-UI
-- UI5 Web Components
+- SAP UI5
 - Vite
 - React Router
 
 ### Backend
 - Node.js
 - Express
-- MongoDB
-- Mongoose
+- SAP HANA
 - JWT
-
-## Contribución
-
-1. Fork el proyecto
-2. Crear una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abrir un Pull Request
-
-## Licencia
-
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
-
-## Contacto
-
-Para cualquier consulta o sugerencia, por favor contactar al equipo de desarrollo.
