@@ -9,6 +9,7 @@ export const validateRegister = [
     body("cellphone").notEmpty().withMessage("El número de celular es obligatorio"),
     body("password").isLength({ min: 8 }).withMessage("La contraseña debe tener al menos 8 caracteres"),
     body("role").notEmpty().withMessage("El rol es obligatorio"),
+    body("role").isIn(["admin", "manager", "sales", "owner"]).withMessage("El rol debe ser admin, manager, sales o owner"),
 ];
 
 export const validateLogin = [

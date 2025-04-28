@@ -295,7 +295,7 @@ const AddUser = () => {
                         <ui5-option value="">Seleccionar rol</ui5-option>
                         <ui5-option value="admin">Administrador</ui5-option>
                         <ui5-option value="manager">Gerente</ui5-option>
-                        <ui5-option value="venta">Ventas</ui5-option>
+                        <ui5-option value="sales">Ventas</ui5-option>
                         <ui5-option value="owner">Propietario</ui5-option>
                       </ui5-select>
                       {errors.role && <div className="error-message">{errors.role}</div>}
