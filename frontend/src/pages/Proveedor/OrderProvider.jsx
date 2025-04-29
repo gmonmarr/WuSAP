@@ -421,6 +421,8 @@ const OrderProvider = () => {
                       error={error[product.id]}
                       onQuantityChange={handleQuantityChange}
                       onAddToCart={addToCart}
+                      showStock={true}
+                      editable={true}
                     />
                   </Grid>
                 ))}

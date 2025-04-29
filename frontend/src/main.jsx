@@ -18,6 +18,7 @@ import AdminMain from './pages/admin/AdminMain';
 import OrderHistory from './pages/general/OrderHistory';
 import Requests from './pages/Proveedor/Requests';
 import OrderProvider from './pages/Proveedor/OrderProvider';
+import ProductsPage from './pages/general/ProductsPage';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
@@ -38,6 +39,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path='/historial-pedido' element={<OrderHistory/>} />
         <Route path='/solicitudes' element={<Requests/>} />
         <Route path='/solicitar-material' element={<OrderProvider/>} />
+        <Route path='/productos' element={<ProductsPage/>} />
       </Routes>
     </Router>
   </React.StrictMode>
