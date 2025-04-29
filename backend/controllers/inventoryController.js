@@ -17,13 +17,17 @@ import {
   
   export const getStoreInventory = async (req, res) => {
     try {
-      const storeID = req.user.storeID;
+      const storeID = req.body.storeID || req.user?.storeID;
+      if (!storeID) {
+        return res.status(400).json({ message: 'Store ID not provided.' });
+      }
+  
       const data = await getInventoryByStore(storeID);
       res.json(data);
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
-  };
+  };  
   
   export const postInventory = async (req, res) => {
     const { productID, storeID, quantity } = req.body;
