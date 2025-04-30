@@ -8,6 +8,7 @@ import authRoutes from './routes/authRoutes.js';
 import { logAPIAccess } from './middleware/logMiddleware.js';
 import productRoutes from './routes/productRoutes.js';
 import inventoryRoutes from './routes/inventoryRoutes.js';
+import hanaPool from './db/hanaPool.js';
 
 dotenv.config();
 
@@ -40,7 +41,6 @@ app.get('/api/test', (req, res) => {
 
 // Test HANA connection
 app.get('/api/test-hana', (req, res) => {
-  const hanaPool = require('./db/hanaPool.js');
   hanaPool.acquire().then((conn) => {
     conn.exec('SELECT CURRENT_TIMESTAMP AS "Current Time" FROM DUMMY', (err, rows) => {
       if (err) {
