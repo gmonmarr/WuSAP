@@ -19,12 +19,23 @@ import {
   IconButton,
   Alert,
   InputAdornment,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  CircularProgress,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  FormHelperText,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import SearchIcon from '@mui/icons-material/Search';
+import AddIcon from '@mui/icons-material/Add';
 import Navbar from "../../components/Navbar";
 import Header from "../../components/Header";
 import AvisoPerdidaInfo from "../../components/AvisoPerdidaInfo";
@@ -87,7 +98,7 @@ const OrderPage = () => {
     contactNumber: "",
     notes: "",
   });
-
+  
   const products = [
     {
       id: 1,
@@ -392,6 +403,7 @@ const OrderPage = () => {
                       onQuantityChange={handleQuantityChange}
                       onAddToCart={addToCart}
                       showStock={true}
+                      editable={true}
                     />
                   </Grid>
                 ))}
@@ -720,36 +732,38 @@ const OrderPage = () => {
                   {filteredProducts.length} productos
                 </Typography>
               </Box>
-              <Box sx={{ width: '300px' }}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  placeholder="Buscar productos..."
-                  variant="outlined"
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon color="action" />
-                      </InputAdornment>
-                    ),
-                  }}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: '8px',
-                      backgroundColor: '#f9f9f9',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.04)',
-                      transition: 'all 0.2s ease',
-                      '&:hover': {
-                        boxShadow: '0 4px 8px rgba(0,0,0,0.08)',
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{ width: '300px' }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    placeholder="Buscar productos..."
+                    variant="outlined"
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchIcon color="action" />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '8px',
+                        backgroundColor: '#f9f9f9',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.04)',
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          boxShadow: '0 4px 8px rgba(0,0,0,0.08)',
+                        },
+                        '&.Mui-focused': {
+                          boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                        }
                       },
-                      '&.Mui-focused': {
-                        boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-                      }
-                    },
-                  }}
-                />
+                    }}
+                  />
+                </Box>
               </Box>
             </Box>
           )}
@@ -846,4 +860,4 @@ const OrderPage = () => {
   );
 };
 
-export default OrderPage; 
+export default OrderPage;

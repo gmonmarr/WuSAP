@@ -126,4 +126,40 @@ api.interceptors.request.use(
 );
 
 // Export the axios instance for direct use if needed
-export default api; 
+export default api;
+
+// Product services
+export const productService = {
+  // Get all products
+  getAllProducts: async () => {
+    try {
+      const response = await api.get('/api/product/');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching all products:', error);
+      throw error;
+    }
+  },
+
+  // Get only active products
+  getActiveProducts: async () => {
+    try {
+      const response = await api.get('/api/product/active');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching active products:', error);
+      throw error;
+    }
+  },
+
+  // Create a new product
+  createProduct: async (productData) => {
+    try {
+      const response = await api.post('/api/product/', productData);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating product:', error);
+      throw error;
+    }
+  }
+}; 

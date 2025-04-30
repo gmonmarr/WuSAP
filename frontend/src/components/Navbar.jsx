@@ -73,6 +73,7 @@ const Navbar = () => {
   const navItems = [
     { path: '/tablero', label: 'Tablero', icon: 'home' },
     { path: '/hacer-pedido', label: 'Hacer Pedido', icon: 'cart' },
+    { path: '/productos', label: 'Productos', icon: 'business-objects-experience' },
     { path: '/solicitar-material', label: 'Solicitar Material', icon: 'cart' },
     { path: '/historial-pedido', label: 'Historial de Pedidos', icon: 'business-objects-experience' },
     { path: '/solicitudes', label: 'Solicitudes', icon: 'business-objects-experience' },

@@ -8,9 +8,11 @@ import {
   Button,
   Box,
   Chip,
+  IconButton,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
+import EditIcon from '@mui/icons-material/Edit';
 
 // Styled components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -63,8 +65,16 @@ const ProductCard = ({
   error,
   onQuantityChange,
   onAddToCart,
-  showStock = false, // Optional prop to show stock info
+  showStock = false, // Default to NOT showing stock
+  showEditButton = false, // Option to show edit button
+  editable = false, // If the card should be editable with quantity field
+  onEditClick,
 }) => {
+  // Format price - handle potential string values or null/undefined
+  const formattedPrice = typeof product.price === 'number'
+    ? product.price.toFixed(2)
+    : parseFloat(product.price || 0).toFixed(2);
+
   return (
     <StyledCard>
       <StyledCardMedia
@@ -85,97 +95,106 @@ const ProductCard = ({
           >
             {product.name}
           </Typography>
-          <Typography 
-            variant="body2" 
-            color="text.secondary" 
-            sx={{ 
-              display: '-webkit-box',
-              overflow: 'hidden',
-              WebkitBoxOrient: 'vertical',
-              WebkitLineClamp: 2,
-              lineHeight: '1.4em',
-              height: '2.8em'
-            }}
-          >
-            {product.description}
-          </Typography>
         </ProductHeader>
         
         <ProductDetail>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Typography variant="body2" color="text.secondary">
-              Unidad: {product.unit}
+              Unidad: {product.unit || 'unidad'}
             </Typography>
             {showStock && (
               <Chip 
-                label={`Stock: ${product.stock}`} 
-                color="success" 
+                label={`Stock: ${product.stock || 0}`} 
+                color={product.stock > 0 ? "success" : "error"}
                 size="small"
                 variant="outlined"
                 sx={{ height: '20px', fontSize: '0.7rem' }}
               />
             )}
           </Box>
-          <Typography variant="body2" color="text.secondary">
-            Mínimo: {product.minOrder} {product.unit}
-          </Typography>
+          {editable && product.minOrder && (
+            <Typography variant="body2" color="text.secondary">
+              Mínimo: {product.minOrder} {product.unit || 'unidad'}
+            </Typography>
+          )}
         </ProductDetail>
         
         <ProductActions>
-          <Typography 
-            variant="h6" 
-            color="primary" 
-            sx={{ 
-              fontWeight: 600, 
-              textAlign: 'right',
-              fontSize: '1.2rem'
-            }}
-          >
-            ${product.price}/{product.unit}
-          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography 
+              variant="h6" 
+              color="primary" 
+              sx={{ 
+                fontWeight: 600, 
+                fontSize: '1.2rem'
+              }}
+            >
+              ${formattedPrice}/{product.unit || 'unidad'}
+            </Typography>
+            
+            {showEditButton && (
+              <IconButton 
+                color="primary"
+                size="small"
+                onClick={() => onEditClick && onEditClick(product)}
+                sx={{ 
+                  bgcolor: 'rgba(25, 118, 210, 0.08)',
+                  '&:hover': {
+                    bgcolor: 'rgba(25, 118, 210, 0.12)',
+                  }
+                }}
+              >
+                <EditIcon fontSize="small" />
+              </IconButton>
+            )}
+          </Box>
           
-          <TextField
-            size="small"
-            placeholder={`Cantidad (${product.unit})`}
-            type="number"
-            value={quantity || ""}
-            onChange={(e) => onQuantityChange(product.id, e.target.value)}
-            error={!!error}
-            helperText={error}
-            InputProps={{
-              inputProps: {
-                min: product.minOrder,
-                max: showStock 
-                  ? Math.min(product.maxOrder, product.stock) 
-                  : product.maxOrder,
-                step: product.increment,
-              },
-            }}
-            sx={{ 
-              "& .MuiOutlinedInput-root": { 
-                borderRadius: "6px",
-                fontSize: "0.9rem"
-              }
-            }}
-          />
-          
-          <Button
-            variant="contained"
-            color="primary"
-            fullWidth
-            size="medium"
-            startIcon={<AddShoppingCartIcon />}
-            onClick={() => onAddToCart(product)}
-            sx={{
-              py: 1,
-              borderRadius: "6px",
-              textTransform: "none",
-              fontSize: "0.9rem",
-              fontWeight: 500,
-            }}
-          >
-            Agregar
-          </Button>
+          {editable && (
+            <>
+              <TextField
+                size="small"
+                placeholder={`Cantidad (${product.unit || 'unidad'})`}
+                type="number"
+                value={quantity || ""}
+                onChange={(e) => onQuantityChange(product.id, e.target.value)}
+                error={!!error}
+                helperText={error}
+                InputProps={{
+                  inputProps: {
+                    min: product.minOrder || 1,
+                    max: showStock 
+                      ? Math.min(product.maxOrder || 10000, product.stock || 0) 
+                      : (product.maxOrder || 10000),
+                    step: product.increment || 1,
+                  },
+                }}
+                sx={{ 
+                  "& .MuiOutlinedInput-root": { 
+                    borderRadius: "6px",
+                    fontSize: "0.9rem"
+                  }
+                }}
+              />
+              
+              <Button
+                variant="contained"
+                color="primary"
+                fullWidth
+                size="medium"
+                startIcon={<AddShoppingCartIcon />}
+                onClick={() => onAddToCart(product)}
+                sx={{
+                  py: 1,
+                  borderRadius: "6px",
+                  textTransform: "none",
+                  fontSize: "0.9rem",
+                  fontWeight: 500,
+                }}
+              >
+                Agregar
+              </Button>
+            </>
+          )}
         </ProductActions>
       </CardContent>
     </StyledCard>
