@@ -17,11 +17,19 @@ const PORT = process.env.PORT || 3000;
 
 // Configuración de CORS 
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173', // URL de tu frontend
+  origin: function (origin, callback) {
+    const allowedOrigins = ['https://wusap-front.onrender.com'];
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 };
+
 
 // Middleware
 app.use(cors(corsOptions));
