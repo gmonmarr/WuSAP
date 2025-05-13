@@ -8,6 +8,7 @@ import authRoutes from './routes/authRoutes.js';
 import { logAPIAccess } from './middleware/logMiddleware.js';
 import productRoutes from './routes/productRoutes.js';
 import inventoryRoutes from './routes/inventoryRoutes.js';
+import orderRoutes from './routes/orderRoutes.js';
 import hanaPool from './db/hanaPool.js';
 
 dotenv.config();
@@ -19,21 +20,22 @@ const corsOptions = {
   origin: function (origin, callback) {
     const allowedOrigins = [
       'https://wusap-front.onrender.com',
-      'http://localhost:5173'
+      'http://localhost:5173',
+      'http://localhost:3000',
     ];
-    
+
+    // Allow requests with no origin (like Postman or Supertest)
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.warn(`Blocked by CORS: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  credentials: true,
 };
-
-
 
 // Middleware
 app.use(cors(corsOptions));
@@ -45,6 +47,7 @@ app.use(logAPIAccess); // ESTE DEBE ESTAR ANTES DE LAS RUTAS
 app.use('/api', authRoutes);
 app.use('/api', productRoutes);
 app.use('/api', inventoryRoutes);
+app.use('/api', orderRoutes);
 
 // Test Route
 app.get('/api/test', (req, res) => {
