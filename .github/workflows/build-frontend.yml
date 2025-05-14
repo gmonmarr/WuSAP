@@ -45,9 +45,12 @@ jobs:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
 
       - name: Check vite VITE_API_URL
-        run: echo "VITE_API_URL is: $VITE_API_URL"
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        run: |
+          echo "✅ VITE_API_URL is set: ${VITE_API_URL}"
         continue-on-error: true
-
+        
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
