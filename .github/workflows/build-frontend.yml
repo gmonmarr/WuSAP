@@ -42,13 +42,13 @@ jobs:
       - name: Build Vite app
         run: npm run build
         env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_API_URL: ${{ secrets.VITE_API_SERVER }}
 
-      - name: Check vite VITE_API_URL
+      - name: Check vite VITE_API_SERVER
         env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_API_URL: ${{ secrets.VITE_API_SERVER }}
         run: |
-          echo "✅ VITE_API_URL is set: ${VITE_API_URL}"
+          echo "✅ VITE_API_SERVER is set: ${VITE_API_SERVER}"
         continue-on-error: true
         
       - name: Deploy to GitHub Pages

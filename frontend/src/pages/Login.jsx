@@ -181,7 +181,7 @@ const Login = () => {
                   letterSpacing: "0.01em"
                 }}
               >
-                Tu solución integral para la gestión de pedidos, y producción
+                Tu solución integral para la gestión de pedidos y producción
               </Typography>
             </Box>
           </Grid>
