@@ -19,7 +19,8 @@ const corsOptions = {
   origin: function (origin, callback) {
     const allowedOrigins = [
       'https://wusap-front.onrender.com',
-      'http://localhost:5173'
+      'http://localhost:5173',
+      'https://gmonmarr.github.io/WuSAP/',
     ];
     
     if (!origin || allowedOrigins.includes(origin)) {
