@@ -21,7 +21,8 @@ const corsOptions = {
     const allowedOrigins = [
       'https://wusap-front.onrender.com',
       'http://localhost:5173',
-      'http://localhost:3000',
+      'https://gmonmarr.github.io',
+      'http://localhost:3000'
     ];
 
     // Allow requests with no origin (like Postman or Supertest)
