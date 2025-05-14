@@ -42,7 +42,7 @@ jobs:
       - name: Build Vite app
         run: npm run build
         env:
-          VITE_API_URL: ${{ secrets.VITE_API_SERVER }}
+          VITE_API_SERVER: ${{ secrets.VITE_API_SERVER }}
 
       - name: Check vite VITE_API_SERVER
         env:
