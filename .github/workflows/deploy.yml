@@ -52,11 +52,10 @@ jobs:
           echo "✅ Access token received. Targeting Cloud Foundry..."
 
           export CF_ACCESS_TOKEN="bearer $ACCESS_TOKEN"
+          export CF_USERNAME="$CF_CLIENT_ID"
 
           cf api "$CF_API"
           cf target -o "$CF_ORG" -s "$CF_SPACE"
-
-
 
       - name: 🚀 Deploy Backend (with environment variables)
         working-directory: backend
