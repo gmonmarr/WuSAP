@@ -61,8 +61,8 @@ export const authService = {
         throw new Error('No estás autorizado para realizar esta acción. Por favor, inicia sesión nuevamente.');
       }
       
-      // Validación adicional de los datos requeridos
-      const requiredFields = ['name', 'lastName', 'email', 'password', 'role', 'cellphone'];
+      // Validate required fields - using lowercase lastname to match backend
+      const requiredFields = ['name', 'lastname', 'email', 'password', 'role', 'cellphone'];
       const missingFields = requiredFields.filter(field => !userData[field]);
       
       if (missingFields.length > 0) {
@@ -110,6 +110,31 @@ export const authService = {
   
   isAuthenticated: () => {
     return !!sessionStorage.getItem('token');
+  }
+};
+
+// Employee service
+export const employeeService = {
+  // Get all employees
+  getAllEmployees: async () => {
+    try {
+      const response = await api.get('/api/employees');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching employees:', error);
+      throw error;
+    }
+  },
+  
+  // Update employee
+  updateEmployee: async (employeeId, employeeData) => {
+    try {
+      const response = await api.put(`/api/employees/${employeeId}`, employeeData);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating employee:', error);
+      throw error;
+    }
   }
 };
 
