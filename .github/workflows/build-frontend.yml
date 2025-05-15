@@ -2,7 +2,7 @@ name: Deploy Backend & Frontend to SAP CF
 
 on:
   push:
-    branches: [main]  # Change if your default branch is different
+    branches: [sap-cf]  # Change if your default branch is different
 
 jobs:
   deploy:
