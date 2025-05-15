@@ -53,8 +53,13 @@ jobs:
 
           echo "✅ Access token received. Logging into Cloud Foundry..."
 
-          cf auth --client-credentials --assertion "$ACCESS_TOKEN"
+          # Store the token in a file that CF CLI understands
+          mkdir -p ~/.cf
+          echo "{\"AccessToken\":\"bearer $ACCESS_TOKEN\"}" > ~/.cf/config.json
+
+          # Target the org and space (no login step needed)
           cf target -o "$CF_ORG" -s "$CF_SPACE"
+
 
       - name: 🚀 Deploy Backend (with environment variables)
         working-directory: backend
