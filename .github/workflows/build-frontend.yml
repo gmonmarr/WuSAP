@@ -17,11 +17,14 @@ jobs:
         with:
           node-version: 18
 
-      - name: ☁️ Install Cloud Foundry CLI
+      - name: ☁️ Install Cloud Foundry CLI via apt
         run: |
-          curl -L "https://packages.cloudfoundry.org/stable?release=linux64" -o cf-cli.tgz
-          tar -xzf cf-cli.tgz
-          sudo mv cf /usr/local/bin
+          sudo apt-get update
+          sudo apt-get install -y wget gnupg
+          wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
+          echo "deb https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
+          sudo apt-get update
+          sudo apt-get install -y cf-cli
           cf version
 
       - name: 🔐 Authenticate to SAP CF using service key
