@@ -27,7 +27,7 @@ jobs:
           sudo apt-get install -y cf8-cli || sudo apt-get install -y cf-cli
           cf version
 
-      - name: 🔐 Authenticate to SAP CF using service key
+      - name: 🔐 Authenticate to SAP CF using OAuth token via curl
         env:
           CF_API: ${{ secrets.CF_API }}
           CF_CLIENT_ID: ${{ secrets.CF_CLIENT_ID }}
@@ -36,9 +36,25 @@ jobs:
           CF_ORG: ${{ secrets.CF_ORG }}
           CF_SPACE: ${{ secrets.CF_SPACE }}
         run: |
-          cf api $CF_API
-          cf auth $CF_CLIENT_ID $CF_CLIENT_SECRET --client-credentials
-          cf target -o $CF_ORG -s $CF_SPACE
+          sudo apt-get install -y jq > /dev/null
+
+          cf api "$CF_API"
+
+          echo "🔐 Requesting access token from UAA..."
+          ACCESS_TOKEN=$(curl -s -k -X POST "$CF_AUTH_URL/oauth/token" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            -u "$CF_CLIENT_ID:$CF_CLIENT_SECRET" \
+            -d 'grant_type=client_credentials' | jq -r .access_token)
+
+          if [ "$ACCESS_TOKEN" = "null" ] || [ -z "$ACCESS_TOKEN" ]; then
+            echo "❌ Failed to retrieve access token."
+            exit 1
+          fi
+
+          echo "✅ Access token received. Logging into Cloud Foundry..."
+
+          cf auth --client-id "$CF_CLIENT_ID" --access-token "$ACCESS_TOKEN"
+          cf target -o "$CF_ORG" -s "$CF_SPACE"
 
       - name: 🚀 Deploy Backend (with environment variables)
         working-directory: backend
