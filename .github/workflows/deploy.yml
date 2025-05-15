@@ -38,6 +38,8 @@ jobs:
         run: |
           sudo apt-get install -y jq > /dev/null
 
+          cf api "$CF_API"
+
           echo "🔐 Requesting access token from UAA..."
           ACCESS_TOKEN=$(curl -s -k -X POST "$CF_AUTH_URL/oauth/token" \
             -H "Content-Type: application/x-www-form-urlencoded" \
@@ -49,13 +51,11 @@ jobs:
             exit 1
           fi
 
-          echo "✅ Access token received. Targeting Cloud Foundry..."
+          echo "✅ Access token received. Logging into Cloud Foundry..."
 
-          export CF_ACCESS_TOKEN="bearer $ACCESS_TOKEN"
-          export CF_USERNAME="$CF_CLIENT_ID"
-
-          cf api "$CF_API"
+          cf auth "$CF_CLIENT_ID" --client-credentials --origin uaa --assertion "$ACCESS_TOKEN"
           cf target -o "$CF_ORG" -s "$CF_SPACE"
+
 
       - name: 🚀 Deploy Backend (with environment variables)
         working-directory: backend
