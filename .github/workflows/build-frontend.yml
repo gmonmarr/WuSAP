@@ -1,58 +1,69 @@
-name: Build and Deploy Frontend
+name: Deploy Backend & Frontend to SAP CF
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
-permissions:
-  contents: write
-  pages: write
-  id-token: write
+    branches: [main]  # Change if your default branch is different
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
-    
-    defaults:
-      run:
-        working-directory: frontend
 
     steps:
-      - name: Checkout repository
+      - name: 📦 Checkout Code
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: 18
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run lint
-        run: npm run lint
-        continue-on-error: true
-
-      - name: Run tests
-        run: npm test
-        continue-on-error: true
-
-      - name: Build Vite app
-        run: npm run build
-        env:
-          VITE_API_SERVER: ${{ secrets.VITE_API_SERVER }}
-
-      - name: Check vite VITE_API_SERVER
-        env:
-          VITE_API_URL: ${{ secrets.VITE_API_SERVER }}
+      - name: ☁️ Install Cloud Foundry CLI
         run: |
-          echo "✅ VITE_API_SERVER is set: ${VITE_API_SERVER}"
-        continue-on-error: true
-        
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: frontend/dist
+          curl -L "https://packages.cloudfoundry.org/stable?release=linux64" -o cf-cli.tgz
+          tar -xzf cf-cli.tgz
+          sudo mv cf /usr/local/bin
+          cf version
+
+      - name: 🔐 Authenticate to SAP CF using service key
+        env:
+          CF_API: ${{ secrets.CF_API }}
+          CF_CLIENT_ID: ${{ secrets.CF_CLIENT_ID }}
+          CF_CLIENT_SECRET: ${{ secrets.CF_CLIENT_SECRET }}
+          CF_AUTH_URL: ${{ secrets.CF_AUTH_URL }}
+          CF_ORG: ${{ secrets.CF_ORG }}
+          CF_SPACE: ${{ secrets.CF_SPACE }}
+        run: |
+          cf api $CF_API
+          cf auth $CF_CLIENT_ID $CF_CLIENT_SECRET --client-credentials
+          cf target -o $CF_ORG -s $CF_SPACE
+
+      - name: 🚀 Deploy Backend (with environment variables)
+        working-directory: backend
+        env:
+          HANA_SERVER_NODE: ${{ secrets.HANA_SERVER_NODE }}
+          HANA_USER: ${{ secrets.HANA_USER }}
+          HANA_PASSWORD: ${{ secrets.HANA_PASSWORD }}
+          HANA_SCHEMA: ${{ secrets.HANA_SCHEMA }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWT_EXPIRATION: ${{ secrets.JWT_EXPIRATION }}
+        run: |
+          npm install --omit=dev
+          cf push
+
+      - name: 🌐 Get Backend Route
+        id: backend-url
+        run: |
+          BACKEND_ROUTE=$(cf app wusap-backend | grep routes: | awk '{print $2}')
+          echo "BACKEND_URL=https://$BACKEND_ROUTE" >> $GITHUB_ENV
+          echo "✅ Backend URL is: https://$BACKEND_ROUTE"
+
+      - name: 🏗️ Build Frontend with dynamic backend URL
+        working-directory: frontend
+        run: |
+          echo "VITE_API_SERVER=${{ env.BACKEND_URL }}" > .env.production
+          npm install
+          npm run build
+
+      - name: 🌍 Deploy Frontend
+        working-directory: frontend
+        run: cf push
