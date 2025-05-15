@@ -1,13 +1,11 @@
 // services/orderService.js
 
-import pool from '../db/hanaPool.js';
-
 // Format:
 // In order to do *this*
     // We need to do *that*
 
 // Tables:
-// Orders [orderID, orderDate, orderTotal, status, comments, storeID, createdAt, updatedAt]
+// Orders [orderID, orderDate, orderTotal, status, comments, storeID]
 // OrderItems [orderItemID, orderID, productID, source, quantity, itemTotal]
 // OrderHistory [historyID, orderItemID, timestamp, action, employeeID, comment]
 
@@ -28,6 +26,8 @@ import pool from '../db/hanaPool.js';
     // Update order items
     // Update order history
 
+import pool from '../db/hanaPool.js';
+
 /**
  * Get all orders
  */
@@ -47,7 +47,7 @@ export async function getAllOrders() {
 export async function getOrderById(orderID) {
   const conn = await pool.acquire();
   try {
-    const order = await conn.exec('SELECT * FROM WUSAP.Orders WHERE orderID = ?', [orderID]);
+    const [order] = await conn.exec('SELECT * FROM WUSAP.Orders WHERE orderID = ?', [orderID]);
     const items = await conn.exec('SELECT * FROM WUSAP.OrderItems WHERE orderID = ?', [orderID]);
 
     const itemIDs = items.map(item => item.orderItemID);
@@ -60,7 +60,7 @@ export async function getOrderById(orderID) {
       );
     }
 
-    return { order: order[0], items, history };
+    return { order, items, history };
   } finally {
     await pool.release(conn);
   }
@@ -98,40 +98,100 @@ export async function getOrdersByEmployee(employeeID) {
 }
 
 /**
- * Create a new order with items and history
+ * Create a new order with items and history, and log to TableLogs
  */
 export async function createOrder(orderData, orderItems, employeeID) {
   const conn = await pool.acquire();
   try {
     await conn.setAutoCommit(false);
 
-    await conn.prepare(`
-      INSERT INTO WUSAP.Orders (orderDate, orderTotal, status, comments, storeID, createdAt, updatedAt)
-      VALUES (CURRENT_DATE, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-    `).then(stmt => stmt.exec([
-      orderData.orderTotal,
-      orderData.status,
-      orderData.comments,
-      orderData.storeID
-    ]));
+    // Insert Order
+    await conn.exec(
+      `INSERT INTO WUSAP.Orders (orderDate, orderTotal, status, comments, storeID)
+       VALUES (CURRENT_DATE, ?, ?, ?, ?)`,
+      [
+        orderData.orderTotal,
+        orderData.status,
+        orderData.comments,
+        orderData.storeID
+      ]
+    );
 
-    const [newOrder] = await conn.exec('SELECT TOP 1 * FROM WUSAP.Orders ORDER BY orderID DESC');
-    const orderID = newOrder.orderID;
+    // Get new order ID
+    const [orderRow] = await conn.exec('SELECT CURRENT_IDENTITY_VALUE() AS ORDERID FROM DUMMY');
+    const orderID = orderRow.ORDERID;
+
+    // Log Order insert
+    await new Promise((resolve, reject) => {
+      conn.prepare(
+        `INSERT INTO WUSAP.TableLogs (employeeID, tableName, recordID, action)
+         VALUES (?, ?, ?, ?)`,
+        (err, stmt) => {
+          if (err) return reject(err);
+          stmt.exec([employeeID, "Orders", orderID, "INSERT"], err => {
+            if (err) return reject(err);
+            resolve();
+          });
+        }
+      );
+    });
+
+    // Track all inserted itemIDs and historyIDs
+    const insertedOrderItemIDs = [];
 
     for (const item of orderItems) {
-      await conn.exec(`
-        INSERT INTO WUSAP.OrderItems (orderID, productID, source, quantity, itemTotal)
-        VALUES (?, ?, ?, ?, ?)`,
+      // Insert item
+      await conn.exec(
+        `INSERT INTO WUSAP.OrderItems (orderID, productID, source, quantity, itemTotal)
+         VALUES (?, ?, ?, ?, ?)`,
         [orderID, item.productID, item.source, item.quantity, item.itemTotal]
       );
 
-      const [itemRow] = await conn.exec('SELECT TOP 1 * FROM WUSAP.OrderItems ORDER BY orderItemID DESC');
+      // Get item ID
+      const [itemRow] = await conn.exec('SELECT CURRENT_IDENTITY_VALUE() AS ORDERITEMID FROM DUMMY');
+      const orderItemID = itemRow.ORDERITEMID;
+      insertedOrderItemIDs.push(orderItemID);
 
-      await conn.exec(`
-        INSERT INTO WUSAP.OrderHistory (orderItemID, timestamp, action, employeeID, comment)
-        VALUES (?, CURRENT_TIMESTAMP, 'CREATED', ?, ?)`,
-        [itemRow.orderItemID, employeeID, 'Created order item']
+      // Log item insert
+      await new Promise((resolve, reject) => {
+        conn.prepare(
+          `INSERT INTO WUSAP.TableLogs (employeeID, tableName, recordID, action)
+           VALUES (?, ?, ?, ?)`,
+          (err, stmt) => {
+            if (err) return reject(err);
+            stmt.exec([employeeID, "OrderItems", orderItemID, "INSERT"], err => {
+              if (err) return reject(err);
+              resolve();
+            });
+          }
+        );
+      });
+
+      // Insert history
+      await conn.exec(
+        `INSERT INTO WUSAP.OrderHistory (orderItemID, timestamp, action, employeeID, comment)
+         VALUES (?, CURRENT_TIMESTAMP, 'CREATED', ?, ?)`,
+        [orderItemID, employeeID, 'Created order item']
       );
+
+      // Get history ID
+      const [historyRow] = await conn.exec('SELECT CURRENT_IDENTITY_VALUE() AS HISTORYID FROM DUMMY');
+      const historyID = historyRow.HISTORYID;
+
+      // Log history insert
+      await new Promise((resolve, reject) => {
+        conn.prepare(
+          `INSERT INTO WUSAP.TableLogs (employeeID, tableName, recordID, action)
+           VALUES (?, ?, ?, ?)`,
+          (err, stmt) => {
+            if (err) return reject(err);
+            stmt.exec([employeeID, "OrderHistory", historyID, "INSERT"], err => {
+              if (err) return reject(err);
+              resolve();
+            });
+          }
+        );
+      });
     }
 
     await conn.commit();
@@ -152,25 +212,41 @@ export async function updateOrder(orderID, updatedOrder, updatedItems, employeeI
   try {
     await conn.setAutoCommit(false);
 
-    await conn.exec(`
-      UPDATE WUSAP.Orders
-      SET orderTotal = ?, status = ?, comments = ?, updatedAt = CURRENT_TIMESTAMP
-      WHERE orderID = ?
-    `, [updatedOrder.orderTotal, updatedOrder.status, updatedOrder.comments, orderID]);
+    await conn.exec(
+      `UPDATE WUSAP.Orders
+       SET orderTotal = ?, status = ?, comments = ?
+       WHERE orderID = ?`,
+      [updatedOrder.orderTotal, updatedOrder.status, updatedOrder.comments, orderID]
+    );
 
     for (const item of updatedItems) {
-      await conn.exec(`
-        UPDATE WUSAP.OrderItems
-        SET productID = ?, source = ?, quantity = ?, itemTotal = ?
-        WHERE orderItemID = ?
-      `, [item.productID, item.source, item.quantity, item.itemTotal, item.orderItemID]);
+      await conn.exec(
+        `UPDATE WUSAP.OrderItems
+         SET productID = ?, source = ?, quantity = ?, itemTotal = ?
+         WHERE orderItemID = ?`,
+        [item.productID, item.source, item.quantity, item.itemTotal, item.orderItemID]
+      );
 
-      await conn.exec(`
-        INSERT INTO WUSAP.OrderHistory (orderItemID, timestamp, action, employeeID, comment)
-        VALUES (?, CURRENT_TIMESTAMP, 'UPDATED', ?, ?)`,
+      await conn.exec(
+        `INSERT INTO WUSAP.OrderHistory (orderItemID, timestamp, action, employeeID, comment)
+         VALUES (?, CURRENT_TIMESTAMP, 'UPDATED', ?, ?)`,
         [item.orderItemID, employeeID, 'Updated order item']
       );
     }
+
+    await new Promise((resolve, reject) => {
+      conn.prepare(
+        `INSERT INTO WUSAP.TableLogs (employeeID, tableName, recordID, action)
+         VALUES (?, ?, ?, ?)`,
+        (err, stmt) => {
+          if (err) return reject(err);
+          stmt.exec([employeeID, "Orders", orderID, "UPDATE"], err => {
+            if (err) return reject(err);
+            resolve();
+          });
+        }
+      );
+    });
 
     await conn.commit();
     return { success: true };
@@ -181,4 +257,3 @@ export async function updateOrder(orderID, updatedOrder, updatedItems, employeeI
     await pool.release(conn);
   }
 }
-
