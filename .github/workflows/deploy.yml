@@ -17,14 +17,15 @@ jobs:
         with:
           node-version: 18
 
-      - name: ☁️ Install Cloud Foundry CLI v8 (official instructions)
+      - name: ☁️ Install Cloud Foundry CLI v8 (official)
         run: |
-          (apt update && apt install --yes curl gnupg) > /dev/null 2>&1
-          curl -fsSL https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | gpg --dearmor -o /usr/share/keyrings/cloudfoundry-keyring.gpg
-          echo "deb [signed-by=/usr/share/keyrings/cloudfoundry-keyring.gpg] https://packages.cloudfoundry.org/debian stable main" | tee /etc/apt/sources.list.d/cloudfoundry.list
-          apt update > /dev/null 2>&1
-          apt install --yes cf8-cli
-          cf8 version
+          wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | \
+            sudo gpg --dearmor -o /usr/share/keyrings/cli.cloudfoundry.org.gpg
+          echo "deb [signed-by=/usr/share/keyrings/cli.cloudfoundry.org.gpg] https://packages.cloudfoundry.org/debian stable main" | \
+            sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
+          sudo apt-get update
+          sudo apt-get install -y cf8-cli || sudo apt-get install -y cf-cli
+          cf version
 
       - name: 🔐 Authenticate to SAP CF using service key
         env:
