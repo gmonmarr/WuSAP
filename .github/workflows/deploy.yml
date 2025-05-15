@@ -53,9 +53,8 @@ jobs:
 
           echo "✅ Access token received. Logging into Cloud Foundry..."
 
-          cf auth "$CF_CLIENT_ID" --client-credentials --origin uaa --assertion "$ACCESS_TOKEN"
+          cf auth "$CF_CLIENT_ID" --client-credentials --assertion "$ACCESS_TOKEN"
           cf target -o "$CF_ORG" -s "$CF_SPACE"
-
 
       - name: 🚀 Deploy Backend (with environment variables)
         working-directory: backend
