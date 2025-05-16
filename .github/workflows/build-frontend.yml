@@ -37,7 +37,6 @@ jobs:
 
       - name: Run tests
         run: npm test
-        continue-on-error: true
 
       - name: Build Vite app
         run: npm run build
