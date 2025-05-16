@@ -163,13 +163,14 @@ const OrderHistory = () => {
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Start of today
 
     switch (timeFilter) {
-      case 'today':
+      case 'today': {
         filteredOrders = filteredOrders.filter(order => {
           const orderDate = new Date(order.date);
           return orderDate >= today;
         });
         break;
-      case 'week':
+      }
+      case 'week': {
         const lastWeek = new Date(today);
         lastWeek.setDate(today.getDate() - 7);
         filteredOrders = filteredOrders.filter(order => {
@@ -177,7 +178,8 @@ const OrderHistory = () => {
           return orderDate >= lastWeek;
         });
         break;
-      case 'month':
+      }
+      case 'month': {
         const lastMonth = new Date(today);
         lastMonth.setMonth(today.getMonth() - 1);
         filteredOrders = filteredOrders.filter(order => {
@@ -185,6 +187,7 @@ const OrderHistory = () => {
           return orderDate >= lastMonth;
         });
         break;
+      }
       default:
         break;
     }

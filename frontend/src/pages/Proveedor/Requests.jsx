@@ -370,7 +370,8 @@ const Requests = () => {
             },
           }}>
             <List sx={{ py: 0 }}>
-              {filteredRequests.map((request, index) => (
+              {/* {filteredRequests.map((request, index) => ( */}
+              {filteredRequests.map((request) => (
                 <Paper 
                   key={request.id} 
                   elevation={1}

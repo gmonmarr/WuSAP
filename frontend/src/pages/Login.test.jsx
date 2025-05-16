@@ -1,5 +1,10 @@
+// src/pages/Login.test.jsx
+
+/* eslint-env jest */
+
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { authService } from '../services/api.js';
 import Login from './Login';
 import React from 'react';
 
@@ -33,8 +38,6 @@ describe('Login Page', () => {
     });
 
   test('calls authService.login with valid credentials', async () => {
-    const { authService } = require('../services/api.js');
-
     render(<Login />, { wrapper: MemoryRouter });
 
     fireEvent.change(screen.getByLabelText(/correo electrónico/i), {

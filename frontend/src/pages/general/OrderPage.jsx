@@ -50,6 +50,7 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
   background: "#ffffff",
 }));
 
+// eslint-disable-next-line no-unused-vars
 const StyledCardMedia = styled(CardMedia)(({ theme }) => ({
   height: "240px",
   objectFit: "cover",
@@ -84,12 +85,14 @@ const CartItem = styled(Box)(({ theme }) => ({
 }));
 
 const OrderPage = () => {
+  // eslint-disable-next-line no-unused-vars
   const theme = useTheme();
   const [activeStep, setActiveStep] = useState(0);
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [quantities, setQuantities] = useState({});
   const [error, setError] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const [orderSubmitted, setOrderSubmitted] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [shippingDetails, setShippingDetails] = useState({
