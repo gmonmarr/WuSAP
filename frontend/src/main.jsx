@@ -19,6 +19,8 @@ import OrderHistory from './pages/general/OrderHistory';
 import Requests from './pages/Proveedor/Requests';
 import OrderProvider from './pages/Proveedor/OrderProvider';
 import ProductsPage from './pages/general/ProductsPage';
+import Alertas from './pages/general/Alertas';
+
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
@@ -41,6 +43,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path='/solicitudes' element={<Requests/>} />
         <Route path='/solicitar-material' element={<OrderProvider/>} />
         <Route path='/productos' element={<ProductsPage/>} />
+        <Route path='/alertas' element={<Alertas/>} />
       </Routes>
     </Router>
   </React.StrictMode>
