@@ -97,7 +97,7 @@ const Navbar = () => {
           <button className="icon-button notification-button">
             <ui5-icon name="bell" class="nav-icon"></ui5-icon>
           </button>
-          <button className="icon-button profile-button">
+          <button className="icon-button profile-button" onClick={() => handleNavigation('/perfil')}>
             <ui5-avatar 
               initials={userInitials || "?"}
               size="XS" 
