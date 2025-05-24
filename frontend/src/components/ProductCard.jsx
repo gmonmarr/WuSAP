@@ -15,7 +15,9 @@ import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import EditIcon from '@mui/icons-material/Edit';
 
 // Styled components
+// eslint-disable-next-line no-unused-vars
 const StyledCard = styled(Card)(({ theme }) => ({
+  // `theme` is not used here either, but left for potential theme use
   height: "100%",
   display: "flex",
   flexDirection: "column",
@@ -30,7 +32,9 @@ const StyledCard = styled(Card)(({ theme }) => ({
   },
 }));
 
+// eslint-disable-next-line no-unused-vars
 const StyledCardMedia = styled(CardMedia)(({ theme }) => ({
+  // `theme` is not used here either, but left for potential theme use
   height: "180px",
   objectFit: "cover",
   transition: "transform 0.3s ease",

@@ -34,11 +34,9 @@ jobs:
 
       - name: Run lint
         run: npm run lint
-        continue-on-error: true
 
       - name: Run tests
         run: npm test
-        continue-on-error: true
 
       - name: Build Vite app
         run: npm run build

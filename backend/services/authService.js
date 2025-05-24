@@ -62,10 +62,13 @@ export const loginUser = async (email, password) => {
 };
 
 // -- REGISTER --
-export const registerUser = async (createdByID, name, lastName, email, cellphone, password, role) => {
+export const registerUser = async (createdByID, name, lastname, email, cellphone, password, role) => {
   const conn = await pool.acquire();
 
   try {
+    // Start a transaction
+    await conn.setAutoCommit(false);
+    
     // 1. Check for existing user
     const checkSql = `SELECT * FROM WUSAP.Employees WHERE EMAIL = ?`;
     const existing = await new Promise((resolve, reject) => {
@@ -93,7 +96,7 @@ export const registerUser = async (createdByID, name, lastName, email, cellphone
     await new Promise((resolve, reject) => {
       conn.prepare(insertSql, (err, stmt) => {
         if (err) return reject(err);
-        stmt.exec([name, lastName, email, hashedPassword, role, cellphone], (err) => {
+        stmt.exec([name, lastname, email, hashedPassword, role, cellphone], (err) => {
           if (err) return reject(err);
           resolve();
         });
@@ -104,33 +107,47 @@ export const registerUser = async (createdByID, name, lastName, email, cellphone
     const result = await new Promise((resolve, reject) => {
       conn.exec(`SELECT CURRENT_IDENTITY_VALUE() AS employeeID FROM DUMMY`, (err, res) => {
         if (err) return reject(err);
+        if (!res || res.length === 0 || res[0].employeeID === null) {
+          return reject(new Error("No se pudo obtener el ID del empleado recién creado"));
+        }
         resolve(res[0]);
       });
     });
 
-    const newEmployeeID = result.EMPLOYEEID;
-
-    // 5. Log to TableLogs
-    const logSql = `
-      INSERT INTO WUSAP.TableLogs (employeeID, tableName, recordID, action)
-      VALUES (?, ?, ?, ?)
-    `;
-    await new Promise((resolve, reject) => {
-      conn.prepare(logSql, (err, stmt) => {
-        if (err) return reject(err);
-        stmt.exec([createdByID, "Employees", newEmployeeID, "INSERT"], (err) => {
+    const newEmployeeID = result.employeeID;
+    
+    // 5. Log to TableLogs - only if we have both valid IDs
+    if (createdByID && newEmployeeID) {
+      const logSql = `
+        INSERT INTO WUSAP.TableLogs (employeeID, tableName, recordID, action)
+        VALUES (?, ?, ?, ?)
+      `;
+      await new Promise((resolve, reject) => {
+        conn.prepare(logSql, (err, stmt) => {
           if (err) return reject(err);
-          resolve();
+          stmt.exec([createdByID, "Employees", newEmployeeID, "INSERT"], (err) => {
+            if (err) return reject(err);
+            resolve();
+          });
         });
       });
-    });
+    } else {
+      console.warn("Omitiendo registro en TableLogs - ID de empleado creador o creado no válido");
+    }
 
-    // 6. Return
+    // 6. Commit the transaction
+    await conn.commit();
+    
+    // 7. Return
     return {
       success: true,
       message: "Usuario registrado exitosamente",
-      user: { name, lastName, email, role },
+      user: { name, lastname, email, role },
     };
+  } catch (error) {
+    // Rollback on error
+    await conn.rollback();
+    throw error;
   } finally {
     pool.release(conn);
   }

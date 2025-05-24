@@ -14,6 +14,7 @@ import "@ui5/webcomponents-icons/dist/detail-view.js";
 
 const OrdenStatus = () => {
   const navigate = useNavigate();
+  // eslint-disable-next-line no-unused-vars
   const [orders, setOrders] = useState([
     {
       id: 'ORD001',

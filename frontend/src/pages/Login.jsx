@@ -1,7 +1,7 @@
 // src/pages/Login.jsx
 
 import React, { useState } from "react";
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   TextField,
   Button,
@@ -29,7 +29,9 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
   border: "1px solid rgba(255, 255, 255, 0.2)",
 }));
 
+// eslint-disable-next-line no-unused-vars
 const StyledTextField = styled(TextField)(({ theme }) => ({
+  // `theme` is not used here, but required for future styling if needed
   "& .MuiOutlinedInput-root": {
     borderRadius: "12px",
     backgroundColor: "rgba(255, 255, 255, 0.9)",
