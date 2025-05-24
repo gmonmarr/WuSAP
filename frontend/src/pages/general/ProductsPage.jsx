@@ -39,6 +39,7 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
   background: "#ffffff",
 }));
 
+// eslint-disable-next-line no-unused-vars
 const StyledCard = styled(Paper)(({ theme }) => ({
   height: "100%",
   display: "flex",
@@ -54,6 +55,7 @@ const StyledCard = styled(Paper)(({ theme }) => ({
   },
 }));
 
+// eslint-disable-next-line no-unused-vars
 const StyledCardMedia = styled(Paper)(({ theme }) => ({
   height: "180px",
   objectFit: "cover",
@@ -64,12 +66,14 @@ const StyledCardMedia = styled(Paper)(({ theme }) => ({
 }));
 
 const ProductsPage = () => {
+  // eslint-disable-next-line no-unused-vars
   const theme = useTheme();
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   
   // New state variables for product creation
   const [openProductDialog, setOpenProductDialog] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const [productImage, setProductImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [creatingProduct, setCreatingProduct] = useState(false);

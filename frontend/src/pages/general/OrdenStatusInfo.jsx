@@ -1,6 +1,7 @@
 // src/pages/general/OrdenStatusInfo.jsx
 
-import React, { useState, useEffect } from "react";
+// import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
 import NavBar from "../../components/Navbar";
@@ -21,9 +22,11 @@ import { Dialog, DialogTitle, DialogContent, Box, Grid, Typography, List, ListIt
 
 const OrdenStatusInfo = () => {
   const { ordenId } = useParams();
+  // eslint-disable-next-line no-unused-vars
   const navigate = useNavigate();
   
   // Mock data - esto vendría de tu API
+  // eslint-disable-next-line no-unused-vars
   const [orden, setOrden] = useState({
     id: ordenId || "1",
     numOrden: "N00XXXX",
@@ -81,6 +84,7 @@ const OrdenStatusInfo = () => {
 
   const [open, setOpen] = useState(false);
 
+  // eslint-disable-next-line no-unused-vars
   const handleOpen = () => {
     setOpen(true);
   };
