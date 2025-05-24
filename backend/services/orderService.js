@@ -220,6 +220,7 @@ export async function updateOrder(orderID, updatedOrder, updatedItems, employeeI
     );
 
     for (const item of updatedItems) {
+      // Update OrderItems
       await conn.exec(
         `UPDATE WUSAP.OrderItems
          SET productID = ?, source = ?, quantity = ?, itemTotal = ?
@@ -227,13 +228,49 @@ export async function updateOrder(orderID, updatedOrder, updatedItems, employeeI
         [item.productID, item.source, item.quantity, item.itemTotal, item.orderItemID]
       );
 
+      // Log OrderItems update
+      await new Promise((resolve, reject) => {
+        conn.prepare(
+          `INSERT INTO WUSAP.TableLogs (employeeID, tableName, recordID, action)
+           VALUES (?, ?, ?, ?)`,
+          (err, stmt) => {
+            if (err) return reject(err);
+            stmt.exec([employeeID, "OrderItems", item.orderItemID, "UPDATE"], err => {
+              if (err) return reject(err);
+              resolve();
+            });
+          }
+        );
+      });
+
+      // Insert OrderHistory
       await conn.exec(
         `INSERT INTO WUSAP.OrderHistory (orderItemID, timestamp, action, employeeID, comment)
          VALUES (?, CURRENT_TIMESTAMP, 'UPDATED', ?, ?)`,
         [item.orderItemID, employeeID, 'Updated order item']
       );
+
+      // Get the new historyID
+      const [historyRow] = await conn.exec('SELECT CURRENT_IDENTITY_VALUE() AS HISTORYID FROM DUMMY');
+      const historyID = historyRow.HISTORYID;
+
+      // Log OrderHistory insert
+      await new Promise((resolve, reject) => {
+        conn.prepare(
+          `INSERT INTO WUSAP.TableLogs (employeeID, tableName, recordID, action)
+           VALUES (?, ?, ?, ?)`,
+          (err, stmt) => {
+            if (err) return reject(err);
+            stmt.exec([employeeID, "OrderHistory", historyID, "INSERT"], err => {
+              if (err) return reject(err);
+              resolve();
+            });
+          }
+        );
+      });
     }
 
+    // Log the update to Orders table
     await new Promise((resolve, reject) => {
       conn.prepare(
         `INSERT INTO WUSAP.TableLogs (employeeID, tableName, recordID, action)
