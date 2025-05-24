@@ -48,19 +48,25 @@ export async function getAllOrders() {
 export async function getOrderById(orderID) {
   const conn = await pool.acquire();
   try {
-    const [order] = await conn.exec('SELECT * FROM WUSAP.Orders WHERE orderID = ?', [orderID]);
-    const items = await conn.exec('SELECT * FROM WUSAP.OrderItems WHERE orderID = ?', [orderID]);
+    // Fetch the order
+    const [order] = await conn.exec(
+      'SELECT * FROM WUSAP.Orders WHERE orderID = ?', [orderID]
+    );
 
-    const itemIDs = items.map(item => item.orderItemID);
+    // Fetch associated items
+    const items = await conn.exec(
+      'SELECT * FROM WUSAP.OrderItems WHERE orderID = ?', [orderID]
+    );
+
+    // Fetch order history if any items exist    
+    const itemIDs = items.map(item => item.ORDERITEMID);
     let history = [];
     if (itemIDs.length > 0) {
-      const placeholders = itemIDs.map(() => '?').join(',');
+      const ids = itemIDs.join(','); // join IDs directly into string
       history = await conn.exec(
-        `SELECT * FROM WUSAP.OrderHistory WHERE orderItemID IN (${placeholders})`,
-        itemIDs
+        `SELECT * FROM WUSAP.OrderHistory WHERE orderItemID IN (${ids})`
       );
     }
-
     return { order, items, history };
   } finally {
     await pool.release(conn);
