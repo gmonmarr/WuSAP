@@ -1,7 +1,7 @@
 // routes/orderRoutes.js
 
 import express from 'express';
-import { verifyToken } from '../middleware/authMiddleware.js';
+import { verifyToken, verifyRoles } from '../middleware/authMiddleware.js';
 import {
   getAllOrders,
   getOrderById,
@@ -13,11 +13,11 @@ import {
 
 const router = express.Router();
 
-router.get('/orders', verifyToken, getAllOrders);
-router.get('/orders/:id', verifyToken, getOrderById);
-router.get('/orders/store/current', verifyToken, getOrdersByStore);
-router.get('/orders/employee/current', verifyToken, getOrdersByEmployee);
-router.post('/orders', verifyToken, createOrder);
-router.put('/orders/:id', verifyToken, updateOrder);
+router.get('/orders', verifyToken, verifyRoles("admin", "owner", "manager"), getAllOrders);
+router.get('/orders/:id', verifyToken, verifyRoles("admin", "owner", "manager"), getOrderById);
+router.get('/orders/store/current', verifyToken, verifyRoles("admin", "owner", "manager"), getOrdersByStore);
+router.get('/orders/employee/current', verifyToken, verifyRoles("admin", "owner", "manager"), getOrdersByEmployee);
+router.post('/orders', verifyToken, verifyRoles("admin", "owner", "manager"), createOrder);
+router.put('/orders/:id', verifyToken, verifyRoles("admin", "owner", "manager"), updateOrder);
 
 export default router;
