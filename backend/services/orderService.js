@@ -212,15 +212,85 @@ export async function updateOrder(orderID, updatedOrder, updatedItems, employeeI
   try {
     await conn.setAutoCommit(false);
 
-    await conn.exec(
-      `UPDATE WUSAP.Orders
-       SET orderTotal = ?, status = ?, comments = ?
-       WHERE orderID = ?`,
-      [updatedOrder.orderTotal, updatedOrder.status, updatedOrder.comments, orderID]
+    // 🔍 Fetch original order for comparison
+    const [originalOrder] = await conn.exec(
+      `SELECT orderTotal, status, comments FROM WUSAP.Orders WHERE orderID = ?`,
+      [orderID]
     );
 
+    const orderChanges = [];
+    if (Number(originalOrder.ORDERTOTAL) !== Number(updatedOrder.orderTotal))
+      orderChanges.push(`orderTotal: ${originalOrder.ORDERTOTAL} → ${updatedOrder.orderTotal}`);
+    if (originalOrder.STATUS !== updatedOrder.status)
+      orderChanges.push(`status: ${originalOrder.STATUS} → ${updatedOrder.status}`);
+    if ((originalOrder.COMMENTS || '') !== (updatedOrder.comments || ''))
+      orderChanges.push(`comments: ${originalOrder.COMMENTS || ''} → ${updatedOrder.comments || ''}`);
+
+    // ✅ Only update Orders table if there are changes
+    if (orderChanges.length > 0) {
+      await conn.exec(
+        `UPDATE WUSAP.Orders
+         SET orderTotal = ?, status = ?, comments = ?
+         WHERE orderID = ?`,
+        [updatedOrder.orderTotal, updatedOrder.status, updatedOrder.comments, orderID]
+      );
+
+      // 🧾 Log Orders table update
+      await new Promise((resolve, reject) => {
+        conn.prepare(
+          `INSERT INTO WUSAP.TableLogs (employeeID, tableName, recordID, action)
+           VALUES (?, ?, ?, ?)`,
+          (err, stmt) => {
+            if (err) return reject(err);
+            stmt.exec([employeeID, "Orders", orderID, "UPDATE"], err => {
+              if (err) return reject(err);
+              resolve();
+            });
+          }
+        );
+      });
+    }
+
+    // 🔁 Handle OrderItems
     for (const item of updatedItems) {
-      // Update OrderItems
+      // ✅ Validate item belongs to the order
+      const [validationResult] = await conn.exec(
+        `SELECT orderID FROM WUSAP.OrderItems WHERE orderItemID = ?`,
+        [item.orderItemID]
+      );
+
+      const actualOrderID = parseInt(validationResult?.ORDERID);
+      const expectedOrderID = parseInt(orderID);
+
+      if (isNaN(actualOrderID) || isNaN(expectedOrderID) || actualOrderID !== expectedOrderID) {
+        throw new Error(`OrderItem ${item.orderItemID} does not belong to Order ${expectedOrderID}`);
+      }
+
+      // 🔍 Fetch original item
+      const [originalItem] = await conn.exec(
+        `SELECT productID, source, quantity, itemTotal
+         FROM WUSAP.OrderItems
+         WHERE orderItemID = ?`,
+        [item.orderItemID]
+      );
+
+      const changes = [];
+      if (originalItem.PRODUCTID !== item.productID)
+        changes.push(`productID: ${originalItem.PRODUCTID} → ${item.productID}`);
+      if (originalItem.SOURCE !== item.source)
+        changes.push(`source: ${originalItem.SOURCE} → ${item.source}`);
+      if (Number(originalItem.QUANTITY) !== Number(item.quantity))
+        changes.push(`quantity: ${originalItem.QUANTITY} → ${item.quantity}`);
+      if (Number(originalItem.ITEMTOTAL) !== Number(item.itemTotal))
+        changes.push(`itemTotal: ${originalItem.ITEMTOTAL} → ${item.itemTotal}`);
+
+      const comment = changes.length > 0
+        ? `Updated fields: ${changes.join(', ')}`
+        : `Updated with no changes (redundant update)`;
+
+      if (changes.length === 0) continue;
+
+      // 🛠 Update the item
       await conn.exec(
         `UPDATE WUSAP.OrderItems
          SET productID = ?, source = ?, quantity = ?, itemTotal = ?
@@ -228,7 +298,7 @@ export async function updateOrder(orderID, updatedOrder, updatedItems, employeeI
         [item.productID, item.source, item.quantity, item.itemTotal, item.orderItemID]
       );
 
-      // Log OrderItems update
+      // 🧾 Log OrderItems update
       await new Promise((resolve, reject) => {
         conn.prepare(
           `INSERT INTO WUSAP.TableLogs (employeeID, tableName, recordID, action)
@@ -243,18 +313,18 @@ export async function updateOrder(orderID, updatedOrder, updatedItems, employeeI
         );
       });
 
-      // Insert OrderHistory
+      // 📜 Insert OrderHistory with comment
       await conn.exec(
         `INSERT INTO WUSAP.OrderHistory (orderItemID, timestamp, action, employeeID, comment)
          VALUES (?, CURRENT_TIMESTAMP, 'UPDATED', ?, ?)`,
-        [item.orderItemID, employeeID, 'Updated order item']
+        [item.orderItemID, employeeID, comment]
       );
 
-      // Get the new historyID
+      // 🔢 Get historyID
       const [historyRow] = await conn.exec('SELECT CURRENT_IDENTITY_VALUE() AS HISTORYID FROM DUMMY');
       const historyID = historyRow.HISTORYID;
 
-      // Log OrderHistory insert
+      // 🧾 Log OrderHistory insert
       await new Promise((resolve, reject) => {
         conn.prepare(
           `INSERT INTO WUSAP.TableLogs (employeeID, tableName, recordID, action)
@@ -269,21 +339,6 @@ export async function updateOrder(orderID, updatedOrder, updatedItems, employeeI
         );
       });
     }
-
-    // Log the update to Orders table
-    await new Promise((resolve, reject) => {
-      conn.prepare(
-        `INSERT INTO WUSAP.TableLogs (employeeID, tableName, recordID, action)
-         VALUES (?, ?, ?, ?)`,
-        (err, stmt) => {
-          if (err) return reject(err);
-          stmt.exec([employeeID, "Orders", orderID, "UPDATE"], err => {
-            if (err) return reject(err);
-            resolve();
-          });
-        }
-      );
-    });
 
     await conn.commit();
     return { success: true };
