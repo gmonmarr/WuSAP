@@ -23,8 +23,8 @@ import Alertas from './pages/general/Alertas';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <Router basename="/WuSAP/">
-    {/* <Router> */}
+    {/* <Router basename="/WuSAP/"> */}
+    <Router>
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/inicio-sesion" element={<Login />} />
