@@ -22,7 +22,8 @@ import ProductsPage from './pages/general/ProductsPage';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <Router basename="/WuSAP/">
+    {/* <Router basename="/WuSAP/"> */}
+    <Router>
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/inicio-sesion" element={<Login />} />
