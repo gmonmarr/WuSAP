@@ -289,8 +289,6 @@ const Login = () => {
 
 export default Login;
 
-
-
 /* Asi es para el registro
 import React from "react";
 import { TextField, Button, Checkbox, FormControlLabel, Typography, Paper, Grid } from "@mui/material";
@@ -334,5 +332,5 @@ const Login = () => {
   );
 };
 
-export default Login;
+// Removed duplicate export default Login;
 */

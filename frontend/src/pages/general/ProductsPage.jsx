@@ -19,6 +19,9 @@ import {
   FormControl,
   InputLabel,
   FormHelperText,
+  FormControlLabel,
+  Switch,
+  Alert,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -80,9 +83,16 @@ const ProductsPage = () => {
   const [productFormData, setProductFormData] = useState({
     name: "",
     suggestedPrice: "",
-    unit: "Pieza"
+    unit: "Pieza",
+    discontinued: false,
   });
   const [productFormErrors, setProductFormErrors] = useState({});
+
+  // Edit and delete states
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState(null);
 
   // Sample placeholder images for products
   const placeholderImages = [
@@ -104,7 +114,8 @@ const ProductsPage = () => {
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        let data = await productService.getAllProducts();
+        const response = await productService.getAllProducts();
+        let data = response.data;
         
         // Map API response fields to the format expected by the UI
         data = data.map(product => ({
@@ -127,6 +138,7 @@ const ProductsPage = () => {
         setProducts(data);
       } catch (error) {
         console.error("Error fetching products:", error);
+        setError("Error al cargar productos: " + (error.response?.data?.details || error.message));
         // In case of error, keep the UI working with empty array
         setProducts([]);
       } finally {
@@ -148,19 +160,26 @@ const ProductsPage = () => {
 
   // Product creation handlers
   const handleOpenProductDialog = () => {
+    setIsEditMode(false);
+    setEditingProduct(null);
     setOpenProductDialog(true);
   };
 
   const handleCloseProductDialog = () => {
     setOpenProductDialog(false);
+    setIsEditMode(false);
+    setEditingProduct(null);
     setProductImage(null);
     setImagePreview(null);
     setProductFormData({
       name: "",
       suggestedPrice: "",
-      unit: "Pieza"
+      unit: "Pieza",
+      discontinued: false,
     });
     setProductFormErrors({});
+    setError("");
+    setSuccessMessage(null);
   };
 
   const handleProductFormChange = (e) => {
@@ -212,64 +231,102 @@ const ProductsPage = () => {
     }
 
     setCreatingProduct(true);
+    setError("");
+    
     try {
       // Create product data object
       const productData = {
         name: productFormData.name,
         suggestedPrice: productFormData.suggestedPrice,
-        unit: productFormData.unit
+        unit: productFormData.unit,
+        discontinued: productFormData.discontinued,
       };
 
-      // Use the product service to create the product
-      const result = await productService.createProduct(productData);
+      let result;
+      if (isEditMode && editingProduct) {
+        // Update existing product
+        result = await productService.updateProduct(editingProduct.id, productData);
+        setSuccessMessage(`Producto "${productData.name}" actualizado correctamente.`);
+      } else {
+        // Create new product
+        result = await productService.createProduct(productData);
+        setSuccessMessage(`Producto "${productData.name}" creado correctamente.`);
+      }
       
-      // Handle successful creation
-      alert("Producto creado exitosamente!");
       handleCloseProductDialog();
       
       // Refresh the product list
-      try {
-        const refreshedProducts = await productService.getAllProducts();
-        
-        // Map API response fields to the format expected by the UI
-        const processedProducts = refreshedProducts.map(product => ({
-          id: product.PRODUCTID,
-          name: product.NAME,
-          price: typeof product.SUGGESTEDPRICE === 'string' 
-            ? parseFloat(product.SUGGESTEDPRICE) 
-            : product.SUGGESTEDPRICE || 0,
-          suggestedPrice: product.SUGGESTEDPRICE,
-          unit: product.UNIT,
-          discontinued: product.DISCONTINUED,
-          image: product.image || getRandomImage(),
-          description: product.description || `${product.NAME} - ${product.UNIT}`,
-          stock: product.stock || 0
-        }));
-        
-        setProducts(processedProducts);
-      } catch (refreshError) {
-        console.error("Error refreshing products after creation:", refreshError);
-        
-        // If refresh fails, at least add the new product to the state
-        const newProduct = {
-          id: result.productID || Math.max(...products.map(p => p.id || 0), 0) + 1,
-          name: productFormData.name,
-          price: Number(productFormData.suggestedPrice),
-          suggestedPrice: productFormData.suggestedPrice,
-          unit: productFormData.unit,
-          description: `${productFormData.name} - ${productFormData.unit}`,
-          stock: 0,
-          image: imagePreview || getRandomImage()
-        };
-        
-        setProducts(prev => [...prev, newProduct]);
-      }
+      await refreshProductList();
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccessMessage(null), 3000);
+      
     } catch (error) {
-      console.error("Error creating product:", error);
-      alert("Error al crear el producto: " + (error.response?.data?.message || error.message));
+      console.error("Error saving product:", error);
+      const errorMessage = error.response?.data?.details || error.response?.data?.message || error.message;
+      setError("Error al guardar el producto: " + errorMessage);
     } finally {
       setCreatingProduct(false);
     }
+  };
+
+  // Delete product handler
+  const handleDeleteProduct = async (product) => {
+    if (window.confirm(`¿Está seguro de eliminar el producto "${product.name}"?`)) {
+      try {
+        await productService.deleteProduct(product.id);
+        setSuccessMessage(`Producto "${product.name}" eliminado correctamente.`);
+        await refreshProductList();
+        
+        // Clear success message after 3 seconds
+        setTimeout(() => setSuccessMessage(null), 3000);
+      } catch (error) {
+        console.error("Error deleting product:", error);
+        const errorMessage = error.response?.data?.details || error.response?.data?.message || error.message;
+        setError("Error al eliminar producto: " + errorMessage);
+      }
+    }
+  };
+
+  // Helper function to refresh product list
+  const refreshProductList = async () => {
+    try {
+      const refreshedProducts = await productService.getAllProducts();
+      
+      // Map API response fields to the format expected by the UI
+      const processedProducts = refreshedProducts.data.map(product => ({
+        id: product.PRODUCTID,
+        name: product.NAME,
+        price: typeof product.SUGGESTEDPRICE === 'string' 
+          ? parseFloat(product.SUGGESTEDPRICE) 
+          : product.SUGGESTEDPRICE || 0,
+        suggestedPrice: product.SUGGESTEDPRICE,
+        unit: product.UNIT,
+        discontinued: product.DISCONTINUED,
+        image: product.image || getRandomImage(),
+        description: product.description || `${product.NAME} - ${product.UNIT}`,
+        stock: product.stock || 0
+      }));
+      
+      setProducts(processedProducts);
+    } catch (refreshError) {
+      console.error("Error refreshing products:", refreshError);
+      setError("Error al actualizar la lista de productos");
+    }
+  };
+
+  // Edit product handler
+  const handleEditProduct = (product) => {
+    setIsEditMode(true);
+    setEditingProduct(product);
+    setProductFormData({
+      name: product.name,
+      suggestedPrice: product.suggestedPrice.toString(),
+      unit: product.unit,
+      discontinued: product.discontinued || false,
+    });
+    setImagePreview(product.image);
+    setOpenProductDialog(true);
   };
 
   return (
@@ -286,6 +343,29 @@ const ProductsPage = () => {
         display: "flex",
         flexDirection: "column"
       }}>
+        {/* Success Message */}
+        {successMessage && (
+          <Box sx={{ mb: 2 }}>
+            <Paper
+              sx={{
+                p: 2,
+                backgroundColor: '#e8f5e8',
+                border: '1px solid #4caf50',
+                borderRadius: 2
+              }}
+            >
+              <Typography variant="body1">{successMessage}</Typography>
+            </Paper>
+          </Box>
+        )}
+        
+        {/* Error display */}
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+        
         <StyledPaper sx={{
           display: "flex",
           flexDirection: "column",
@@ -413,11 +493,10 @@ const ProductsPage = () => {
                       product={product} 
                       showStock={false}
                       showEditButton={true}
+                      showDeleteButton={true}
                       editable={false}
-                      onEditClick={(product) => {
-                        // Here you would implement edit functionality
-                        console.log("Edit product:", product);
-                      }}
+                      onEditClick={handleEditProduct}
+                      onDeleteClick={handleDeleteProduct}
                     />
                   </Grid>
                 ))}
@@ -455,8 +534,13 @@ const ProductsPage = () => {
         fullWidth
         maxWidth="sm"
       >
-        <DialogTitle>Agregar Nuevo Producto</DialogTitle>
+        <DialogTitle>{isEditMode ? "Editar Producto" : "Agregar Nuevo Producto"}</DialogTitle>
         <DialogContent>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
           <Grid container spacing={3} sx={{ mt: 1 }}>
             <Grid item xs={12}>
               <TextField
@@ -512,6 +596,18 @@ const ProductsPage = () => {
                   <FormHelperText>{productFormErrors.unit}</FormHelperText>
                 )}
               </FormControl>
+            </Grid>
+            
+            <Grid item xs={12}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={productFormData.discontinued}
+                    onChange={(e) => handleProductFormChange({ target: { name: 'discontinued', value: e.target.checked } })}
+                  />
+                }
+                label="Producto Descontinuado"
+              />
             </Grid>
             
             <Grid item xs={12}>
@@ -596,7 +692,7 @@ const ProductsPage = () => {
             disabled={creatingProduct}
             startIcon={creatingProduct ? <CircularProgress size={20} color="inherit" /> : null}
           >
-            {creatingProduct ? "Creando..." : "Crear Producto"}
+            {creatingProduct ? (isEditMode ? "Actualizando..." : "Creando...") : (isEditMode ? "Actualizar Producto" : "Crear Producto")}
           </Button>
         </DialogActions>
       </Dialog>

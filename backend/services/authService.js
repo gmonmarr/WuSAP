@@ -41,6 +41,17 @@ export const loginUser = async (email, password) => {
             { expiresIn: process.env.JWT_EXPIRATION }
           );
 
+          // Console log para imprimir el JWT token
+          console.log("🔑 JWT Token generado para login:");
+          console.log("📧 Email:", user.EMAIL);
+          console.log("🎫 Token:", token);
+          console.log("👤 Payload:", {
+            employeeID: user.EMPLOYEEID,
+            email: user.EMAIL,
+            role: user.ROLE,
+            storeID: user.STOREID,
+          });
+
           resolve({
             success: true,
             message: "Login exitoso",
@@ -51,6 +62,7 @@ export const loginUser = async (email, password) => {
               name: user.NAME,
               lastName: user.LASTNAME,
               role: user.ROLE,
+              storeID: user.STOREID,
             },
           });
         });
@@ -62,7 +74,7 @@ export const loginUser = async (email, password) => {
 };
 
 // -- REGISTER --
-export const registerUser = async (createdByID, name, lastname, email, cellphone, password, role) => {
+export const registerUser = async (createdByID, name, lastname, email, cellphone, password, role, storeID = null) => {
   const conn = await pool.acquire();
 
   try {
@@ -88,15 +100,15 @@ export const registerUser = async (createdByID, name, lastname, email, cellphone
     // 2. Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 3. Insert user
+    // 3. Insert user with storeID
     const insertSql = `
-      INSERT INTO WUSAP.Employees (NAME, LASTNAME, EMAIL, PASSWORD, ROLE, CELLPHONE)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO WUSAP.Employees (NAME, LASTNAME, EMAIL, PASSWORD, ROLE, CELLPHONE, STOREID)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
     await new Promise((resolve, reject) => {
       conn.prepare(insertSql, (err, stmt) => {
         if (err) return reject(err);
-        stmt.exec([name, lastname, email, hashedPassword, role, cellphone], (err) => {
+        stmt.exec([name, lastname, email, hashedPassword, role, cellphone, storeID], (err) => {
           if (err) return reject(err);
           resolve();
         });
@@ -142,7 +154,7 @@ export const registerUser = async (createdByID, name, lastname, email, cellphone
     return {
       success: true,
       message: "Usuario registrado exitosamente",
-      user: { name, lastname, email, role },
+      user: { name, lastname, email, role, storeID },
     };
   } catch (error) {
     // Rollback on error

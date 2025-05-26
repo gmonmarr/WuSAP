@@ -10,10 +10,12 @@ export async function getAllEmployees() {
   try {
     const result = await conn.exec(`
       SELECT 
-      *
-      FROM WUSAP.Employees
+        e.*,
+        l.NAME AS LOCATION_NAME
+      FROM WUSAP.Employees e
+      LEFT JOIN WUSAP.LOCATIONS l ON e.STOREID = l.STOREID
+      ORDER BY e.EMPLOYEEID
     `);
-    console.log(result);
     return result;
   } finally {
     await pool.release(conn);

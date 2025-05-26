@@ -13,7 +13,7 @@ import "@ui5/webcomponents/dist/CardHeader.js";
 import "@ui5/webcomponents-icons/dist/menu.js";
 import "@ui5/webcomponents-icons/dist/person-placeholder.js";
 import "@ui5/webcomponents-icons/dist/product.js";
-import "@ui5/webcomponents-icons/dist/chart-table-view.js";
+import "@ui5/webcomponents-icons/dist/map.js";
 
 const AdminMain = () => {
   const navigate = useNavigate();
@@ -54,13 +54,13 @@ const AdminMain = () => {
                 </div>
               </div>
               
-              <div className="admin-menu-item" onClick={() => navigate('/reportes')}>
+              <div className="admin-menu-item" onClick={() => navigate('/admin/locations')}>
                 <div className="menu-item-icon">
-                  <ui5-icon name="chart-table-view" interactive></ui5-icon>
+                  <ui5-icon name="map" interactive></ui5-icon>
                 </div>
                 <div className="menu-item-text">
-                  <h3>Reportes</h3>
-                  <p>Ver informes y estadísticas</p>
+                  <h3>Ubicaciones</h3>
+                  <p>Gestionar ubicaciones y sucursales</p>
                 </div>
               </div>
             </div>

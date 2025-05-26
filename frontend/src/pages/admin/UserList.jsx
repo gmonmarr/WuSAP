@@ -1,6 +1,6 @@
 // pages/admin/UserList.jsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -11,7 +11,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TablePagination,
   Chip,
   IconButton,
   Select,
@@ -30,7 +29,8 @@ import {
   Grid,
   Switch,
   FormControlLabel,
-  Tooltip
+  Tooltip,
+  CircularProgress
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import SearchIcon from '@mui/icons-material/Search';
@@ -40,7 +40,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import InfoIcon from '@mui/icons-material/Info';
 import Navbar from '../../components/Navbar';
 import Header from '../../components/Header';
-import { employeeService, authService } from '../../services/api';
+import { employeeService, authService, locationService } from '../../services/api';
 
 // Styled components
 const StyledPaper = styled(Paper)(({ theme }) => ({
@@ -54,12 +54,14 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
 const UserList = () => {
   // States
   const [employees, setEmployees] = useState([]);
+  const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingLocations, setLoadingLocations] = useState(false);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [visibleCount, setVisibleCount] = useState(5); // Show 5 records initially
+  const [loadingMore, setLoadingMore] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [currentEmployee, setCurrentEmployee] = useState(null);
   const [formData, setFormData] = useState({
@@ -68,6 +70,7 @@ const UserList = () => {
     email: '',
     role: 'sales',
     cellphone: '',
+    storeID: '',
     isBlocked: false,
     blockReason: '',
     password: '',
@@ -95,30 +98,88 @@ const UserList = () => {
     }
   };
 
+  const fetchLocations = async () => {
+    setLoadingLocations(true);
+    try {
+      const data = await locationService.getAllLocations();
+      setLocations(data);
+    } catch (err) {
+      console.error('Error al cargar ubicaciones:', err);
+      // Don't show error for locations, just log it
+    } finally {
+      setLoadingLocations(false);
+    }
+  };
+
   // Handle search and filters
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
-    setPage(0);
+    setVisibleCount(5); // Reset to show 5 records when searching
   };
 
   const handleRoleFilterChange = (event, newValue) => {
     if (newValue !== null) {
       setRoleFilter(newValue);
-      setPage(0);
+      setVisibleCount(5); // Reset to show 5 records when filtering
     }
   };
 
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
+  // Infinite scroll functionality
+  const loadMoreRecords = useCallback(() => {
+    if (loadingMore) return;
+    
+    setLoadingMore(true);
+    // Simulate loading delay for better UX
+    setTimeout(() => {
+      setVisibleCount(prev => prev + 5);
+      setLoadingMore(false);
+    }, 300);
+  }, [loadingMore]);
 
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
+  // Filter employees
+  const filteredEmployees = employees.filter(employee => {
+    // Search term filter
+    const matchesSearch = 
+      !searchTerm ||
+      (employee.NAME?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (employee.LASTNAME?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (employee.EMAIL?.toLowerCase() || '').includes(searchTerm.toLowerCase());
+    
+    // Role filter
+    const matchesRole = roleFilter === 'all' || 
+      (employee.ROLE?.toLowerCase() === roleFilter);
+    
+    return matchesSearch && matchesRole;
+  });
+
+  // Handle scroll event for infinite loading (moved after filteredEmployees definition)
+  const handleScroll = useCallback((event) => {
+    const { scrollTop, scrollHeight, clientHeight } = event.target;
+    
+    // Debug logs to see what's happening
+    console.log('Scroll event:', {
+      scrollTop,
+      scrollHeight, 
+      clientHeight,
+      threshold: scrollHeight - scrollTop,
+      shouldLoad: scrollHeight - scrollTop <= clientHeight + 50,
+      loadingMore,
+      visibleCount,
+      totalFiltered: filteredEmployees.length
+    });
+    
+    // Load more when user scrolls near the bottom (within 50px instead of 100px)
+    if (scrollHeight - scrollTop <= clientHeight + 50 && !loadingMore && visibleCount < filteredEmployees.length) {
+      console.log('Loading more records...');
+      loadMoreRecords();
+    }
+  }, [loadMoreRecords, loadingMore, visibleCount, filteredEmployees.length]);
 
   // Dialog handlers
   const handleOpenDialog = (employee = null) => {
+    // Fetch locations when opening dialog
+    fetchLocations();
+    
     if (employee) {
       setFormData({
         name: employee.NAME || '',
@@ -126,6 +187,7 @@ const UserList = () => {
         email: employee.EMAIL || '',
         role: employee.ROLE?.toLowerCase() || 'sales',
         cellphone: employee.CELLPHONE || '',
+        storeID: employee.STOREID ? employee.STOREID.toString() : '',
         isBlocked: employee.ISBLOCKED === true,
         blockReason: employee.BLOCKREASON || '',
         password: '',
@@ -140,6 +202,7 @@ const UserList = () => {
         email: '',
         role: 'sales',
         cellphone: '',
+        storeID: '',
         isBlocked: false,
         blockReason: '',
         password: '',
@@ -211,6 +274,9 @@ const UserList = () => {
     if (!validateForm()) return;
 
     try {
+      // Prepare storeID - convert empty string to null
+      const storeID = formData.storeID === '' ? null : parseInt(formData.storeID);
+      
       if (currentEmployee) {
         await employeeService.updateEmployee(currentEmployee.EMPLOYEEID, {
           name: formData.name,
@@ -218,6 +284,7 @@ const UserList = () => {
           email: formData.email,
           role: formData.role,
           cellphone: formData.cellphone,
+          storeID: storeID,
           isBlocked: formData.isBlocked,
           blockReason: formData.blockReason,
           ...(formData.password ? { password: formData.password } : {})
@@ -230,6 +297,7 @@ const UserList = () => {
           email: formData.email,
           role: formData.role,
           cellphone: formData.cellphone,
+          storeID: storeID,
           password: formData.password
         });
         setSuccessMessage(`Empleado ${formData.name} creado correctamente.`);
@@ -285,22 +353,6 @@ const UserList = () => {
     if (!string) return '';
     return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
   };
-
-  // Filter employees
-  const filteredEmployees = employees.filter(employee => {
-    // Search term filter
-    const matchesSearch = 
-      !searchTerm ||
-      (employee.NAME?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-      (employee.LASTNAME?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-      (employee.EMAIL?.toLowerCase() || '').includes(searchTerm.toLowerCase());
-    
-    // Role filter
-    const matchesRole = roleFilter === 'all' || 
-      (employee.ROLE?.toLowerCase() === roleFilter);
-    
-    return matchesSearch && matchesRole;
-  });
 
   const handleBlockReasonConfirm = () => {
     if (!blockReasonInput.trim()) {
@@ -484,6 +536,7 @@ const UserList = () => {
             flex: 1,
             overflow: "auto",
             p: "1.5rem 2rem",
+            minHeight: 0, // Important for flex scrolling
             "&::-webkit-scrollbar": {
               width: "8px",
               height: "8px",
@@ -499,7 +552,9 @@ const UserList = () => {
                 background: "#666",
               },
             },
-          }}>
+          }}
+          onScroll={handleScroll}
+          >
             {loading ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
                 <Typography variant="body1">Cargando empleados...</Typography>
@@ -509,121 +564,176 @@ const UserList = () => {
                 <Typography variant="body1" color="error">{error}</Typography>
               </Box>
             ) : (
-              <TableContainer sx={{ borderRadius: '8px', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)' }}>
-                <Table sx={{ minWidth: 700 }}>
-                  <TableHead>
-                    <TableRow sx={{ backgroundColor: 'background.paper' }}>
-                      <TableCell sx={{ fontWeight: 'bold', py: 2 }}>Nombre</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', py: 2 }}>Email</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', py: 2 }}>Rol</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', py: 2 }}>Teléfono</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', py: 2 }}>Estado</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', py: 2 }}>Acciones</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {filteredEmployees.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
-                          <Typography variant="body2" sx={{ fontStyle: 'italic', color: 'text.secondary' }}>
-                            No se encontraron empleados con los filtros actuales.
-                          </Typography>
-                        </TableCell>
+              <>
+                <TableContainer sx={{ borderRadius: '8px', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)' }}>
+                  <Table sx={{ minWidth: 700 }}>
+                    <TableHead>
+                      <TableRow sx={{ backgroundColor: 'background.paper' }}>
+                        <TableCell sx={{ fontWeight: 'bold', py: 2 }}>Nombre</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', py: 2 }}>Email</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', py: 2 }}>Rol</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', py: 2 }}>Teléfono</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', py: 2 }}>Ubicación</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', py: 2 }}>Estado</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', py: 2 }}>Acciones</TableCell>
                       </TableRow>
-                    ) : (
-                      filteredEmployees
-                        .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                        .map((employee) => (
-                          <TableRow 
-                            key={employee.EMPLOYEEID} 
-                            hover
-                            sx={{ 
-                              cursor: 'pointer',
-                              '&:hover': {
-                                backgroundColor: 'rgba(0, 0, 0, 0.04)',
-                              },
-                              transition: 'background-color 0.2s',
-                              borderBottom: '1px solid',
-                              borderColor: 'divider',
-                            }}
-                          >
-                            <TableCell 
+                    </TableHead>
+                    <TableBody>
+                      {filteredEmployees.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
+                            <Typography variant="body2" sx={{ fontStyle: 'italic', color: 'text.secondary' }}>
+                              No se encontraron empleados con los filtros actuales.
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        filteredEmployees
+                          .slice(0, visibleCount)
+                          .map((employee) => (
+                            <TableRow 
+                              key={employee.EMPLOYEEID} 
+                              hover
                               sx={{ 
-                                py: 1.8, 
-                                borderLeft: `4px solid ${getRoleBorderColor(employee.ROLE)}`
+                                cursor: 'pointer',
+                                '&:hover': {
+                                  backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                                },
+                                transition: 'background-color 0.2s',
+                                borderBottom: '1px solid',
+                                borderColor: 'divider',
                               }}
                             >
-                              <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                {employee.NAME} {employee.LASTNAME}
-                              </Typography>
-                            </TableCell>
-                            <TableCell sx={{ py: 1.8 }}>{employee.EMAIL}</TableCell>
-                            <TableCell sx={{ py: 1.8 }}>
-                              <Chip
-                                label={capitalizeFirstLetter(employee.ROLE)}
-                                color={getRoleColor(employee.ROLE)}
-                                size="small"
-                                sx={{ fontWeight: 500, minWidth: '80px', justifyContent: 'center' }}
-                              />
-                            </TableCell>
-                            <TableCell sx={{ py: 1.8 }}>{employee.CELLPHONE || 'N/A'}</TableCell>
-                            <TableCell sx={{ py: 1.8 }}>
-                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                              <TableCell 
+                                sx={{ 
+                                  py: 1.8, 
+                                  borderLeft: `4px solid ${getRoleBorderColor(employee.ROLE)}`
+                                }}
+                              >
+                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                  {employee.NAME} {employee.LASTNAME}
+                                </Typography>
+                              </TableCell>
+                              <TableCell sx={{ py: 1.8 }}>{employee.EMAIL}</TableCell>
+                              <TableCell sx={{ py: 1.8 }}>
                                 <Chip
-                                  label={getStatusText(employee.ISBLOCKED)}
-                                  color={getStatusColor(employee.ISBLOCKED)}
+                                  label={capitalizeFirstLetter(employee.ROLE)}
+                                  color={getRoleColor(employee.ROLE)}
                                   size="small"
                                   sx={{ fontWeight: 500, minWidth: '80px', justifyContent: 'center' }}
                                 />
-                                {employee.BLOCKREASON && (
-                                  <Tooltip 
-                                    title={
-                                      <Typography variant="body2" sx={{ p: 0.5 }}>
-                                        <strong>Motivo de bloqueo:</strong><br />
-                                        {employee.BLOCKREASON}
-                                      </Typography>
-                                    } 
-                                    arrow
-                                    placement="top"
-                                  >
-                                    <IconButton 
-                                      size="small" 
-                                      sx={{ 
-                                        ml: 0.5,
-                                        backgroundColor: 'rgba(25, 118, 210, 0.08)',
-                                        '&:hover': {
-                                          backgroundColor: 'rgba(25, 118, 210, 0.15)',
-                                        }
-                                      }}
+                              </TableCell>
+                              <TableCell sx={{ py: 1.8 }}>{employee.CELLPHONE || 'N/A'}</TableCell>
+                              <TableCell sx={{ py: 1.8 }}>{employee.LOCATION_NAME || 'Sin asignar'}</TableCell>
+                              <TableCell sx={{ py: 1.8 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                  <Chip
+                                    label={getStatusText(employee.ISBLOCKED)}
+                                    color={getStatusColor(employee.ISBLOCKED)}
+                                    size="small"
+                                    sx={{ fontWeight: 500, minWidth: '80px', justifyContent: 'center' }}
+                                  />
+                                  {employee.BLOCKREASON && (
+                                    <Tooltip 
+                                      title={
+                                        <Typography variant="body2" sx={{ p: 0.5 }}>
+                                          <strong>Motivo de bloqueo:</strong><br />
+                                          {employee.BLOCKREASON}
+                                        </Typography>
+                                      } 
+                                      arrow
+                                      placement="top"
                                     >
-                                      <InfoIcon fontSize="small" color="info" />
-                                    </IconButton>
-                                  </Tooltip>
-                                )}
-                              </Box>
-                            </TableCell>
-                            <TableCell sx={{ py: 1.8 }}>
-                              <IconButton
-                                color="primary"
-                                size="small"
-                                onClick={() => handleOpenDialog(employee)}
-                                sx={{ 
-                                  borderRadius: '8px',
-                                  transition: 'background-color 0.2s',
-                                  '&:hover': {
-                                    backgroundColor: 'rgba(25, 118, 210, 0.08)',
-                                  }
-                                }}
-                              >
-                                <EditIcon />
-                              </IconButton>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                                      <IconButton 
+                                        size="small" 
+                                        sx={{ 
+                                          ml: 0.5,
+                                          backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                                          '&:hover': {
+                                            backgroundColor: 'rgba(25, 118, 210, 0.15)',
+                                          }
+                                        }}
+                                      >
+                                        <InfoIcon fontSize="small" color="info" />
+                                      </IconButton>
+                                    </Tooltip>
+                                  )}
+                                </Box>
+                              </TableCell>
+                              <TableCell sx={{ py: 1.8 }}>
+                                <IconButton
+                                  color="primary"
+                                  size="small"
+                                  onClick={() => handleOpenDialog(employee)}
+                                  sx={{ 
+                                    borderRadius: '8px',
+                                    transition: 'background-color 0.2s',
+                                    '&:hover': {
+                                      backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                                    }
+                                  }}
+                                >
+                                  <EditIcon />
+                                </IconButton>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                
+                {/* Loading indicator for infinite scroll */}
+                {loadingMore && (
+                  <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    alignItems: 'center', 
+                    py: 3 
+                  }}>
+                    <CircularProgress size={24} sx={{ mr: 2 }} />
+                    <Typography variant="body2" color="text.secondary">
+                      Cargando más empleados...
+                    </Typography>
+                  </Box>
+                )}
+                
+                {/* Load More Button - Fallback if scroll doesn't work */}
+                {!loadingMore && visibleCount < filteredEmployees.length && (
+                  <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    alignItems: 'center', 
+                    py: 3 
+                  }}>
+                    <Button
+                      variant="outlined"
+                      onClick={loadMoreRecords}
+                      sx={{
+                        borderRadius: '8px',
+                        textTransform: 'none',
+                        fontWeight: 500
+                      }}
+                    >
+                      Cargar más empleados ({filteredEmployees.length - visibleCount} restantes)
+                    </Button>
+                  </Box>
+                )}
+                
+                {/* End of results indicator */}
+                {!loadingMore && visibleCount >= filteredEmployees.length && filteredEmployees.length > 5 && (
+                  <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    alignItems: 'center', 
+                    py: 3 
+                  }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                      No hay más empleados para mostrar
+                    </Typography>
+                  </Box>
+                )}
+              </>
             )}
           </Box>
           
@@ -645,30 +755,10 @@ const UserList = () => {
               >
                 Actualizar
               </Button>
-              <Typography variant="caption" sx={{ ml: 2, color: 'text.secondary' }}>
-                Total: {filteredEmployees.length} empleados
-              </Typography>
             </Box>
-            <TablePagination
-              component="div"
-              count={filteredEmployees.length}
-              page={page}
-              onPageChange={handleChangePage}
-              rowsPerPage={rowsPerPage}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-              rowsPerPageOptions={[5, 10, 25]}
-              labelRowsPerPage="Filas por página:"
-              labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
-              sx={{
-                '.MuiTablePagination-toolbar': {
-                  paddingLeft: 2,
-                },
-                '.MuiTablePagination-selectLabel, .MuiTablePagination-select, .MuiTablePagination-selectIcon, .MuiTablePagination-input, .MuiTablePagination-actions': {
-                  color: 'text.secondary',
-                  fontSize: '0.875rem',
-                },
-              }}
-            />
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              Mostrando {Math.min(visibleCount, filteredEmployees.length)} de {filteredEmployees.length} empleados
+            </Typography>
           </Box>
         </StyledPaper>
       </Box>
@@ -770,6 +860,33 @@ const UserList = () => {
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
               />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth margin="normal">
+                <InputLabel id="location-label">Ubicación</InputLabel>
+                <Select
+                  labelId="location-label"
+                  name="storeID"
+                  value={formData.storeID}
+                  onChange={handleInputChange}
+                  label="Ubicación"
+                  disabled={loadingLocations}
+                >
+                  <MenuItem value="">
+                    <em>Sin asignar</em>
+                  </MenuItem>
+                  {locations.map((location) => (
+                    <MenuItem key={location.STOREID} value={location.STOREID}>
+                      {location.NAME}
+                    </MenuItem>
+                  ))}
+                </Select>
+                {loadingLocations && (
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                    Cargando ubicaciones...
+                  </Typography>
+                )}
+              </FormControl>
             </Grid>
             {currentEmployee && (
               <Grid item xs={12} md={6}>

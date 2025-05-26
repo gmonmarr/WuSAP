@@ -14,7 +14,7 @@ export const login = async (req, res) => {
 };
 
 export const register = async (req, res) => {
-  const { name, lastname, email, cellphone, password, role } = req.body;
+  const { name, lastname, email, cellphone, password, role, storeID } = req.body;
   const createdByID = req.user?.employeeID; // ✅ pulled from decoded JWT
 
   if (!createdByID) {
@@ -25,7 +25,7 @@ export const register = async (req, res) => {
   }
 
   try {
-    const result = await registerUser(createdByID, name, lastname, email, cellphone, password, role);
+    const result = await registerUser(createdByID, name, lastname, email, cellphone, password, role, storeID);
     res.status(201).json(result);
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
