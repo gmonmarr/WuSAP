@@ -18,16 +18,12 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS
+  ? process.env.CORS_ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
+  : [];
+
 const corsOptions = {
   origin: function (origin, callback) {
-    const allowedOrigins = [
-      'https://wusap-front.onrender.com',
-      'http://localhost:5173',
-      'https://gmonmarr.github.io',
-      'http://localhost:3000'
-    ];
-
-    // Allow requests with no origin (like Postman or Supertest)
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -39,6 +35,7 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
 };
+
 
 // Middleware
 app.use(cors(corsOptions));
