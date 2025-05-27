@@ -5,11 +5,3 @@ applications:
     buildpacks:
       - nodejs_buildpack
     command: node app.js
-    env:
-      HANA_SERVER_NODE: HANA_SERVER_NODE
-      HANA_USER: HANA_USER
-      HANA_PASSWORD: HANA_PASSWORD
-      HANA_SCHEMA: HANA_SCHEMA
-      JWT_SECRET: JWT_SECRET
-      JWT_EXPIRATION: JWT_EXPIRATION
-
