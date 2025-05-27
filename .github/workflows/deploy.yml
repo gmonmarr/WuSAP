@@ -2,7 +2,7 @@ name: Deploy Backend & Frontend to SAP CF
 
 on:
   push:
-    branches: [sap-cf]  # Change if your default branch is different
+    branches: [sap-cf]
 
 jobs:
   deploy:
@@ -27,33 +27,16 @@ jobs:
           sudo apt-get install -y cf8-cli || sudo apt-get install -y cf-cli
           cf version
 
-      - name: 🔐 Authenticate to SAP CF using OAuth token via curl
+      - name: 🔐 Authenticate to SAP CF using username/password
         env:
           CF_API: ${{ secrets.CF_API }}
-          CF_CLIENT_ID: ${{ secrets.CF_CLIENT_ID }}
-          CF_CLIENT_SECRET: ${{ secrets.CF_CLIENT_SECRET }}
-          CF_AUTH_URL: ${{ secrets.CF_AUTH_URL }}
+          CF_USERNAME: ${{ secrets.CF_USERNAME }}
+          CF_PASSWORD: ${{ secrets.CF_PASSWORD }}
           CF_ORG: ${{ secrets.CF_ORG }}
           CF_SPACE: ${{ secrets.CF_SPACE }}
         run: |
-          sudo apt-get install -y jq > /dev/null
-
           cf api "$CF_API"
-
-          echo "🔐 Requesting access token from UAA..."
-          ACCESS_TOKEN=$(curl -s -k -X POST "$CF_AUTH_URL/oauth/token" \
-            -H "Content-Type: application/x-www-form-urlencoded" \
-            -u "$CF_CLIENT_ID:$CF_CLIENT_SECRET" \
-            -d 'grant_type=client_credentials' | jq -r .access_token)
-
-          if [ "$ACCESS_TOKEN" = "null" ] || [ -z "$ACCESS_TOKEN" ]; then
-            echo "❌ Failed to retrieve access token."
-            exit 1
-          fi
-
-          echo "✅ Access token received. Logging into Cloud Foundry..."
-
-          cf auth "$CF_CLIENT_ID" --client-credentials --assertion "$ACCESS_TOKEN"
+          cf auth "$CF_USERNAME" "$CF_PASSWORD"
           cf target -o "$CF_ORG" -s "$CF_SPACE"
 
       - name: 🚀 Deploy Backend (with environment variables)
@@ -82,6 +65,7 @@ jobs:
           echo "VITE_API_SERVER=${{ env.BACKEND_URL }}" > .env.production
           npm install
           npm run build
+          echo "root: ." > dist/Staticfile
 
       - name: 🌍 Deploy Frontend
         working-directory: frontend
