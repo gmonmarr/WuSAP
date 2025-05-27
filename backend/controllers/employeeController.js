@@ -23,9 +23,9 @@ export async function updateEmployee(req, res) {
   try {
     // Validar rol si está presente
     if (employeeData.role) {
-      const validRoles = ["admin", "manager", "sales", "owner"];
+      const validRoles = ["admin", "manager", "sales", "owner", "warehouse_manager"];
       if (!validRoles.includes(employeeData.role)) {
-        return res.status(400).json({ error: 'Validation error', details: 'El rol debe ser admin, manager, sales o owner' });
+        return res.status(400).json({ error: 'Validation error', details: 'El rol debe ser admin, manager, sales, owner o warehouse_manager' });
       }
     }
 

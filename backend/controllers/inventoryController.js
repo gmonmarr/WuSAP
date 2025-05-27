@@ -3,7 +3,8 @@
 import { 
     getAllInventory,
     getInventoryByStore,
-    assignInventoryToStore
+    assignInventoryToStore,
+    getWarehouseProducts
   } from '../services/inventoryService.js';
   
   export const getInventory = async (req, res) => {
@@ -28,6 +29,22 @@ import {
       res.status(500).json({ message: error.message });
     }
   };  
+  
+  // Nueva función para obtener productos del almacén
+  export const getWarehouseProductsController = async (req, res) => {
+    try {
+      const data = await getWarehouseProducts();
+      res.json({
+        success: true,
+        data: data
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        success: false,
+        message: error.message 
+      });
+    }
+  };
   
   export const postInventory = async (req, res) => {
     const { productID, storeID, quantity } = req.body;

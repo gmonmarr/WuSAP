@@ -295,6 +295,17 @@ export const inventoryService = {
     }
   },
 
+  // Get warehouse products (storeid = 1)
+  getWarehouseProducts: async () => {
+    try {
+      const response = await api.get('/api/inventory/warehouse');
+      return response;
+    } catch (error) {
+      console.error('Error fetching warehouse products:', error);
+      throw error;
+    }
+  },
+
   // Assign/Update inventory to store
   assignInventoryToStore: async (productID, storeID, quantity) => {
     try {

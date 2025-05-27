@@ -16,7 +16,7 @@ import Navbar from "../../components/Navbar";
 import Header from "../../components/Header";
 import AvisoPerdidaInfo from "../../components/AvisoPerdidaInfo";
 import ProductCard from "../../components/ProductCard";
-import { inventoryService, productService } from "../../services/api";
+import { inventoryService, productService, locationService, authService } from "../../services/api";
 
 // Styled components
 const StyledPaper = styled(Paper)(({ theme }) => ({
@@ -33,6 +33,7 @@ const ProductosSucursalPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [storeName, setStoreName] = useState("Sucursal");
 
   // Sample placeholder images for products
   const placeholderImages = [
@@ -47,6 +48,26 @@ const ProductosSucursalPage = () => {
     const randomIndex = Math.floor(Math.random() * placeholderImages.length);
     return placeholderImages[randomIndex];
   };
+
+  // Effect to fetch store name
+  useEffect(() => {
+    const fetchStoreName = async () => {
+      try {
+        const user = authService.getUser();
+        if (user && user.storeID) {
+          const location = await locationService.getLocationById(user.storeID);
+          if (location && location.NAME) {
+            setStoreName(location.NAME);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching store name:", error);
+        // Keep default name if error
+      }
+    };
+
+    fetchStoreName();
+  }, []);
 
   // Effect to fetch inventory and products on component mount
   useEffect(() => {
@@ -112,11 +133,13 @@ const ProductosSucursalPage = () => {
     (product.description?.toLowerCase() || "").includes(searchTerm.toLowerCase())
   );
 
+  const pageTitle = `Inventario de ${storeName}`;
+
   return (
     <div style={{ minHeight: "100vh", background: "#f8f9fa", display: "flex", flexDirection: "column" }}>
       <AvisoPerdidaInfo />
       <Navbar />
-      <Header title="Productos de Sucursal" />
+      <Header title={pageTitle} />
       <Box sx={{ 
         flex: 1,
         maxWidth: 1600,
@@ -151,7 +174,7 @@ const ProductosSucursalPage = () => {
           }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Typography variant="h6" sx={{ fontWeight: 500, color: 'primary.main' }}>
-                Inventario de Sucursal
+                {pageTitle}
               </Typography>
               <Typography 
                 variant="caption" 

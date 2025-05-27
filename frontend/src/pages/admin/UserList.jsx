@@ -325,6 +325,8 @@ const UserList = () => {
         return 'primary';
       case 'manager':
         return 'secondary';
+      case 'warehouse_manager':
+        return 'success';
       case 'sales':
         return 'info';
       case 'owner':
@@ -340,6 +342,8 @@ const UserList = () => {
         return '#1976d2'; // primary
       case 'manager':
         return '#9c27b0'; // secondary
+      case 'warehouse_manager':
+        return '#2e7d32'; // success
       case 'sales':
         return '#03a9f4'; // info
       case 'owner':
@@ -471,6 +475,9 @@ const UserList = () => {
                   </ToggleButton>
                   <ToggleButton value="manager">
                     Manager
+                  </ToggleButton>
+                  <ToggleButton value="warehouse_manager">
+                    Warehouse Manager
                   </ToggleButton>
                   <ToggleButton value="sales">
                     Sales
@@ -844,6 +851,7 @@ const UserList = () => {
                 >
                   <MenuItem value="admin">Admin</MenuItem>
                   <MenuItem value="manager">Manager</MenuItem>
+                  <MenuItem value="warehouse_manager">Warehouse Manager</MenuItem>
                   <MenuItem value="sales">Sales</MenuItem>
                   <MenuItem value="owner">Owner</MenuItem>
                 </Select>

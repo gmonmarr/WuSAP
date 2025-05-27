@@ -51,9 +51,9 @@ export async function updateEmployee(employeeID, employeeData, updatedByID) {
     
     if (employeeData.role !== undefined) {
       // Validate role is one of the allowed values
-      const validRoles = ["admin", "manager", "sales", "owner"];
+      const validRoles = ["admin", "manager", "sales", "owner", "warehouse_manager"];
       if (!validRoles.includes(employeeData.role)) {
-        throw new Error("El rol debe ser admin, manager, sales o owner");
+        throw new Error("El rol debe ser admin, manager, sales, owner o warehouse_manager");
       }
       
       updateFields.push('ROLE = ?');
