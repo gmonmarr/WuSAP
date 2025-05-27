@@ -60,6 +60,15 @@ jobs:
           echo "BACKEND_URL=https://$BACKEND_ROUTE" >> $GITHUB_ENV
           echo "✅ Backend URL is: https://$BACKEND_ROUTE"
 
+      - name: 🔎 Test /api/test-hana endpoint
+        run: |
+          echo "⏳ Waiting a few seconds for backend to be ready..."
+          sleep 15
+          curl --fail "${{ env.BACKEND_URL }}/api/test-hana" || {
+            echo "❌ /api/test-hana endpoint failed."
+            exit 1
+          }
+
       - name: 🏗️ Build Frontend with dynamic backend URL
         working-directory: frontend
         run: |
