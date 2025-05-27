@@ -1,34 +1,13 @@
 // pages/Dashboard.tsx
-
-import React, { useState } from "react";
 import {
-  Avatar,
   Card,
   CardHeader,
-  Text,
-  ShellBar,
-  ShellBarItem,
-  List,
-  ListItemCustom,
-  ListItemStandard,
-  ProgressIndicator,
   FlexBox,
   FlexBoxJustifyContent,
-  FlexBoxWrap,
   FlexBoxDirection,
-  AnalyticalTable,
-  Icon,
-  VerticalAlign,
   Button,
 } from "@ui5/webcomponents-react";
-import { ThemingParameters } from "@ui5/webcomponents-react-base";
 import { BarChart, ColumnChart, DonutChart, LineChart, PieChart } from "@ui5/webcomponents-react-charts";
-import lineChartIcon from "@ui5/webcomponents-icons/dist/line-chart.js";
-import pieChartIcon from "@ui5/webcomponents-icons/dist/pie-chart.js";
-import barChartIcon from "@ui5/webcomponents-icons/dist/horizontal-bar-chart.js";
-import addIcon from "@ui5/webcomponents-icons/dist/add.js";
-import listIcon from "@ui5/webcomponents-icons/dist/list.js";
-import tableViewIcon from "@ui5/webcomponents-icons/dist/table-view.js";
 import Navbar from "../components/Navbar";
 import Header from "../components/Header";
 import "@ui5/webcomponents/dist/Button.js";
@@ -44,6 +23,23 @@ const dataset = [
   ];
 
 const alertCount = [1];
+
+const calculatePercentage = (title) => {
+  switch (title) {
+    case "Ciclo de tiempo de pedido":
+      return (Math.random() * 30 + 50).toFixed(2) + "%"; // Example formula
+    case "Tasa de entrega a tiempo":
+      return (Math.random() * 10 + 85).toFixed(2) + "%";
+    case "Rotación de inventario":
+      return (Math.random() * 40 + 20).toFixed(2) + "%";
+    case "Tiempo de ciclo de aprobación de compras":
+      return (Math.random() * 20 + 60).toFixed(2) + "%";
+    case "Tasa de cumplimiento de proveedores":
+      return (Math.random() * 15 + 80).toFixed(2) + "%";
+    default:
+      return "N/A";
+  }
+};
 
 export function DashboardGeneral() {
     return (
@@ -67,7 +63,8 @@ export function DashboardGeneral() {
         style={{
             width: "100%",
             height: "90vh",
-            padding: "0.5rem"
+            padding: "0.5rem",
+            marginBottom:"3rem"
         }}>
             
         {/* COLUMNA GENERAL IZQUIERDA - (2 rows, primera dos columnas, segunda el resto una columna) */}
@@ -93,6 +90,7 @@ export function DashboardGeneral() {
                     <FlexBox direction={FlexBoxDirection.Row}
                     style={{
                         width: "100%",
+                        height:"80%",
                         gap: "1rem",
                     }} 
                     >
@@ -160,7 +158,7 @@ export function DashboardGeneral() {
                     justifyContent={FlexBoxJustifyContent.SpaceAround}
                     style={{
                     width: "100%",
-                    height: "85%", 
+                    height: "80%", 
                     }}
                 >
                     
@@ -169,7 +167,7 @@ export function DashboardGeneral() {
                         style={{
                             width: "100%",
                             height: "100%",
-                            borderRadius: "8px",
+                            borderRadius: "16px",
                             boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
                             border: "1px solid #e5e5e5",
                         }}
@@ -188,25 +186,80 @@ export function DashboardGeneral() {
                 </FlexBox>
           </FlexBox>
 
-           {/* COLUMNA GENERAL DERECHA - (2 rows, primera dos columnas, segunda el resto una columna) */}
+           {/* COLUMNA GENERAL DERECHA - (3 rows, primera kpis, segunda dos columnas, tercera el resto una columna) */}
            <FlexBox
                 direction={FlexBoxDirection.Column}
                 justifyContent={FlexBoxJustifyContent.SpaceAround}
                 style={{
                     width: "70%",
                     height: "100%", 
-                    gap: "1rem",
+                    //gap: "1rem",
                     paddingLeft: "1rem"
                 }}>
 
-                {/* Row 1: 2 columnas */}
+                {/* Row 1:  5 columnas kpis*/}
+                {/* ROW 1 - 5 kpis */}
+                <FlexBox
+                    direction={FlexBoxDirection.Row}
+                    justifyContent={FlexBoxJustifyContent.Start}
+                    style={{
+                        width: "100%",
+                        marginBottom: "1rem",
+                        height:"auto"
+                    }}
+                    >
+                    <FlexBox
+                        direction={FlexBoxDirection.Row}
+                        style={{
+                        width: "100%",
+                        gap: "1rem",
+                        height: "auto", 
+                        textAlign: "center",
+                        }}
+                    >
+                        {[
+                        "Ciclo de tiempo de pedido",
+                        "Tasa de entrega a tiempo",
+                        "Rotación de inventario",
+                        "Tiempo de ciclo de aprobación de compras",
+                        "Tasa de cumplimiento de proveedores",
+                        ].map((title) => (
+                        <Card
+                            key={title}
+                            header={<CardHeader titleText={title} />}
+                            style={{
+                            flex: 1,
+                            display: "flex",
+                            flexDirection: "column", 
+                            height: "100%",
+                            borderRadius: "16px",
+                            textAlign:"center",
+                            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                            border: "1px solid #e5e5e5",
+                            alignItems: "center", // Center align content
+                            justifyContent: "space-between", // Ensure even spacing
+                            }}
+                        >
+                            <div style={{ fontSize: "1rem", padding:"0.5rem"}}>
+                                {calculatePercentage(title)}
+                            </div>
+                            
+                        </Card>
+                        ))}
+                    </FlexBox>
+                    </FlexBox>
+
+
+
+                {/* Row 2: 2 columnas */}
                 <FlexBox
                     direction={FlexBoxDirection.Row}
                     justifyContent={FlexBoxJustifyContent.SpaceAround}
                     style={{
                         width: "100%",
-                        height: "50%", 
+                        height: "40%", 
                         gap: "1rem",
+                        marginBottom: "1rem"
                     }}
                 >
                     <Card 
@@ -214,7 +267,7 @@ export function DashboardGeneral() {
                     style={{
                         width: "65%",
                         height: "100%",
-                        borderRadius: "8px",
+                        borderRadius: "16px",
                         boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
                         border: "1px solid #e5e5e5",
                     }}
@@ -224,7 +277,7 @@ export function DashboardGeneral() {
                             measures={[{ accessor: "data", label: "Stock Price"}]}
                             dataset={dataset}
                             style={{
-                                height: "35vh",
+                                height: "30vh",
                             }}
                             chartConfig={{
                                 legendPosition: "top",
@@ -245,7 +298,7 @@ export function DashboardGeneral() {
                             style={{
                                 width: "100%",
                                 height: "100%",
-                                borderRadius: "8px",
+                                borderRadius: "16px",
                                 boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
                                 border: "1px solid #e5e5e5",
                             }}
@@ -254,7 +307,7 @@ export function DashboardGeneral() {
                                 dimension={{ accessor: "month" }}
                                 measure={{ accessor: "data" }}
                                 dataset={dataset}
-                                style={{ height:"35vh", fontSize:"0.5rem"}}
+                                style={{ height:"30vh", fontSize:"0.5rem"}}
                                 chartConfig={{
                                 legendPosition: "bottom",
                                 innerRadius: "50%",
@@ -264,13 +317,13 @@ export function DashboardGeneral() {
                     </FlexBox>
                 </FlexBox>
             
-                {/* Row 2: Card fills the rest */}
+                {/* Row 3: Card fills the rest */}
                 <FlexBox
                     direction={FlexBoxDirection.Column}
                     justifyContent={FlexBoxJustifyContent.SpaceAround}
                     style={{
                     width: "100%",
-                    height: "45%", 
+                    height: "35%", 
                     }}
                 >
                     <Card
@@ -278,9 +331,10 @@ export function DashboardGeneral() {
                     style={{
                         width: "100%",
                         height: "100%",
-                        borderRadius: "8px",
+                        borderRadius: "16px",
                         boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
                         border: "1px solid #e5e5e5",
+                        
                     }}
                     >
                         <ColumnChart
@@ -291,7 +345,7 @@ export function DashboardGeneral() {
                             ]}
                             dataset={dataset}
                             style={{
-                                height: "30vh", 
+                                height: "25vh", 
                             }}
                             />
                     </Card>

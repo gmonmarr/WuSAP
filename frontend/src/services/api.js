@@ -63,8 +63,8 @@ export const authService = {
         throw new Error('No estás autorizado para realizar esta acción. Por favor, inicia sesión nuevamente.');
       }
       
-      // Validación adicional de los datos requeridos
-      const requiredFields = ['name', 'lastName', 'email', 'password', 'role', 'cellphone'];
+      // Validate required fields - storeID is optional
+      const requiredFields = ['name', 'lastname', 'email', 'password', 'role', 'cellphone'];
       const missingFields = requiredFields.filter(field => !userData[field]);
       
       if (missingFields.length > 0) {
@@ -115,6 +115,31 @@ export const authService = {
   }
 };
 
+// Employee service
+export const employeeService = {
+  // Get all employees
+  getAllEmployees: async () => {
+    try {
+      const response = await api.get('/api/employees');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching employees:', error);
+      throw error;
+    }
+  },
+  
+  // Update employee
+  updateEmployee: async (employeeId, employeeData) => {
+    try {
+      const response = await api.put(`/api/employees/${employeeId}`, employeeData);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating employee:', error);
+      throw error;
+    }
+  }
+};
+
 // Configure interceptor to add token to all requests
 api.interceptors.request.use(
   (config) => {
@@ -136,7 +161,7 @@ export const productService = {
   getAllProducts: async () => {
     try {
       const response = await api.get('/api/product/');
-      return response.data;
+      return response;
     } catch (error) {
       console.error('Error fetching all products:', error);
       throw error;
@@ -147,7 +172,7 @@ export const productService = {
   getActiveProducts: async () => {
     try {
       const response = await api.get('/api/product/active');
-      return response.data;
+      return response;
     } catch (error) {
       console.error('Error fetching active products:', error);
       throw error;
@@ -158,9 +183,142 @@ export const productService = {
   createProduct: async (productData) => {
     try {
       const response = await api.post('/api/product/', productData);
-      return response.data;
+      return response;
     } catch (error) {
       console.error('Error creating product:', error);
+      throw error;
+    }
+  },
+
+  // Update a product
+  updateProduct: async (productId, productData) => {
+    try {
+      const response = await api.put(`/api/product/${productId}`, productData);
+      return response;
+    } catch (error) {
+      console.error('Error updating product:', error);
+      throw error;
+    }
+  },
+
+  // Delete a product
+  deleteProduct: async (productId) => {
+    try {
+      const response = await api.delete(`/api/product/${productId}`);
+      return response;
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      throw error;
+    }
+  }
+};
+
+// Location services
+export const locationService = {
+  // Get all locations
+  getAllLocations: async () => {
+    try {
+      const response = await api.get('/api/locations');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching locations:', error);
+      throw error;
+    }
+  },
+
+  // Get location by ID
+  getLocationById: async (locationId) => {
+    try {
+      const response = await api.get(`/api/locations/${locationId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching location:', error);
+      throw error;
+    }
+  },
+
+  // Create a new location
+  createLocation: async (locationData) => {
+    try {
+      const response = await api.post('/api/locations', locationData);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating location:', error);
+      throw error;
+    }
+  },
+
+  // Update location
+  updateLocation: async (locationId, locationData) => {
+    try {
+      const response = await api.put(`/api/locations/${locationId}`, locationData);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating location:', error);
+      throw error;
+    }
+  },
+
+  // Delete location
+  deleteLocation: async (locationId) => {
+    try {
+      const response = await api.delete(`/api/locations/${locationId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting location:', error);
+      throw error;
+    }
+  }
+};
+
+// Inventory services
+export const inventoryService = {
+  // Get all inventory
+  getAllInventory: async () => {
+    try {
+      const response = await api.get('/api/inventory/');
+      return response;
+    } catch (error) {
+      console.error('Error fetching all inventory:', error);
+      throw error;
+    }
+  },
+
+  // Get inventory by store
+  getStoreInventory: async (storeID = null) => {
+    try {
+      const response = await api.get('/api/inventory/store', {
+        data: storeID ? { storeID } : {}
+      });
+      return response;
+    } catch (error) {
+      console.error('Error fetching store inventory:', error);
+      throw error;
+    }
+  },
+
+  // Get warehouse products (storeid = 1)
+  getWarehouseProducts: async () => {
+    try {
+      const response = await api.get('/api/inventory/warehouse');
+      return response;
+    } catch (error) {
+      console.error('Error fetching warehouse products:', error);
+      throw error;
+    }
+  },
+
+  // Assign/Update inventory to store
+  assignInventoryToStore: async (productID, storeID, quantity) => {
+    try {
+      const response = await api.post('/api/inventory/', {
+        productID,
+        storeID,
+        quantity
+      });
+      return response;
+    } catch (error) {
+      console.error('Error assigning inventory to store:', error);
       throw error;
     }
   }

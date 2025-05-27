@@ -9,13 +9,17 @@ import {
   Box,
   Chip,
   IconButton,
+  Badge,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 // Styled components
+// eslint-disable-next-line no-unused-vars
 const StyledCard = styled(Card)(({ theme }) => ({
+  // `theme` is not used here either, but left for potential theme use
   height: "100%",
   display: "flex",
   flexDirection: "column",
@@ -30,7 +34,9 @@ const StyledCard = styled(Card)(({ theme }) => ({
   },
 }));
 
+// eslint-disable-next-line no-unused-vars
 const StyledCardMedia = styled(CardMedia)(({ theme }) => ({
+  // `theme` is not used here either, but left for potential theme use
   height: "180px",
   objectFit: "cover",
   transition: "transform 0.3s ease",
@@ -67,8 +73,10 @@ const ProductCard = ({
   onAddToCart,
   showStock = false, // Default to NOT showing stock
   showEditButton = false, // Option to show edit button
+  showDeleteButton = false, // Option to show delete button
   editable = false, // If the card should be editable with quantity field
   onEditClick,
+  onDeleteClick,
 }) => {
   // Format price - handle potential string values or null/undefined
   const formattedPrice = typeof product.price === 'number'
@@ -76,12 +84,39 @@ const ProductCard = ({
     : parseFloat(product.price || 0).toFixed(2);
 
   return (
-    <StyledCard>
-      <StyledCardMedia
-        component="img"
-        image={product.image}
-        alt={product.name}
-      />
+    <StyledCard sx={{
+      opacity: product.discontinued ? 0.7 : 1,
+      border: product.discontinued ? "2px solid #ff4444" : "1px solid #f0f0f0",
+    }}>
+      <Box sx={{ position: 'relative' }}>
+        <StyledCardMedia
+          component="img"
+          image={product.image}
+          alt={product.name}
+          sx={{
+            filter: product.discontinued ? "grayscale(100%)" : "none"
+          }}
+        />
+        {product.discontinued && (
+          <Chip
+            label="Descontinuado"
+            color="error"
+            size="small"
+            sx={{
+              position: 'absolute',
+              top: 8,
+              right: 8,
+              fontSize: '0.7rem',
+              fontWeight: 'bold',
+              backgroundColor: '#ff4444',
+              color: 'white',
+              '& .MuiChip-label': {
+                padding: '4px 8px',
+              }
+            }}
+          />
+        )}
+      </Box>
       <CardContent sx={{ p: 2, flexGrow: 1, display: "flex", flexDirection: "column" }}>
         <ProductHeader>
           <Typography 
@@ -132,21 +167,39 @@ const ProductCard = ({
               ${formattedPrice}/{product.unit || 'unidad'}
             </Typography>
             
-            {showEditButton && (
-              <IconButton 
-                color="primary"
-                size="small"
-                onClick={() => onEditClick && onEditClick(product)}
-                sx={{ 
-                  bgcolor: 'rgba(25, 118, 210, 0.08)',
-                  '&:hover': {
-                    bgcolor: 'rgba(25, 118, 210, 0.12)',
-                  }
-                }}
-              >
-                <EditIcon fontSize="small" />
-              </IconButton>
-            )}
+            <Box sx={{ display: 'flex', gap: 0.5 }}>
+              {showEditButton && (
+                <IconButton 
+                  color="primary"
+                  size="small"
+                  onClick={() => onEditClick && onEditClick(product)}
+                  sx={{ 
+                    bgcolor: 'rgba(25, 118, 210, 0.08)',
+                    '&:hover': {
+                      bgcolor: 'rgba(25, 118, 210, 0.12)',
+                    }
+                  }}
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              )}
+              
+              {showDeleteButton && (
+                <IconButton 
+                  color="error"
+                  size="small"
+                  onClick={() => onDeleteClick && onDeleteClick(product)}
+                  sx={{ 
+                    bgcolor: 'rgba(211, 47, 47, 0.08)',
+                    '&:hover': {
+                      bgcolor: 'rgba(211, 47, 47, 0.12)',
+                    }
+                  }}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              )}
+            </Box>
           </Box>
           
           {editable && (

@@ -9,6 +9,8 @@ import { logAPIAccess } from './middleware/logMiddleware.js';
 import productRoutes from './routes/productRoutes.js';
 import inventoryRoutes from './routes/inventoryRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
+import employeeRoutes from './routes/employeeRoutes.js';
+import locationRoutes from './routes/locationRoutes.js';
 import hanaPool from './db/hanaPool.js';
 
 dotenv.config();
@@ -49,6 +51,8 @@ app.use('/api', authRoutes);
 app.use('/api', productRoutes);
 app.use('/api', inventoryRoutes);
 app.use('/api', orderRoutes);
+app.use('/api', employeeRoutes);
+app.use('/api', locationRoutes);
 
 // Test Route
 app.get('/api/test', (req, res) => {
@@ -69,8 +73,7 @@ app.get('/api/test-hana', (req, res) => {
   }).catch((err) => {
     res.status(500).json({ error: 'Error acquiring HANA connection' });
   });
-  }
-);
+});
 
 // Catch-all for unmatched routes
 app.use('*', (req, res) => {

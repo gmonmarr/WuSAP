@@ -1,6 +1,6 @@
 // pages/general/OrderPage.jsx
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Paper,
@@ -40,6 +40,7 @@ import Navbar from "../../components/Navbar";
 import Header from "../../components/Header";
 import AvisoPerdidaInfo from "../../components/AvisoPerdidaInfo";
 import ProductCard from "../../components/ProductCard";
+import { inventoryService } from "../../services/api";
 
 // Styled components
 const StyledPaper = styled(Paper)(({ theme }) => ({
@@ -50,6 +51,7 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
   background: "#ffffff",
 }));
 
+// eslint-disable-next-line no-unused-vars
 const StyledCardMedia = styled(CardMedia)(({ theme }) => ({
   height: "240px",
   objectFit: "cover",
@@ -84,95 +86,63 @@ const CartItem = styled(Box)(({ theme }) => ({
 }));
 
 const OrderPage = () => {
+  // eslint-disable-next-line no-unused-vars
   const theme = useTheme();
   const [activeStep, setActiveStep] = useState(0);
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [quantities, setQuantities] = useState({});
   const [error, setError] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const [orderSubmitted, setOrderSubmitted] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [shippingDetails, setShippingDetails] = useState({
     sucursal: "",
     requestedBy: "",
     contactNumber: "",
     notes: "",
   });
-  
-  const products = [
-    {
-      id: 1,
-      name: "Acero Inoxidable",
-      image: "https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?w=500&h=500&fit=crop",
-      description: "Láminas de acero inoxidable de alta calidad",
-      unit: "kg",
-      minOrder: 1,
-      maxOrder: 1000,
-      increment: 1,
-      stock: 2000,
-      eta: "2-3 días hábiles"
-    },
-    {
-      id: 2,
-      name: "Tornillos Hexagonales",
-      image: "https://images.unsplash.com/photo-1581094794329-c8112c4e1f1c?w=500&h=500&fit=crop",
-      description: "Tornillos de grado industrial",
-      unit: "piezas",
-      minOrder: 1,
-      maxOrder: 10000,
-      increment: 1,
-      stock: 50000,
-      eta: "1 día hábil"
-    },
-    {
-      id: 3,
-      name: "Alambre de Cobre",
-      image: "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=500&h=500&fit=crop",
-      description: "Alambre de cobre para instalaciones eléctricas",
-      unit: "metros",
-      minOrder: 1,
-      maxOrder: 1000,
-      increment: 1,
-      stock: 5000,
-      eta: "2 días hábiles"
-    },
-    {
-      id: 4,
-      name: "Pintura Industrial",
-      image: "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=500&h=500&fit=crop",
-      description: "Pintura resistente para uso industrial",
-      unit: "litros",
-      minOrder: 1,
-      maxOrder: 100,
-      increment: 1,
-      stock: 500,
-      eta: "1-2 días hábiles"
-    },
-    {
-      id: 5,
-      name: "Resina Epóxica",
-      image: "https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?w=500&h=500&fit=crop",
-      description: "Resina epóxica para recubrimientos",
-      unit: "kg",
-      minOrder: 1,
-      maxOrder: 100,
-      increment: 1,
-      stock: 300,
-      eta: "3-4 días hábiles"
-    },
-    {
-      id: 6,
-      name: "Tuercas de Seguridad",
-      image: "https://images.unsplash.com/photo-1581094794329-c8112c4e1f1c?w=500&h=500&fit=crop",
-      description: "Tuercas con sistema de seguridad",
-      unit: "piezas",
-      minOrder: 1,
-      maxOrder: 5000,
-      increment: 1,
-      stock: 20000,
-      eta: "1 día hábil"
-    }
-  ];
+
+  // Función para obtener productos del almacén
+  useEffect(() => {
+    const fetchWarehouseProducts = async () => {
+      try {
+        setLoading(true);
+        const response = await inventoryService.getWarehouseProducts();
+        
+        if (response.data && response.data.success) {
+          // Transformar los datos de la API al formato esperado por el componente
+          const transformedProducts = response.data.data.map(item => ({
+            id: item.PRODUCTID,
+            name: item.NAME,
+            image: "https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?w=500&h=500&fit=crop", // Imagen por defecto
+            description: `${item.NAME} - Disponible en almacén`,
+            unit: item.UNIT,
+            minOrder: 1,
+            maxOrder: Math.min(item.QUANTITY, 1000), // Limitar al stock disponible o 1000
+            increment: 1,
+            stock: item.QUANTITY,
+            price: item.SUGGESTEDPRICE,
+            eta: "1-2 días hábiles"
+          }));
+          
+          setProducts(transformedProducts);
+        } else {
+          console.error('Error en la respuesta de la API:', response.data);
+          setProducts([]);
+        }
+      } catch (error) {
+        console.error('Error al obtener productos del almacén:', error);
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWarehouseProducts();
+  }, []);
 
   const steps = ["Seleccionar Materiales", "Detalles de Envío", "Confirmar Pedido"];
 
@@ -393,40 +363,54 @@ const OrderPage = () => {
         return (
           <Box sx={{ display: 'flex', gap: 4 }}>
             <Box sx={{ flex: 1 }}>
-              <Grid container spacing={3}>
-                {filteredProducts.map((product) => (
-                  <Grid item xs={12} sm={6} md={4} lg={3} key={product.id}>
-                    <ProductCard
-                      product={product}
-                      quantity={quantities[product.id]}
-                      error={error[product.id]}
-                      onQuantityChange={handleQuantityChange}
-                      onAddToCart={addToCart}
-                      showStock={true}
-                      editable={true}
-                    />
-                  </Grid>
-                ))}
-                {filteredProducts.length === 0 && (
-                  <Grid item xs={12}>
-                    <Box sx={{ 
-                      p: 4, 
-                      textAlign: 'center', 
-                      backgroundColor: 'background.paper',
-                      borderRadius: '8px',
-                      border: '1px dashed',
-                      borderColor: 'divider',
-                    }}>
-                      <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
-                        No se encontraron productos
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Intente con otro término de búsqueda
-                      </Typography>
-                    </Box>
-                  </Grid>
-                )}
-              </Grid>
+              {loading ? (
+                <Box sx={{ 
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                  alignItems: 'center', 
+                  minHeight: '400px' 
+                }}>
+                  <CircularProgress size={60} />
+                  <Typography variant="h6" sx={{ ml: 2 }}>
+                    Cargando productos del almacén...
+                  </Typography>
+                </Box>
+              ) : (
+                <Grid container spacing={3}>
+                  {filteredProducts.map((product) => (
+                    <Grid item xs={12} sm={6} md={4} lg={3} key={product.id}>
+                      <ProductCard
+                        product={product}
+                        quantity={quantities[product.id]}
+                        error={error[product.id]}
+                        onQuantityChange={handleQuantityChange}
+                        onAddToCart={addToCart}
+                        showStock={true}
+                        editable={true}
+                      />
+                    </Grid>
+                  ))}
+                  {filteredProducts.length === 0 && !loading && (
+                    <Grid item xs={12}>
+                      <Box sx={{ 
+                        p: 4, 
+                        textAlign: 'center', 
+                        backgroundColor: 'background.paper',
+                        borderRadius: '8px',
+                        border: '1px dashed',
+                        borderColor: 'divider',
+                      }}>
+                        <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
+                          {products.length === 0 ? 'No hay productos disponibles en el almacén' : 'No se encontraron productos'}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {products.length === 0 ? 'Contacte al administrador para agregar productos al inventario' : 'Intente con otro término de búsqueda'}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  )}
+                </Grid>
+              )}
             </Box>
             <Box sx={{ minWidth: '280px', maxWidth: '350px', alignSelf: 'flex-start', position: 'sticky', top: 0 }}>
               {renderCart()}
@@ -666,6 +650,7 @@ const OrderPage = () => {
       <AvisoPerdidaInfo />
       <Navbar />
       <Header title="Solicitar Materiales del Almacén" />
+
       <Box sx={{ 
         flex: 1,
         maxWidth: 1600,

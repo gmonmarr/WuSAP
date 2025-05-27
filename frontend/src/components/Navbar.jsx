@@ -16,6 +16,7 @@ import "@ui5/webcomponents-icons/dist/group.js";
 import "@ui5/webcomponents-icons/dist/business-objects-experience.js";
 import "@ui5/webcomponents-icons/dist/cart.js";
 import "@ui5/webcomponents-icons/dist/log.js";
+import "@ui5/webcomponents-icons/dist/map.js";
 
 const Navbar = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -72,14 +73,22 @@ const Navbar = () => {
 
   const navItems = [
     { path: '/tablero', label: 'Tablero', icon: 'home' },
-    { path: '/hacer-pedido', label: 'Hacer Pedido', icon: 'cart' },
-    { path: '/productos', label: 'Productos', icon: 'business-objects-experience' },
-    { path: '/solicitar-material', label: 'Solicitar Material', icon: 'cart' },
-    { path: '/historial-pedido', label: 'Historial de Pedidos', icon: 'business-objects-experience' },
-    { path: '/solicitudes', label: 'Solicitudes', icon: 'business-objects-experience' },
-    { path: '/orden-status', label: 'Ordenes de Producción', icon: 'business-objects-experience' },
-    { path: '/registrar-usuario', label: 'Registrar usuario', icon: 'add-employee' },
-    { path: '/lista-usuarios', label: 'Gestionar usuarios', icon: 'group' },
+    // Manager
+    { path: '/hacer-pedido', label: 'Manager: Hacer Pedido', icon: 'cart' },
+    // Warehouse Manager
+    { path: '/productos', label: 'Warehouse Manager: Gestion de Productos', icon: 'business-objects-experience' },
+    // Owner
+    { path: '/solicitar-material', label: 'Owner: Solicitar Material', icon: 'cart' },
+    // Owner/Manager
+    { path: '/inventario', label: 'Owner/Manager/Warehouse Manager: Estadisticas Inventario', icon: 'map' },
+    { path: '/productos-sucursal', label: 'Owner/Manager/Warehouse Manager :Productos Sucursal', icon: 'business-objects-experience' },
+    { path: '/historial-pedido', label: 'Owner/Manager: Historial de Pedidos', icon: 'business-objects-experience' },
+    { path: '/solicitudes', label: 'Owner/Manager: Solicitudes', icon: 'business-objects-experience' },
+    { path: '/orden-status', label: 'Owner/Manager: Ordenes de Producción', icon: 'business-objects-experience' },
+    // Admin
+    { path: '/lista-usuarios', label: 'Admin: Gestionar usuarios', icon: 'group' },
+    { path: '/admin', label: 'Admin: Admin View', icon: 'group' },
+    { path: '/admin/locations', label: 'Admin:Ubicaciones', icon: 'map' },
   ];
 
   return (
@@ -98,7 +107,7 @@ const Navbar = () => {
           <button className="icon-button notification-button">
             <ui5-icon name="bell" class="nav-icon"></ui5-icon>
           </button>
-          <button className="icon-button profile-button">
+          <button className="icon-button profile-button" onClick={() => handleNavigation('/perfil')}>
             <ui5-avatar 
               initials={userInitials || "?"}
               size="XS" 

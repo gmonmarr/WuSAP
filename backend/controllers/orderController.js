@@ -11,6 +11,15 @@ export async function getAllOrders(req, res) {
   }
 }
 
+export async function getAllActiveOrders(req, res) {
+  try {
+    const activeOrders = await orderService.getAllActiveOrders();
+    res.json(activeOrders);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch active orders', details: err.message });
+  }
+}
+
 export async function getOrderById(req, res) {
   const { id } = req.params;
   try {
