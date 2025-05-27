@@ -59,15 +59,12 @@ const Profile = () => {
               <Typography variant="h5" style={{ marginBottom: "1rem" }}>Datos de Contacto</Typography>
               <Grid container direction="row" alignItems="center" justifyContent="space-between" style={{ marginBottom: "1rem" }}>
                 <Typography variant="body1">Correo: {user.email}</Typography>
-                <Button variant="outlined" style={{ backgroundColor: "black", border: "none", color: "white" }}>Editar</Button>
               </Grid>
               <Grid container direction="row" alignItems="center" justifyContent="space-between" style={{ marginBottom: "1rem" }}>
                 <Typography variant="body1">Teléfono: {user.cellphone || 'No especificado'}</Typography>
-                <Button variant="outlined" style={{ backgroundColor: "black", border: "none", color: "white" }}>Editar</Button>
               </Grid>
               <Grid container direction="row" alignItems="center" justifyContent="space-between">
                 <Typography variant="body1">Rol: {user.role}</Typography>
-                <Button variant="outlined" style={{ backgroundColor: "black", border: "none", color: "white" }}>Editar</Button>
               </Grid>
             </Paper>
           </Grid>

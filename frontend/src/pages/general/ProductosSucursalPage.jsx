@@ -9,9 +9,22 @@ import {
   InputAdornment,
   CircularProgress,
   Alert,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Chip,
+  Snackbar
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import SearchIcon from '@mui/icons-material/Search';
+import AddIcon from '@mui/icons-material/Add';
+import InventoryIcon from '@mui/icons-material/Inventory';
 import Navbar from "../../components/Navbar";
 import Header from "../../components/Header";
 import AvisoPerdidaInfo from "../../components/AvisoPerdidaInfo";
@@ -42,6 +55,25 @@ const ProductosSucursalPage = () => {
 
   // State for inventory products
   const [inventoryProducts, setInventoryProducts] = useState([]);
+  
+  // State for warehouse products modal
+  const [openWarehouseModal, setOpenWarehouseModal] = useState(false);
+  const [warehouseProducts, setWarehouseProducts] = useState([]);
+  const [selectedProduct, setSelectedProduct] = useState('');
+  const [quantity, setQuantity] = useState('');
+  const [loadingWarehouse, setLoadingWarehouse] = useState(false);
+  const [assigningInventory, setAssigningInventory] = useState(false);
+  
+  // Snackbar state
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
+  
+  // User state
+  const [user, setUser] = useState(null);
+  const [canAssignInventory, setCanAssignInventory] = useState(false);
 
   // Function to get a random image from the placeholder images
   const getRandomImage = () => {
@@ -49,24 +81,32 @@ const ProductosSucursalPage = () => {
     return placeholderImages[randomIndex];
   };
 
-  // Effect to fetch store name
+  // Effect to fetch store name and check user permissions
   useEffect(() => {
-    const fetchStoreName = async () => {
+    const fetchUserData = async () => {
       try {
-        const user = authService.getUser();
-        if (user && user.storeID) {
-          const location = await locationService.getLocationById(user.storeID);
+        const currentUser = authService.getUser();
+        setUser(currentUser);
+        
+        // Check if user can assign inventory (admin, manager, warehouse_manager, owner, sales)
+        if (currentUser && currentUser.role) {
+          const allowedRoles = ['admin', 'manager', 'warehouse_manager', 'owner', 'sales'];
+          setCanAssignInventory(allowedRoles.includes(currentUser.role));
+        }
+        
+        if (currentUser && currentUser.storeID) {
+          const location = await locationService.getLocationById(currentUser.storeID);
           if (location && location.NAME) {
             setStoreName(location.NAME);
           }
         }
       } catch (error) {
-        console.error("Error fetching store name:", error);
+        console.error("Error fetching user data:", error);
         // Keep default name if error
       }
     };
 
-    fetchStoreName();
+    fetchUserData();
   }, []);
 
   // Effect to fetch inventory and products on component mount
@@ -132,6 +172,184 @@ const ProductosSucursalPage = () => {
     (product.name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
     (product.description?.toLowerCase() || "").includes(searchTerm.toLowerCase())
   );
+
+  // Function to fetch products based on user role
+  const fetchProductsForModal = async () => {
+    setLoadingWarehouse(true);
+    try {
+      let response;
+      let products = [];
+
+      if (user?.role === 'warehouse_manager' || user?.role === 'admin') {
+        // Warehouse manager and admin see all active products to assign to stores
+        response = await productService.getActiveProducts();
+        products = response.data.map(product => ({
+          PRODUCTID: product.PRODUCTID,
+          NAME: product.NAME,
+          SUGGESTEDPRICE: product.SUGGESTEDPRICE,
+          UNIT: product.UNIT,
+          QUANTITY: 0, // No quantity shown for active products
+          isActiveProduct: true
+        }));
+      } else {
+        // Manager, owner, and sales see products from their own store inventory to update quantities
+        response = await inventoryService.getStoreInventory();
+        const inventoryData = response.data;
+        
+        // Get product details for inventory items
+        const productsResponse = await productService.getAllProducts();
+        const allProducts = productsResponse.data;
+        
+        const productMap = {};
+        allProducts.forEach(product => {
+          productMap[product.PRODUCTID] = product;
+        });
+        
+        products = inventoryData.map(inventory => {
+          const product = productMap[inventory.PRODUCTID];
+          return {
+            PRODUCTID: inventory.PRODUCTID,
+            NAME: product?.NAME || 'Producto Desconocido',
+            SUGGESTEDPRICE: product?.SUGGESTEDPRICE || 0,
+            UNIT: product?.UNIT || 'Pieza',
+            QUANTITY: inventory.QUANTITY,
+            INVENTORYID: inventory.INVENTORYID,
+            isActiveProduct: false
+          };
+        });
+      }
+
+      setWarehouseProducts(products);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      const errorMessage = (user?.role === 'warehouse_manager' || user?.role === 'admin')
+        ? "Error al cargar productos activos"
+        : "Error al cargar inventario de la tienda";
+      setSnackbar({
+        open: true,
+        message: errorMessage,
+        severity: 'error'
+      });
+    } finally {
+      setLoadingWarehouse(false);
+    }
+  };
+
+  // Function to open products modal
+  const handleOpenWarehouseModal = () => {
+    setOpenWarehouseModal(true);
+    fetchProductsForModal();
+  };
+
+  // Function to close products modal
+  const handleCloseWarehouseModal = () => {
+    setOpenWarehouseModal(false);
+    setSelectedProduct('');
+    setQuantity('');
+  };
+
+  // Function to assign/update inventory
+  const handleAssignInventory = async () => {
+    if (!selectedProduct || !quantity || quantity <= 0) {
+      setSnackbar({
+        open: true,
+        message: "Por favor seleccione un producto y especifique una cantidad válida",
+        severity: 'warning'
+      });
+      return;
+    }
+
+    if (!user || !user.storeID) {
+      setSnackbar({
+        open: true,
+        message: "Error: No se pudo identificar la sucursal",
+        severity: 'error'
+      });
+      return;
+    }
+
+    setAssigningInventory(true);
+    try {
+      const targetStoreID = (user?.role === 'warehouse_manager' || user?.role === 'admin') ? user.storeID : user.storeID;
+      
+      await inventoryService.assignInventoryToStore(
+        selectedProduct,
+        targetStoreID,
+        parseInt(quantity)
+      );
+
+      const successMessage = (user?.role === 'warehouse_manager' || user?.role === 'admin')
+        ? "Producto asignado exitosamente"
+        : "Inventario actualizado exitosamente";
+
+      setSnackbar({
+        open: true,
+        message: successMessage,
+        severity: 'success'
+      });
+
+      // Refresh inventory data
+      const fetchData = async () => {
+        try {
+          const inventoryResponse = await inventoryService.getStoreInventory();
+          let inventoryData = inventoryResponse.data;
+          
+          const productsResponse = await productService.getAllProducts();
+          const allProducts = productsResponse.data;
+          
+          const productMap = {};
+          allProducts.forEach(product => {
+            productMap[product.PRODUCTID] = product;
+          });
+          
+          inventoryData = inventoryData.map(inventory => {
+            const product = productMap[inventory.PRODUCTID];
+            return {
+              id: inventory.INVENTORYID,
+              productID: inventory.PRODUCTID,
+              storeID: inventory.STOREID,
+              quantity: inventory.QUANTITY,
+              name: product?.NAME || 'Producto Desconocido',
+              price: typeof product?.SUGGESTEDPRICE === 'string' 
+                ? parseFloat(product.SUGGESTEDPRICE) 
+                : product?.SUGGESTEDPRICE || 0,
+              suggestedPrice: product?.SUGGESTEDPRICE || 0,
+              unit: product?.UNIT || 'Pieza',
+              discontinued: product?.DISCONTINUED || false,
+              image: product?.image || getRandomImage(),
+              description: product?.description || `${product?.NAME || 'Producto'} - ${product?.UNIT || 'Pieza'}`,
+              stock: inventory.QUANTITY
+            };
+          });
+          
+          setInventoryProducts(inventoryData);
+        } catch (error) {
+          console.error("Error refreshing inventory:", error);
+        }
+      };
+
+      await fetchData();
+      handleCloseWarehouseModal();
+
+    } catch (error) {
+      console.error("Error processing inventory:", error);
+      const errorMessage = (user?.role === 'warehouse_manager' || user?.role === 'admin')
+        ? "Error al asignar producto: "
+        : "Error al actualizar inventario: ";
+      setSnackbar({
+        open: true,
+        message: errorMessage + (error.response?.data?.message || error.message),
+        severity: 'error'
+      });
+    } finally {
+      setAssigningInventory(false);
+    }
+  };
+
+  // Function to close snackbar
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
 
   const pageTitle = `Inventario de ${storeName}`;
 
@@ -224,6 +442,26 @@ const ProductosSucursalPage = () => {
                   }}
                 />
               </Box>
+              {canAssignInventory && (
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={handleOpenWarehouseModal}
+                  sx={{
+                    borderRadius: '8px',
+                    textTransform: 'none',
+                    fontWeight: 500,
+                    px: 3,
+                    py: 1,
+                    boxShadow: '0 2px 8px rgba(25, 118, 210, 0.3)',
+                    '&:hover': {
+                      boxShadow: '0 4px 12px rgba(25, 118, 210, 0.4)',
+                    }
+                  }}
+                >
+                  {(user?.role === 'warehouse_manager' || user?.role === 'admin') ? 'Asignar Productos' : 'Actualizar Valores'}
+                </Button>
+              )}
             </Box>
           </Box>
 
@@ -298,6 +536,190 @@ const ProductosSucursalPage = () => {
           </Box>
         </StyledPaper>
       </Box>
+
+      {/* Warehouse Products Modal */}
+      <Dialog 
+        open={openWarehouseModal} 
+        onClose={handleCloseWarehouseModal}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 1,
+          pb: 1
+        }}>
+          <InventoryIcon color="primary" />
+          <Typography variant="h6" component="span">
+            {(user?.role === 'warehouse_manager' || user?.role === 'admin')
+              ? 'Asignar Productos a Sucursal' 
+              : 'Actualizar Inventario de Sucursal'}
+          </Typography>
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Producto</InputLabel>
+                  <Select
+                    value={selectedProduct}
+                    label="Producto"
+                    onChange={(e) => setSelectedProduct(e.target.value)}
+                    disabled={loadingWarehouse}
+                  >
+                    {loadingWarehouse ? (
+                      <MenuItem disabled>
+                        <CircularProgress size={20} sx={{ mr: 1 }} />
+                        Cargando productos...
+                      </MenuItem>
+                    ) : (
+                      warehouseProducts.map((product) => (
+                        <MenuItem key={product.PRODUCTID} value={product.PRODUCTID}>
+                          <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                              {product.NAME}
+                            </Typography>
+                            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 0.5 }}>
+                              {product.isActiveProduct ? (
+                                // For warehouse manager and admin - show active products
+                                <>
+                                  <Chip 
+                                    label="Producto Activo" 
+                                    size="small" 
+                                    color="success" 
+                                    variant="outlined"
+                                  />
+                                  <Chip 
+                                    label={`$${product.SUGGESTEDPRICE}`} 
+                                    size="small" 
+                                    color="secondary" 
+                                    variant="outlined"
+                                  />
+                                  <Typography variant="caption" color="text.secondary">
+                                    {product.UNIT}
+                                  </Typography>
+                                </>
+                              ) : (
+                                // For manager, owner, and sales - show current inventory
+                                <>
+                                  <Chip 
+                                    label={`Stock Actual: ${product.QUANTITY}`} 
+                                    size="small" 
+                                    color="primary" 
+                                    variant="outlined"
+                                  />
+                                  <Chip 
+                                    label={`$${product.SUGGESTEDPRICE}`} 
+                                    size="small" 
+                                    color="secondary" 
+                                    variant="outlined"
+                                  />
+                                  <Typography variant="caption" color="text.secondary">
+                                    {product.UNIT}
+                                  </Typography>
+                                </>
+                              )}
+                            </Box>
+                          </Box>
+                        </MenuItem>
+                      ))
+                    )}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Cantidad"
+                  type="number"
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                  inputProps={{ min: 1 }}
+                  helperText={(user?.role === 'warehouse_manager' || user?.role === 'admin')
+                    ? "Cantidad a asignar a esta sucursal"
+                    : "Nueva cantidad en inventario"}
+                />
+              </Grid>
+            </Grid>
+            
+            {selectedProduct && (
+              <Box sx={{ mt: 3, p: 2, backgroundColor: 'grey.50', borderRadius: 1 }}>
+                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                  Producto seleccionado:
+                </Typography>
+                {(() => {
+                  const product = warehouseProducts.find(p => p.PRODUCTID === selectedProduct);
+                  return product ? (
+                    <Box>
+                      <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                        {product.NAME}
+                      </Typography>
+                      {product.isActiveProduct ? (
+                        // For warehouse manager and admin
+                        <>
+                          <Typography variant="body2" color="text.secondary">
+                            Producto activo disponible para asignación
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Precio sugerido: ${product.SUGGESTEDPRICE}
+                          </Typography>
+                        </>
+                      ) : (
+                        // For manager, owner, and sales
+                        <>
+                          <Typography variant="body2" color="text.secondary">
+                            Stock actual en inventario: {product.QUANTITY} {product.UNIT}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Precio sugerido: ${product.SUGGESTEDPRICE}
+                          </Typography>
+                        </>
+                      )}
+                    </Box>
+                  ) : null;
+                })()}
+              </Box>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button 
+            onClick={handleCloseWarehouseModal}
+            color="inherit"
+          >
+            Cancelar
+          </Button>
+          <Button 
+            onClick={handleAssignInventory}
+            variant="contained"
+            disabled={!selectedProduct || !quantity || quantity <= 0 || assigningInventory}
+            startIcon={assigningInventory ? <CircularProgress size={16} /> : <AddIcon />}
+          >
+            {assigningInventory 
+              ? ((user?.role === 'warehouse_manager' || user?.role === 'admin') ? 'Asignando...' : 'Actualizando...')
+              : ((user?.role === 'warehouse_manager' || user?.role === 'admin') ? 'Asignar Producto' : 'Actualizar Inventario')
+            }
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert 
+          onClose={handleCloseSnackbar} 
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 };

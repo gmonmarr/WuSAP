@@ -81,7 +81,7 @@ const Navbar = () => {
     { path: '/solicitar-material', label: 'Owner: Solicitar Material', icon: 'cart' },
     // Owner/Manager
     { path: '/inventario', label: 'Owner/Manager/Warehouse Manager: Estadisticas Inventario', icon: 'map' },
-    { path: '/productos-sucursal', label: 'Owner/Manager/Warehouse Manager :Productos Sucursal', icon: 'business-objects-experience' },
+    { path: '/productos-sucursal', label: 'Owner/Manager/Warehouse Manager: Inventario', icon: 'business-objects-experience' },
     { path: '/historial-pedido', label: 'Owner/Manager: Historial de Pedidos', icon: 'business-objects-experience' },
     { path: '/solicitudes', label: 'Owner/Manager: Solicitudes', icon: 'business-objects-experience' },
     { path: '/orden-status', label: 'Owner/Manager: Ordenes de Producción', icon: 'business-objects-experience' },

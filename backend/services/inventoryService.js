@@ -47,6 +47,7 @@ export const getWarehouseProducts = async () => {
         FROM WUSAP.Products p
         INNER JOIN WUSAP.Inventory i ON p.PRODUCTID = i.PRODUCTID
         WHERE i.STOREID = 1 
+          AND (p.DISCONTINUED IS NULL OR p.DISCONTINUED = '' OR p.DISCONTINUED = 'FALSE' OR p.DISCONTINUED = FALSE)
           AND i.QUANTITY > 0
         ORDER BY p.NAME`,
         (err, result) => err ? reject(err) : resolve(result)
