@@ -43,6 +43,23 @@ export async function getAllOrders() {
 }
 
 /**
+ * Get all active orders (where status is not 'Cancelada' or 'Entregada')
+ * ["Pendiente", "Aprobada", "Confirmada", "Entregada", "Cancelada"]
+ */
+export async function getAllActiveOrders() {
+  const conn = await pool.acquire();
+  try {
+    const result = await conn.exec(`
+      SELECT * FROM WUSAP.Orders
+      WHERE status NOT IN ('Cancelada', 'Entregada')
+    `);
+    return result;
+  } finally {
+    await pool.release(conn);
+  }
+}
+
+/**
  * Get an order by ID (with items and history)
  */
 export async function getOrderById(orderID) {
