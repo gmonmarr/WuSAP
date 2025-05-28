@@ -61,8 +61,8 @@ export const authService = {
         throw new Error('No estás autorizado para realizar esta acción. Por favor, inicia sesión nuevamente.');
       }
       
-      // Validación adicional de los datos requeridos
-      const requiredFields = ['name', 'lastName', 'email', 'password', 'role', 'cellphone'];
+      // Validate required fields - storeID is optional
+      const requiredFields = ['name', 'lastname', 'email', 'password', 'role', 'cellphone'];
       const missingFields = requiredFields.filter(field => !userData[field]);
       
       if (missingFields.length > 0) {
@@ -113,6 +113,31 @@ export const authService = {
   }
 };
 
+// Employee service
+export const employeeService = {
+  // Get all employees
+  getAllEmployees: async () => {
+    try {
+      const response = await api.get('/api/employees');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching employees:', error);
+      throw error;
+    }
+  },
+  
+  // Update employee
+  updateEmployee: async (employeeId, employeeData) => {
+    try {
+      const response = await api.put(`/api/employees/${employeeId}`, employeeData);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating employee:', error);
+      throw error;
+    }
+  }
+};
+
 // Configure interceptor to add token to all requests
 api.interceptors.request.use(
   (config) => {
@@ -126,4 +151,259 @@ api.interceptors.request.use(
 );
 
 // Export the axios instance for direct use if needed
-export default api; 
+export default api;
+
+// Product services
+export const productService = {
+  // Get all products
+  getAllProducts: async () => {
+    try {
+      const response = await api.get('/api/product/');
+      return response;
+    } catch (error) {
+      console.error('Error fetching all products:', error);
+      throw error;
+    }
+  },
+
+  // Get only active products
+  getActiveProducts: async () => {
+    try {
+      const response = await api.get('/api/product/active');
+      return response;
+    } catch (error) {
+      console.error('Error fetching active products:', error);
+      throw error;
+    }
+  },
+
+  // Create a new product
+  createProduct: async (productData) => {
+    try {
+      const response = await api.post('/api/product/', productData);
+      return response;
+    } catch (error) {
+      console.error('Error creating product:', error);
+      throw error;
+    }
+  },
+
+  // Update a product
+  updateProduct: async (productId, productData) => {
+    try {
+      const response = await api.put(`/api/product/${productId}`, productData);
+      return response;
+    } catch (error) {
+      console.error('Error updating product:', error);
+      throw error;
+    }
+  },
+
+  // Delete a product
+  deleteProduct: async (productId) => {
+    try {
+      const response = await api.delete(`/api/product/${productId}`);
+      return response;
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      throw error;
+    }
+  }
+};
+
+// Location services
+export const locationService = {
+  // Get all locations
+  getAllLocations: async () => {
+    try {
+      const response = await api.get('/api/locations');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching locations:', error);
+      throw error;
+    }
+  },
+
+  // Get location by ID
+  getLocationById: async (locationId) => {
+    try {
+      const response = await api.get(`/api/locations/${locationId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching location:', error);
+      throw error;
+    }
+  },
+
+  // Create a new location
+  createLocation: async (locationData) => {
+    try {
+      const response = await api.post('/api/locations', locationData);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating location:', error);
+      throw error;
+    }
+  },
+
+  // Update location
+  updateLocation: async (locationId, locationData) => {
+    try {
+      const response = await api.put(`/api/locations/${locationId}`, locationData);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating location:', error);
+      throw error;
+    }
+  },
+
+  // Delete location
+  deleteLocation: async (locationId) => {
+    try {
+      const response = await api.delete(`/api/locations/${locationId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting location:', error);
+      throw error;
+    }
+  }
+};
+
+// Inventory services
+export const inventoryService = {
+  // Get all inventory
+  getAllInventory: async () => {
+    try {
+      const response = await api.get('/api/inventory/');
+      return response;
+    } catch (error) {
+      console.error('Error fetching all inventory:', error);
+      throw error;
+    }
+  },
+
+  // Get inventory by store
+  getStoreInventory: async (storeID = null) => {
+    try {
+      const response = await api.get('/api/inventory/store', {
+        data: storeID ? { storeID } : {}
+      });
+      return response;
+    } catch (error) {
+      console.error('Error fetching store inventory:', error);
+      throw error;
+    }
+  },
+
+  // Get warehouse products (storeid = 1)
+  getWarehouseProducts: async () => {
+    try {
+      const response = await api.get('/api/inventory/warehouse');
+      return response;
+    } catch (error) {
+      console.error('Error fetching warehouse products:', error);
+      throw error;
+    }
+  },
+
+  // Assign/Update inventory to store
+  assignInventoryToStore: async (productID, storeID, quantity) => {
+    try {
+      const response = await api.post('/api/inventory/', {
+        productID,
+        storeID,
+        quantity
+      });
+      return response;
+    } catch (error) {
+      console.error('Error assigning inventory to store:', error);
+      throw error;
+    }
+  }
+};
+
+// Order services
+export const orderService = {
+  // Get all orders
+  getAllOrders: async () => {
+    try {
+      const response = await api.get('/api/orders');
+      return response;
+    } catch (error) {
+      console.error('Error fetching all orders:', error);
+      throw error;
+    }
+  },
+
+  // Get active orders
+  getAllActiveOrders: async () => {
+    try {
+      const response = await api.get('/api/orders/active');
+      return response;
+    } catch (error) {
+      console.error('Error fetching active orders:', error);
+      throw error;
+    }
+  },
+
+  // Get order by ID
+  getOrderById: async (orderId) => {
+    try {
+      const response = await api.get(`/api/orders/${orderId}`);
+      return response;
+    } catch (error) {
+      console.error('Error fetching order by ID:', error);
+      throw error;
+    }
+  },
+
+  // Get orders by current store
+  getOrdersByStore: async () => {
+    try {
+      const response = await api.get('/api/orders/store/current');
+      return response;
+    } catch (error) {
+      console.error('Error fetching store orders:', error);
+      throw error;
+    }
+  },
+
+  // Get orders by current employee
+  getOrdersByEmployee: async () => {
+    try {
+      const response = await api.get('/api/orders/employee/current');
+      return response;
+    } catch (error) {
+      console.error('Error fetching employee orders:', error);
+      throw error;
+    }
+  },
+
+  // Create new order
+  createOrder: async (orderData, orderItems) => {
+    try {
+      const response = await api.post('/api/orders', {
+        orderData,
+        orderItems
+      });
+      return response;
+    } catch (error) {
+      console.error('Error creating order:', error);
+      throw error;
+    }
+  },
+
+  // Update order
+  updateOrder: async (orderId, updatedOrder, updatedItems) => {
+    try {
+      const response = await api.put(`/api/orders/${orderId}`, {
+        updatedOrder,
+        updatedItems
+      });
+      return response;
+    } catch (error) {
+      console.error('Error updating order:', error);
+      throw error;
+    }
+  }
+}; 

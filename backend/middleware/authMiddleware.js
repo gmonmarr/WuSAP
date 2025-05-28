@@ -20,9 +20,14 @@ export const verifyToken = (req, res, next) => {
   }
 };
 
-export const verifyAdmin = (req, res, next) => {
-  if (req.user?.role !== "admin") {
-    return res.status(403).json({ message: "Acceso denegado: se requiere rol de administrador." });
-  }
-  next();
+export const verifyRoles = (...allowedRoles) => {
+  return (req, res, next) => {
+    const userRole = req.user?.role;
+    if (!userRole || !allowedRoles.includes(userRole)) {
+      return res.status(403).json({
+        message: `Acceso denegado: se requiere uno de los siguientes roles: ${allowedRoles.join(', ')}.`
+      });
+    }
+    next();
+  };
 };

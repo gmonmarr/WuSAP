@@ -1,4 +1,4 @@
-import React, { useContext, useCallback, useEffect } from "react";
+import React, { useContext, useEffect } from "react";
 import { UNSAFE_NavigationContext as NavigationContext } from "react-router-dom";
 
 export function useBlocker(blocker, when = true) {
