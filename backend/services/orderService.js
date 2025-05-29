@@ -8,6 +8,7 @@
 // Orders [orderID, orderDate, orderTotal, status, comments, storeID]
 // OrderItems [orderItemID, orderID, productID, source, quantity, itemTotal]
 // OrderHistory [historyID, orderID, timestamp, action, employeeID, comment]
+// Inventory [INVENTORYID, PRODUCTID, STOREID, QUANTITY]
 // TableLogs [logID, employeeID, tableName, recordID, action, comment]
 
 // Get all orders
@@ -326,9 +327,15 @@ export async function updateOrder(orderID, updatedOrder, updatedItems, employeeI
 
     await conn.commit();
 
-    // After success, apply inventory changes
-    for (const item of inventoryActions) {
-      await editInventory(item.inventoryID, item.quantity, employeeID);
+    // Apply inventory subtraction when approved by another warehouse manager
+    if (oldStatus === "Pendiente" && newStatus === "Aprobada" && userRole === "warehouse_manager") {
+      await updateInventoryFromOrderStatus(orderID, updatedItems, "toAprobadaByWarehouseManager", employeeID);
+    }
+
+    // Apply inventory addition when order is delivered
+    if (newStatus === "Entregada") {
+      const [orderInfo] = await conn.exec(`SELECT storeID FROM WUSAP.Orders WHERE orderID = ?`, [orderID]);
+      await updateInventoryFromOrderStatus(orderID, updatedItems, "toEntregada", employeeID, orderInfo.STOREID);
     }
 
     return { success: true };
@@ -472,3 +479,78 @@ async function validateManagerOrderOwnershipAndItemLink(orderID, updatedItems, e
     await pool.release(conn);
   }
 }
+
+export const updateInventoryFromOrderStatus = async (
+  orderID,
+  updatedItems,
+  statusChange,
+  employeeID,
+  targetStoreID = null
+) => {
+  const conn = await pool.acquire();
+  try {
+    for (const item of updatedItems) {
+      const { productID, quantity } = item;
+
+      let action = '';
+      let storeID = 1;
+
+      // --- Check for creator to avoid unnecessary subtraction ---
+      if (statusChange === 'toAprobadaByWarehouseManager') {
+        const [creatorRow] = await conn.exec(
+          `SELECT TOP 1 oh.employeeID, e.role
+           FROM WUSAP.OrderHistory oh
+           JOIN WUSAP.Employees e ON oh.employeeID = e.employeeID
+           WHERE oh.orderID = ? AND oh.action = 'CREATED'`,
+          [orderID]
+        );
+
+        if (creatorRow?.EMPLOYEEID === employeeID) {
+          // Warehouse manager is approving their own order → skip subtraction
+          continue;
+        }
+
+        action = 'SUBTRACT';
+        storeID = 1;
+      } else if (statusChange === 'toEntregada') {
+        action = 'ADD';
+        storeID = targetStoreID;
+      } else {
+        continue;
+      }
+
+      // Get current inventory
+      const [inventory] = await getInventoryByStoreByProduct(storeID, productID);
+      if (!inventory) {
+        throw new Error(`No inventory found for product ${productID} at store ${storeID}`);
+      }
+
+      const inventoryID = inventory.INVENTORYID;
+      const currentQty = inventory.QUANTITY;
+      const newQty = action === 'ADD' ? currentQty + quantity : currentQty - quantity;
+
+      // Update inventory
+      await conn.exec(
+        `UPDATE WUSAP.Inventory SET quantity = ? WHERE inventoryID = ?`,
+        [newQty, inventoryID]
+      );
+
+      // Log update
+      await conn.exec(
+        `INSERT INTO WUSAP.TableLogs (employeeID, tableName, recordID, action, comment)
+         VALUES (?, 'Inventory', ?, 'UPDATE', ?)`,
+        [
+          employeeID,
+          inventoryID,
+          `${action} ${quantity} of product ${productID} for status ${statusChange}`
+        ]
+      );
+    }
+
+    return { success: true };
+  } catch (err) {
+    throw err;
+  } finally {
+    pool.release(conn);
+  }
+};
