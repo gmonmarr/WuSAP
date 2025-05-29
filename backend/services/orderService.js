@@ -7,7 +7,7 @@
 // Tables:
 // Orders [orderID, orderDate, orderTotal, status, comments, storeID]
 // OrderItems [orderItemID, orderID, productID, source, quantity, itemTotal]
-// OrderHistory [historyID, orderItemID, timestamp, action, employeeID, comment]
+// OrderHistory [historyID, orderID, timestamp, action, employeeID, comment]
 // TableLogs [logID, employeeID, tableName, recordID, action, comment]
 
 // Get all orders
@@ -28,6 +28,8 @@
     // Update order history
 
 import pool from '../db/hanaPool.js';
+import { editInventory, getInventoryByStoreByProduct } from './inventoryService.js';
+import { logToTableLogs } from './tableLogService.js';
 
 /**
  * Get all orders
@@ -119,44 +121,65 @@ export async function getOrdersByEmployee(employeeID) {
 /**
  * Create a new order with items and history, and log to TableLogs
  */
-export async function createOrder(orderData, orderItems, employeeID) {
+export async function createOrder(orderData, orderItems, employeeID, userRole) {
   const conn = await pool.acquire();
   try {
     await conn.setAutoCommit(false);
 
-    // Insert Order
+    if (!orderData || !orderItems || !employeeID || !userRole) {
+      throw new Error("Missing required data: orderData, orderItems, employeeID, or userRole");
+    }
+
+    // Force status to "Pendiente"
+    const enforcedOrderData = {
+      ...orderData,
+      status: "Pendiente"
+    };
+
+    // Manager-specific validation
+    if (userRole === 'manager') {
+      const invalidItem = orderItems.find(item => item.source !== 'warehouse');
+      if (invalidItem) {
+        throw new Error(`Managers must set item.source to "warehouse". Found: "${invalidItem.source}"`);
+      }
+    }
+
+    // Insert into Orders
     await conn.exec(
       `INSERT INTO WUSAP.Orders (orderDate, orderTotal, status, comments, storeID)
        VALUES (CURRENT_DATE, ?, ?, ?, ?)`,
       [
-        orderData.orderTotal,
-        orderData.status,
-        orderData.comments,
-        orderData.storeID
+        enforcedOrderData.orderTotal,
+        enforcedOrderData.status,
+        enforcedOrderData.comments,
+        enforcedOrderData.storeID
       ]
     );
 
-    // Get new order ID
     const [orderRow] = await conn.exec('SELECT CURRENT_IDENTITY_VALUE() AS ORDERID FROM DUMMY');
     const orderID = orderRow.ORDERID;
 
-    // Log Order insert
-    await new Promise((resolve, reject) => {
-      conn.prepare(
-        `INSERT INTO WUSAP.TableLogs (employeeID, tableName, recordID, action, comment)
-         VALUES (?, ?, ?, ?, ?)`,
-        (err, stmt) => {
-          if (err) return reject(err);
-          const comment = `Created order with total ${orderData.orderTotal}, status "${orderData.status}", and ${orderItems.length} item(s).`;
-          stmt.exec([employeeID, "Orders", orderID, "INSERT", comment], err => {
-            if (err) return reject(err);
-            resolve();
-          });
-        }
-      );
+    await logToTableLogs({
+      employeeID,
+      tableName: "Orders",
+      recordID: orderID,
+      action: "INSERT",
+      comment: `Created order with total ${enforcedOrderData.orderTotal}, status "${enforcedOrderData.status}", and ${orderItems.length} item(s).`
     });
 
-    // Insert OrderItems
+    // Validate inventory
+    for (const item of orderItems) {
+      const inventory = await getInventoryByStoreByProduct(1, item.productID);
+      if (inventory.length === 0) {
+        throw new Error(`No inventory found for product ${item.productID}`);
+      }
+      const availableQty = inventory[0].QUANTITY;
+      if (availableQty < item.quantity) {
+        throw new Error(`Insufficient inventory for product ${item.productID}: ${availableQty} available, ${item.quantity} required`);
+      }
+    }
+
+    // Insert order items
     for (const item of orderItems) {
       await conn.exec(
         `INSERT INTO WUSAP.OrderItems (orderID, productID, source, quantity, itemTotal)
@@ -167,24 +190,16 @@ export async function createOrder(orderData, orderItems, employeeID) {
       const [itemRow] = await conn.exec('SELECT CURRENT_IDENTITY_VALUE() AS ORDERITEMID FROM DUMMY');
       const orderItemID = itemRow.ORDERITEMID;
 
-      // Log OrderItem insert
-      await new Promise((resolve, reject) => {
-        conn.prepare(
-          `INSERT INTO WUSAP.TableLogs (employeeID, tableName, recordID, action, comment)
-           VALUES (?, ?, ?, ?, ?)`,
-          (err, stmt) => {
-            if (err) return reject(err);
-            const comment = `Inserted order item: productID=${item.productID}, source=${item.source}, quantity=${item.quantity}, itemTotal=${item.itemTotal}`;
-            stmt.exec([employeeID, "OrderItems", orderItemID, "INSERT", comment], err => {
-              if (err) return reject(err);
-              resolve();
-            });
-          }
-        );
+      await logToTableLogs({
+        employeeID,
+        tableName: "OrderItems",
+        recordID: orderItemID,
+        action: "INSERT",
+        comment: `Inserted order item: productID=${item.productID}, source=${item.source}, quantity=${item.quantity}, itemTotal=${item.itemTotal}`
       });
     }
 
-    // Insert a single OrderHistory entry for the order
+    // Insert history entry
     await conn.exec(
       `INSERT INTO WUSAP.OrderHistory (orderID, timestamp, action, employeeID, comment)
        VALUES (?, CURRENT_TIMESTAMP, 'CREATED', ?, ?)`,
@@ -192,22 +207,13 @@ export async function createOrder(orderData, orderItems, employeeID) {
     );
 
     const [historyRow] = await conn.exec('SELECT CURRENT_IDENTITY_VALUE() AS HISTORYID FROM DUMMY');
-    const historyID = historyRow.HISTORYID;
 
-    // Log OrderHistory insert
-    await new Promise((resolve, reject) => {
-      conn.prepare(
-        `INSERT INTO WUSAP.TableLogs (employeeID, tableName, recordID, action, comment)
-         VALUES (?, ?, ?, ?, ?)`,
-        (err, stmt) => {
-          if (err) return reject(err);
-          const comment = `Created order history entry for orderID=${orderID} after inserting all items.`;
-          stmt.exec([employeeID, "OrderHistory", historyID, "INSERT", comment], err => {
-            if (err) return reject(err);
-            resolve();
-          });
-        }
-      );
+    await logToTableLogs({
+      employeeID,
+      tableName: "OrderHistory",
+      recordID: historyRow.HISTORYID,
+      action: "INSERT",
+      comment: `Created order history entry for orderID=${orderID} after inserting all items.`
     });
 
     await conn.commit();
@@ -220,154 +226,248 @@ export async function createOrder(orderData, orderItems, employeeID) {
   }
 }
 
+
 /**
- * Update an existing order and its items, adding history records
+ * Update an existing order with new items and history, and log to TableLogs
  */
-export async function updateOrder(orderID, updatedOrder, updatedItems, employeeID) {
+export async function updateOrder(orderID, updatedOrder, updatedItems, employeeID, userRole) {
   const conn = await pool.acquire();
   try {
     await conn.setAutoCommit(false);
 
-    // Fetch original order for comparison
+    // Ensure updatedItems is iterable
+    updatedItems = Array.isArray(updatedItems) ? updatedItems : [];
+
+    // ✅ Validate manager's ownership and item linkage
+    await validateManagerOrderOwnershipAndItemLink(orderID, updatedItems, employeeID, userRole);
+
     const [originalOrder] = await conn.exec(
-      `SELECT orderTotal, status, comments FROM WUSAP.Orders WHERE orderID = ?`,
+      'SELECT status, orderTotal, comments FROM WUSAP.Orders WHERE orderID = ?',
       [orderID]
     );
 
-    const orderChanges = [];
-    if (Number(originalOrder.ORDERTOTAL) !== Number(updatedOrder.orderTotal))
-      orderChanges.push(`orderTotal: ${originalOrder.ORDERTOTAL} → ${updatedOrder.orderTotal}`);
-    if (originalOrder.STATUS !== updatedOrder.status)
-      orderChanges.push(`status: ${originalOrder.STATUS} → ${updatedOrder.status}`);
-    if ((originalOrder.COMMENTS || '') !== (updatedOrder.comments || ''))
-      orderChanges.push(`comments: ${originalOrder.COMMENTS || ''} → ${updatedOrder.comments || ''}`);
+    const oldStatus = originalOrder.STATUS;
+    const newStatus = updatedOrder.status;
 
-    // Update Orders if needed
-    if (orderChanges.length > 0) {
-      await conn.exec(
-        `UPDATE WUSAP.Orders
-         SET orderTotal = ?, status = ?, comments = ?
-         WHERE orderID = ?`,
-        [updatedOrder.orderTotal, updatedOrder.status, updatedOrder.comments, orderID]
-      );
-
-      await new Promise((resolve, reject) => {
-        conn.prepare(
-          `INSERT INTO WUSAP.TableLogs (employeeID, tableName, recordID, action, "COMMENT")
-           VALUES (?, ?, ?, ?, ?)`,
-          (err, stmt) => {
-            if (err) return reject(err);
-            const comment = `Updated fields: ${orderChanges.join(', ')}`;
-            stmt.exec([employeeID, "Orders", orderID, "UPDATE", comment], err => {
-              if (err) return reject(err);
-              resolve();
-            });
-          }
-        );
-      });
+    if (userRole === 'manager' && updatedOrder.status === 'Aprobada') {
+      throw new Error("Managers cannot set status to 'Aprobada'.");
     }
 
-    // Track changes for OrderHistory log
-    const allItemChanges = [];
+    // Validate transition
+    if (!validateStatusTransition(oldStatus, newStatus)) {
+      throw new Error(`Invalid status transition: ${oldStatus} → ${newStatus}`);
+    }
 
-    for (const item of updatedItems) {
-      // Validate item belongs to the correct order
-      const [validationResult] = await conn.exec(
-        `SELECT orderID FROM WUSAP.OrderItems WHERE orderItemID = ?`,
-        [item.orderItemID]
-      );
+    let skipItemEdits = false;
 
-      const actualOrderID = parseInt(validationResult?.ORDERID);
-      const expectedOrderID = parseInt(orderID);
+    // Step: Check if items changed
+    const itemChanged = await checkItemChanges(conn, updatedItems);
 
-      if (isNaN(actualOrderID) || isNaN(expectedOrderID) || actualOrderID !== expectedOrderID) {
-        throw new Error(`OrderItem ${item.orderItemID} does not belong to Order ${expectedOrderID}`);
+    if (itemChanged) {
+      // Block all item edits if order is not "Pendiente"
+      if (oldStatus !== "Pendiente") {
+        updatedItems = [];
+        skipItemEdits = true;
       }
 
-      // Fetch original item
-      const [originalItem] = await conn.exec(
-        `SELECT productID, source, quantity, itemTotal
-         FROM WUSAP.OrderItems
-         WHERE orderItemID = ?`,
-        [item.orderItemID]
+      // Also block warehouse manager edits on manager-created orders
+      const [creator] = await conn.exec(
+        `SELECT TOP 1 oh.employeeID, u.role
+         FROM WUSAP.OrderHistory oh
+         JOIN WUSAP.Employees u ON oh.employeeID = u.employeeID
+         WHERE oh.orderID = ? AND oh.action = 'CREATED'`,
+        [orderID]
       );
 
-      const changes = [];
-      if (originalItem.PRODUCTID !== item.productID)
-        changes.push(`productID: ${originalItem.PRODUCTID} → ${item.productID}`);
-      if (originalItem.SOURCE !== item.source)
-        changes.push(`source: ${originalItem.SOURCE} → ${item.source}`);
-      if (Number(originalItem.QUANTITY) !== Number(item.quantity))
-        changes.push(`quantity: ${originalItem.QUANTITY} → ${item.quantity}`);
-      if (Number(originalItem.ITEMTOTAL) !== Number(item.itemTotal))
-        changes.push(`itemTotal: ${originalItem.ITEMTOTAL} → ${item.itemTotal}`);
-
-      if (changes.length === 0) continue;
-
-      // Apply item update
-      await conn.exec(
-        `UPDATE WUSAP.OrderItems
-         SET productID = ?, source = ?, quantity = ?, itemTotal = ?
-         WHERE orderItemID = ?`,
-        [item.productID, item.source, item.quantity, item.itemTotal, item.orderItemID]
-      );
-
-      const comment = `Updated orderItem ${item.orderItemID}: ${changes.join(', ')}`;
-      allItemChanges.push(comment);
-
-      await new Promise((resolve, reject) => {
-        conn.prepare(
-          `INSERT INTO WUSAP.TableLogs (employeeID, tableName, recordID, action, "COMMENT")
-           VALUES (?, ?, ?, ?, ?)`,
-          (err, stmt) => {
-            if (err) return reject(err);
-            stmt.exec([employeeID, "OrderItems", item.orderItemID, "UPDATE", comment], err => {
-              if (err) return reject(err);
-              resolve();
-            });
-          }
-        );
-      });
+      if (userRole === 'warehouse_manager' && creator.ROLE === 'manager') {
+        updatedItems = [];
+        skipItemEdits = true;
+      }
     }
 
-    // Insert OrderHistory if there were changes
-    const historyCommentParts = [];
-    if (orderChanges.length > 0) historyCommentParts.push(`Order: ${orderChanges.join(', ')}`);
-    if (allItemChanges.length > 0) historyCommentParts.push(`Items: ${allItemChanges.join(' | ')}`);
-
-    if (historyCommentParts.length > 0) {
-      const fullComment = `Updated order. ${historyCommentParts.join(' | ')}`;
-
-      await conn.exec(
-        `INSERT INTO WUSAP.OrderHistory (orderID, timestamp, action, employeeID, comment)
-         VALUES (?, CURRENT_TIMESTAMP, 'UPDATED', ?, ?)`,
-        [orderID, employeeID, fullComment]
-      );
-
-      const [historyRow] = await conn.exec('SELECT CURRENT_IDENTITY_VALUE() AS HISTORYID FROM DUMMY');
-      const historyID = historyRow.HISTORYID;
-
-      await new Promise((resolve, reject) => {
-        conn.prepare(
-          `INSERT INTO WUSAP.TableLogs (employeeID, tableName, recordID, action, "COMMENT")
-           VALUES (?, ?, ?, ?, ?)`,
-          (err, stmt) => {
-            if (err) return reject(err);
-            const logComment = `Logged order update in history for orderID=${orderID}`;
-            stmt.exec([employeeID, "OrderHistory", historyID, "INSERT", logComment], err => {
-              if (err) return reject(err);
-              resolve();
-            });
-          }
-        );
-      });
+    // Validate sources if manager
+    if (userRole === 'manager') {
+      const invalidItem = updatedItems.find(item => item.source !== 'warehouse');
+      if (invalidItem) {
+        throw new Error(`Managers must set item.source to "warehouse". Found: "${invalidItem.source}"`);
+      }
     }
+
+    // Queue inventory actions (only if we’re applying item updates)
+    const inventoryActions = [];
+    if (!skipItemEdits && userRole === 'warehouse_manager' && oldStatus === 'Pendiente' && newStatus === 'Aprobada') {
+      for (const item of updatedItems) {
+        const available = await getInventoryByStoreByProduct(1, item.productID);
+        if (!available.length || available[0].QUANTITY < item.quantity) {
+          throw new Error(`Not enough inventory for product ${item.productID}`);
+        }
+        inventoryActions.push({ ...item });
+      }
+    }
+
+    // Apply updates
+    const changes = await applyOrderUpdates(conn, orderID, updatedOrder, updatedItems, employeeID, skipItemEdits);
+
+    const comment = `Updated order. ${changes.join(' | ')}`;
+    await conn.exec(
+      `INSERT INTO WUSAP.OrderHistory (orderID, timestamp, action, employeeID, comment)
+       VALUES (?, CURRENT_TIMESTAMP, 'UPDATED', ?, ?)`,
+      [orderID, employeeID, comment]
+    );
+
+    const [historyRow] = await conn.exec('SELECT CURRENT_IDENTITY_VALUE() AS HISTORYID FROM DUMMY');
+    await logToTableLogs({
+      employeeID,
+      tableName: "OrderHistory",
+      recordID: historyRow.HISTORYID,
+      action: "INSERT",
+      comment
+    });
 
     await conn.commit();
+
+    // After success, apply inventory changes
+    for (const item of inventoryActions) {
+      await editInventory(item.inventoryID, item.quantity, employeeID);
+    }
+
     return { success: true };
   } catch (err) {
     await conn.rollback();
     throw err;
+  } finally {
+    await pool.release(conn);
+  }
+}
+
+function validateStatusTransition(from, to) {
+  const transitions = {
+    Pendiente: ["Aprobada", "Cancelada"],
+    Aprobada: ["Confirmada", "Cancelada", "Entregada"],
+    Confirmada: ["Entregada"]
+  };
+  return transitions[from]?.includes(to);
+}
+
+async function checkItemChanges(conn, updatedItems) {
+  for (const item of updatedItems) {
+    const [original] = await conn.exec(
+      'SELECT productID, source, quantity, itemTotal FROM WUSAP.OrderItems WHERE orderItemID = ?',
+      [item.orderItemID]
+    );
+
+    if (
+      original.PRODUCTID !== item.productID ||
+      original.SOURCE !== item.source ||
+      Number(original.QUANTITY) !== Number(item.quantity) ||
+      Number(original.ITEMTOTAL) !== Number(item.itemTotal)
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+async function applyOrderUpdates(conn, orderID, updatedOrder, updatedItems, employeeID, skipItemEdits = false) {
+  const changes = [];
+
+  const [original] = await conn.exec(
+    `SELECT orderTotal, status, comments FROM WUSAP.Orders WHERE orderID = ?`,
+    [orderID]
+  );
+
+  if (Number(original.ORDERTOTAL) !== Number(updatedOrder.orderTotal)) {
+    changes.push(`orderTotal: ${original.ORDERTOTAL} → ${updatedOrder.orderTotal}`);
+  }
+  if (original.STATUS !== updatedOrder.status) {
+    changes.push(`status: ${original.STATUS} → ${updatedOrder.status}`);
+  }
+  if ((original.COMMENTS || '') !== (updatedOrder.comments || '')) {
+    changes.push(`comments: ${original.COMMENTS || ''} → ${updatedOrder.comments || ''}`);
+  }
+
+  await conn.exec(
+    `UPDATE WUSAP.Orders SET orderTotal = ?, status = ?, comments = ? WHERE orderID = ?`,
+    [updatedOrder.orderTotal, updatedOrder.status, updatedOrder.comments, orderID]
+  );
+
+  await logToTableLogs({
+    employeeID,
+    tableName: "Orders",
+    recordID: orderID,
+    action: "UPDATE",
+    comment: `Updated: ${changes.join(', ')}`
+  });
+
+  if (!skipItemEdits) {
+    for (const item of updatedItems) {
+      const [originalItem] = await conn.exec(
+        `SELECT productID, source, quantity, itemTotal FROM WUSAP.OrderItems WHERE orderItemID = ?`,
+        [item.orderItemID]
+      );
+
+      const itemChanges = [];
+      if (originalItem.PRODUCTID !== item.productID)
+        itemChanges.push(`productID: ${originalItem.PRODUCTID} → ${item.productID}`);
+      if (originalItem.SOURCE !== item.source)
+        itemChanges.push(`source: ${originalItem.SOURCE} → ${item.source}`);
+      if (Number(originalItem.QUANTITY) !== Number(item.quantity))
+        itemChanges.push(`quantity: ${originalItem.QUANTITY} → ${item.quantity}`);
+      if (Number(originalItem.ITEMTOTAL) !== Number(item.itemTotal))
+        itemChanges.push(`itemTotal: ${originalItem.ITEMTOTAL} → ${item.itemTotal}`);
+
+      if (itemChanges.length > 0) {
+        await conn.exec(
+          `UPDATE WUSAP.OrderItems SET productID = ?, source = ?, quantity = ?, itemTotal = ?
+           WHERE orderItemID = ?`,
+          [item.productID, item.source, item.quantity, item.itemTotal, item.orderItemID]
+        );
+
+        const changeStr = `Item ${item.orderItemID}: ${itemChanges.join(', ')}`;
+        changes.push(changeStr);
+
+        await logToTableLogs({
+          employeeID,
+          tableName: "OrderItems",
+          recordID: item.orderItemID,
+          action: "UPDATE",
+          comment: changeStr
+        });
+      }
+    }
+  }
+
+  return changes;
+}
+
+async function validateManagerOrderOwnershipAndItemLink(orderID, updatedItems, employeeID, userRole) {
+  if (userRole !== 'manager') return;
+
+  const conn = await pool.acquire();
+  try {
+    // Ensure the manager is the creator
+    const [creator] = await conn.exec(
+      `SELECT TOP 1 oh.employeeID
+       FROM WUSAP.OrderHistory oh
+       WHERE oh.orderID = ? AND oh.action = 'CREATED'`,
+      [orderID]
+    );
+
+    if (!creator || creator.EMPLOYEEID !== employeeID) {
+      throw new Error("Managers can only modify their own orders");
+    }
+
+    // Check orderID match for each item
+    for (const item of updatedItems) {
+      const [row] = await conn.exec(
+        `SELECT orderID FROM WUSAP.OrderItems WHERE orderItemID = ?`,
+        [item.orderItemID]
+      );
+
+      if (!row || row.ORDERID !== orderID) {
+        throw new Error(`OrderItem ${item.orderItemID} does not belong to Order ${orderID}`);
+      }
+    }
   } finally {
     await pool.release(conn);
   }
