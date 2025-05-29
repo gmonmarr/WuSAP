@@ -499,19 +499,50 @@ export const updateInventoryFromOrderStatus = async (
       if (statusChange === 'toAprobadaByWarehouseManager') {
         const [creatorRow] = await conn.exec(
           `SELECT TOP 1 oh.employeeID, e.role
-           FROM WUSAP.OrderHistory oh
-           JOIN WUSAP.Employees e ON oh.employeeID = e.employeeID
-           WHERE oh.orderID = ? AND oh.action = 'CREATED'`,
+          FROM WUSAP.OrderHistory oh
+          JOIN WUSAP.Employees e ON oh.employeeID = e.employeeID
+          WHERE oh.orderID = ? AND oh.action = 'CREATED'`,
           [orderID]
         );
 
         if (creatorRow?.EMPLOYEEID === employeeID) {
-          // Warehouse manager is approving their own order → skip subtraction
-          continue;
+          continue; // Approving own order → skip subtraction
         }
 
         action = 'SUBTRACT';
         storeID = 1;
+
+        // Get inventory record
+        const [inventory] = await getInventoryByStoreByProduct(storeID, productID);
+        if (!inventory) {
+          throw new Error(`No inventory found for product ${productID} at warehouse`);
+        }
+
+        const inventoryID = inventory.INVENTORYID;
+        const currentQty = inventory.QUANTITY;
+        const newQty = currentQty - quantity;
+
+        if (newQty < 0) {
+          throw new Error(`Insufficient stock for product ${productID} at warehouse. Available: ${currentQty}, required: ${quantity}`);
+        }
+
+        // Apply update and logging
+        await conn.exec(
+          `UPDATE WUSAP.Inventory SET quantity = ? WHERE inventoryID = ?`,
+          [newQty, inventoryID]
+        );
+
+        await conn.exec(
+          `INSERT INTO WUSAP.TableLogs (employeeID, tableName, recordID, action, comment)
+          VALUES (?, 'Inventory', ?, 'UPDATE', ?)`,
+          [
+            employeeID,
+            inventoryID,
+            `SUBTRACT ${quantity} of product ${productID} for status Aprobada`
+          ]
+        );
+
+        continue; // Skip to next item (we handled it)
       } else if (statusChange === 'toEntregada') {
         action = 'ADD';
         storeID = targetStoreID;
