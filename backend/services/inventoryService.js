@@ -58,7 +58,7 @@ export const getWarehouseProducts = async () => {
   }
 };
 
-export const assignInventoryToStore = async (productID, storeID, quantity, employeeID = 0) => {
+export const assignInventoryToStore = async (productID, storeID, quantity, employeeID) => {
   const conn = await pool.acquire();
   try {
     // 1. Check if inventory record exists for product + store
@@ -130,3 +130,50 @@ export const assignInventoryToStore = async (productID, storeID, quantity, emplo
     pool.release(conn);
   }
 };
+
+export const editInventory = async (inventoryID, quantity, employeeID) => {
+  const conn = await pool.acquire();
+  try {
+    // 1. Update the inventory record
+    const updateSql = `UPDATE WUSAP.Inventory SET quantity = ? WHERE inventoryID = ?`;
+    await new Promise((resolve, reject) => {
+      conn.prepare(updateSql, (err, stmt) => {
+        if (err) return reject(err);
+        stmt.exec([quantity, inventoryID], (err) => err ? reject(err) : resolve());
+      });
+    });
+
+    // 2. Log the action into TableLogs
+    const logSql = `
+      INSERT INTO WUSAP.TableLogs (employeeID, tableName, recordID, action)
+      VALUES (?, ?, ?, 'UPDATE')
+    `;
+    await new Promise((resolve, reject) => {
+      conn.prepare(logSql, (err, stmt) => {
+        if (err) return reject(err);
+        stmt.exec([employeeID, "Inventory", inventoryID], (err) =>
+          err ? reject(err) : resolve()
+        );
+      });
+    });
+
+    return { success: true, message: 'Inventario actualizado exitosamente' };
+  } finally {
+    pool.release(conn);
+  }
+}
+
+export const getInventoryByStoreByProduct = async (storeID, productID) => {
+  const conn = await pool.acquire();
+  try {
+    return await new Promise((resolve, reject) => {
+      conn.exec(
+        `SELECT * FROM WUSAP.Inventory WHERE storeID = ? AND productID = ?`,
+        [storeID, productID],
+        (err, result) => err ? reject(err) : resolve(result)
+      );
+    });
+  } finally {
+    pool.release(conn);
+  }
+}
