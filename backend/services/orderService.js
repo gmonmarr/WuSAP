@@ -234,7 +234,7 @@ export async function createOrder(orderData, orderItems, employeeID, userRole) {
 function validateStatusTransition(from, to, userRole) {
   const transitionsByRole = {
     warehouse_manager: {
-      Pendiente: ["Pendiente","Aprobada", "Cancelada"],
+      Pendiente: ["Pendiente", "Aprobada", "Cancelada"],
       Aprobada: ["Confirmada", "Cancelada", "Entregada"],
       Confirmada: ["Entregada", "Cancelada"]
     },
@@ -277,6 +277,13 @@ export async function updateOrder(orderID, updatedOrder, updatedItems, employeeI
 
     if (!orderData.length) throw new Error("Order not found");
 
+    // --- FORMAT INPUTS TO MATCH DB ---
+    // Coerce DECIMAL(12,2) to string with 2 decimals for both updated and original
+    if (updatedOrder.orderTotal !== undefined && updatedOrder.orderTotal !== null) {
+      updatedOrder.orderTotal = Number(updatedOrder.orderTotal).toFixed(2);
+    }
+    orderData[0].OLDORDERTOTAL = Number(orderData[0].OLDORDERTOTAL).toFixed(2);
+
     const oldStatus = orderData[0].OLDSTATUS;
     const storeID = orderData[0].STOREID;
     const creatorID = orderData[0].CREATORID;
@@ -286,6 +293,11 @@ export async function updateOrder(orderID, updatedOrder, updatedItems, employeeI
     // Validate status transition based on role
     if (!validateStatusTransition(oldStatus, newStatus, userRole)) {
       throw new Error(`Invalid status transition: ${oldStatus} → ${newStatus}`);
+    }
+
+    // Manager cannot edit orders created by warehouse managers
+    if (userRole === 'manager' && creatorRole === 'warehouse_manager') {
+      throw new Error("Managers cannot edit orders created by warehouse managers");
     }
 
     // Check for changes on orderItems
@@ -308,6 +320,15 @@ export async function updateOrder(orderID, updatedOrder, updatedItems, employeeI
       if (differences.length > 0) itemChanges.push({ item, differences });
     }
 
+    console.log("Items to update:", itemChanges.map(change => ({
+      orderItemID: change.item.orderItemID,
+      productID: change.item.productID,
+      source: change.item.source,
+      quantity: change.item.quantity,
+      itemTotal: change.item.itemTotal,
+      differences: change.differences
+    })));
+
     // Prevent managers from changing item source to anything other than 'warehouse'
     if (userRole === 'manager') {
       for (const change of itemChanges) {
@@ -318,10 +339,11 @@ export async function updateOrder(orderID, updatedOrder, updatedItems, employeeI
       }
     }
 
-    // Only allow edits in Pendiente
-    const isEdit = updatedOrder.orderTotal !== orderData[0].OLDTOTAL || updatedOrder.comments !== orderData[0].OLDCOMMENTS || itemChanges.length > 0;
-    if (isEdit && oldStatus !== "Pendiente") {
-      throw new Error("Order properties or items can only be modified when status is 'Pendiente'");
+    // Only allow orderTotal or item edits in Pendiente; status can always be updated if valid
+    const isOrderTotalEdit = updatedOrder.orderTotal !== orderData[0].OLDORDERTOTAL;
+    const isItemEdit = itemChanges.length > 0;
+    if ((isOrderTotalEdit || isItemEdit) && oldStatus !== "Pendiente") {
+      throw new Error("Order total or items can only be modified when status is 'Pendiente'");
     }
 
     // Warehouse managers can't modify manager's order items
@@ -331,60 +353,73 @@ export async function updateOrder(orderID, updatedOrder, updatedItems, employeeI
 
     // Apply Order Updates
     const orderUpdateFields = [];
-    if (Number(orderData[0].OLDTOTAL) !== Number(updatedOrder.orderTotal)) orderUpdateFields.push("orderTotal");
-    if (orderData[0].OLDCOMMENTS !== updatedOrder.comments) orderUpdateFields.push("comments");
-    if (orderData[0].OLDSTATUS !== updatedOrder.status) orderUpdateFields.push("status");
+
+    // Coerce for safe comparison
+    const oldOrderTotalNum = Number(orderData[0].OLDORDERTOTAL);
+    const newOrderTotalNum = Number(updatedOrder.orderTotal);
+    const oldComments = (orderData[0].OLDCOMMENTS ?? "").trim();
+    const newComments = (updatedOrder.comments ?? "").trim();
+    const oldStatusVal = (orderData[0].OLDSTATUS ?? "").trim();
+    const newStatusVal = (updatedOrder.status ?? "").trim();
+
+    if (oldOrderTotalNum !== newOrderTotalNum) orderUpdateFields.push("orderTotal");
+    if (oldComments !== newComments) orderUpdateFields.push("comments");
+    if (oldStatusVal !== newStatusVal) orderUpdateFields.push("status");
 
     await conn.exec(
       `UPDATE WUSAP.Orders SET orderTotal = ?, status = ?, comments = ? WHERE orderID = ?`,
       [updatedOrder.orderTotal, updatedOrder.status, updatedOrder.comments, orderID]
     );
 
+    let logComment = 'No changes detected';
     if (orderUpdateFields.length > 0) {
-      const logComment = `Updated order. ${orderUpdateFields.map(field => {
-        const fieldKey = fieldMap[field];
-        const oldVal = orderData[0][fieldKey];
-        const newVal = updatedOrder[field];
-        return `${field}: ${oldVal} → ${newVal}`;
+      logComment = `Updated order. ${orderUpdateFields.map(field => {
+        if (field === "orderTotal") {
+          const oldVal = oldOrderTotalNum.toFixed(2);
+          const newVal = newOrderTotalNum.toFixed(2);
+          return `${field}: ${oldVal} → ${newVal}`;
+        } else if (field === "comments") {
+          return `comments: ${oldComments} → ${newComments}`;
+        } else if (field === "status") {
+          return `status: ${oldStatusVal} → ${newStatusVal}`;
+        }
       }).join(' | ')}`;
-
-      await logToTableLogs({
-        employeeID,
-        tableName: "Orders",
-        recordID: orderID,
-        action: "UPDATE",
-        comment: logComment
-      });
     }
+
+    await logToTableLogs({
+      employeeID,
+      tableName: "Orders",
+      recordID: orderID,
+      action: "UPDATE",
+      comment: logComment
+    });
 
     for (const change of itemChanges) {
       const { item, differences } = change;
-      await conn.exec(
-        `UPDATE WUSAP.OrderItems SET productID = ?, source = ?, quantity = ?, itemTotal = ?
-         WHERE orderItemID = ?`,
-        [item.productID, item.source, item.quantity, item.itemTotal, item.orderItemID]
-      );
-
-      await logToTableLogs({
-        employeeID,
-        tableName: "OrderItems",
-        recordID: item.orderItemID,
-        action: "UPDATE",
-        comment: `Updated orderItem ${item.orderItemID}: ${differences.map(f => {
-          const old = orderItemMap.get(item.orderItemID)[f.toUpperCase()];
-          const newVal = item[f];
-          return `${f}: ${old} → ${newVal}`;
-        }).join(' | ')}`
-      });
+      try {
+        await conn.exec(
+          `UPDATE WUSAP.OrderItems SET productID = ?, source = ?, quantity = ?, itemTotal = ?
+          WHERE orderItemID = ?`,
+          [item.productID, item.source, item.quantity, item.itemTotal, item.orderItemID]
+        );
+        await logToTableLogs({
+          employeeID,
+          tableName: "OrderItems",
+          recordID: item.orderItemID,
+          action: "UPDATE",
+          comment: `Updated orderItem ${item.orderItemID}: ${differences.map(f => {
+            const old = orderItemMap.get(item.orderItemID)[f.toUpperCase()];
+            const newVal = item[f];
+            return `${f}: ${old} → ${newVal}`;
+          }).join(' | ')}`
+        });
+      } catch (err) {
+        console.error(`Failed to update orderItem ${item.orderItemID}:`, err);
+        throw err;
+      }
     }
 
     // Record order history
-    const orderChanges = orderUpdateFields.map(field => {
-      const oldVal = orderData[0][fieldMap[field]];
-      const newVal = updatedOrder[field];
-      return `${field}: ${oldVal} → ${newVal}`;
-    }).join(' | ');
-
     const itemChangesLog = itemChanges.map(change => {
       return `Updated orderItem ${change.item.orderItemID}: ${change.differences.map(f => {
         const old = orderItemMap.get(change.item.orderItemID)[f.toUpperCase()];
@@ -393,11 +428,14 @@ export async function updateOrder(orderID, updatedOrder, updatedItems, employeeI
       }).join(', ')}`;
     }).join(' | ');
 
-    const historyComment = `Updated order. ${orderChanges}${itemChanges.length ? ' | Items: ' + itemChangesLog : ''}`;
+    let historyComment = logComment;
+    if (itemChangesLog) {
+      historyComment += ` | Items: ${itemChangesLog}`;
+    }
 
     await conn.exec(
       `INSERT INTO WUSAP.OrderHistory (orderID, timestamp, action, employeeID, comment)
-       VALUES (?, CURRENT_TIMESTAMP, 'UPDATED', ?, ?)`,
+      VALUES (?, CURRENT_TIMESTAMP, 'UPDATED', ?, ?)`,
       [orderID, employeeID, historyComment]
     );
 
