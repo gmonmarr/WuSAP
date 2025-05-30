@@ -270,9 +270,9 @@ export async function updateOrder(orderID, updatedOrder, updatedItems, employeeI
     );
 
     const fieldMap = {
-      orderTotal: 'oldOrderTotal',
-      comments: 'oldComments',
-      status: 'oldStatus'
+      orderTotal: 'OLDORDERTOTAL',
+      comments: 'OLDCOMMENTS',
+      status: 'OLDSTATUS'
     };
 
     if (!orderData.length) throw new Error("Order not found");
@@ -341,16 +341,19 @@ export async function updateOrder(orderID, updatedOrder, updatedItems, employeeI
     );
 
     if (orderUpdateFields.length > 0) {
+      const logComment = `Updated order. ${orderUpdateFields.map(field => {
+        const fieldKey = fieldMap[field];
+        const oldVal = orderData[0][fieldKey];
+        const newVal = updatedOrder[field];
+        return `${field}: ${oldVal} → ${newVal}`;
+      }).join(' | ')}`;
+
       await logToTableLogs({
         employeeID,
         tableName: "Orders",
         recordID: orderID,
         action: "UPDATE",
-        comment: `Updated order. ${orderUpdateFields.map(field => {
-          const oldVal = orderData[0][fieldMap[field]];
-          const newVal = updatedOrder[field];
-          return `${field}: ${oldVal} → ${newVal}`;
-        }).join(' | ')}`
+        comment: logComment
       });
     }
 
