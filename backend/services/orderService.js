@@ -371,6 +371,7 @@ export async function updateOrder(orderID, updatedOrder, updatedItems, employeeI
       [updatedOrder.orderTotal, updatedOrder.status, updatedOrder.comments, orderID]
     );
 
+    // --- Logging for Orders table ---
     let logComment = 'No changes detected';
     if (orderUpdateFields.length > 0) {
       logComment = `Updated order. ${orderUpdateFields.map(field => {
@@ -394,6 +395,7 @@ export async function updateOrder(orderID, updatedOrder, updatedItems, employeeI
       comment: logComment
     });
 
+    // --- Update OrderItems and log changes ---
     for (const change of itemChanges) {
       const { item, differences } = change;
       try {
@@ -419,7 +421,7 @@ export async function updateOrder(orderID, updatedOrder, updatedItems, employeeI
       }
     }
 
-    // Record order history
+    // --- OrderHistory logging ---
     const itemChangesLog = itemChanges.map(change => {
       return `Updated orderItem ${change.item.orderItemID}: ${change.differences.map(f => {
         const old = orderItemMap.get(change.item.orderItemID)[f.toUpperCase()];
@@ -428,9 +430,19 @@ export async function updateOrder(orderID, updatedOrder, updatedItems, employeeI
       }).join(', ')}`;
     }).join(' | ');
 
-    let historyComment = logComment;
-    if (itemChangesLog) {
-      historyComment += ` | Items: ${itemChangesLog}`;
+    let historyComment = '';
+    if (orderUpdateFields.length > 0 && itemChangesLog) {
+      // Both order fields and items changed
+      historyComment = `${logComment} | Items: ${itemChangesLog}`;
+    } else if (orderUpdateFields.length > 0) {
+      // Only order fields changed
+      historyComment = logComment;
+    } else if (itemChangesLog) {
+      // Only items changed
+      historyComment = `Updated order items. | Items: ${itemChangesLog}`;
+    } else {
+      // Neither changed
+      historyComment = "No changes detected";
     }
 
     await conn.exec(
@@ -447,6 +459,7 @@ export async function updateOrder(orderID, updatedOrder, updatedItems, employeeI
       action: "INSERT",
       comment: `Inserted update history entry`
     });
+
 
     // Subtract inventory if warehouse manager approves warehouse-sourced items
     if (userRole === 'warehouse_manager' && oldStatus === 'Pendiente' && newStatus === 'Aprobada') {
