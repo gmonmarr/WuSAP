@@ -231,89 +231,171 @@ export async function createOrder(orderData, orderItems, employeeID, userRole) {
 /**
  * Update an existing order with new items and history, and log to TableLogs
  */
+function validateStatusTransition(from, to, userRole) {
+  const transitionsByRole = {
+    warehouse_manager: {
+      Pendiente: ["Pendiente","Aprobada", "Cancelada"],
+      Aprobada: ["Confirmada", "Cancelada", "Entregada"],
+      Confirmada: ["Entregada", "Cancelada"]
+    },
+    manager: {
+      Pendiente: ["Pendiente","Cancelada"],
+      Aprobada: ["Entregada"]
+    }
+  };
+
+  const transitions = transitionsByRole[userRole];
+  if (!transitions) return false;
+  return transitions[from]?.includes(to);
+}
+
 export async function updateOrder(orderID, updatedOrder, updatedItems, employeeID, userRole) {
   const conn = await pool.acquire();
   try {
     await conn.setAutoCommit(false);
-
-    // Ensure updatedItems is iterable
     updatedItems = Array.isArray(updatedItems) ? updatedItems : [];
 
-    // ✅ Validate manager's ownership and item linkage
-    await validateManagerOrderOwnershipAndItemLink(orderID, updatedItems, employeeID, userRole);
-
-    const [originalOrder] = await conn.exec(
-      'SELECT status, orderTotal, comments FROM WUSAP.Orders WHERE orderID = ?',
+    // Unified query to get all relevant data
+    const orderData = await conn.exec(
+      `SELECT o.status AS oldStatus, o.orderTotal AS oldOrderTotal, o.comments AS oldComments,
+              oi.orderItemID, oi.productID, oi.source, oi.quantity, oi.itemTotal,
+              oh.employeeID AS creatorID, u.role AS creatorRole,
+              o.storeID
+       FROM WUSAP.Orders o
+       JOIN WUSAP.OrderItems oi ON o.orderID = oi.orderID
+       JOIN WUSAP.OrderHistory oh ON o.orderID = oh.orderID AND oh.action = 'CREATED'
+       JOIN WUSAP.Employees u ON oh.employeeID = u.employeeID
+       WHERE o.orderID = ?`,
       [orderID]
     );
 
-    const oldStatus = originalOrder.STATUS;
+    const fieldMap = {
+      orderTotal: 'oldOrderTotal',
+      comments: 'oldComments',
+      status: 'oldStatus'
+    };
+
+    if (!orderData.length) throw new Error("Order not found");
+
+    const oldStatus = orderData[0].OLDSTATUS;
+    const storeID = orderData[0].STOREID;
+    const creatorID = orderData[0].CREATORID;
+    const creatorRole = orderData[0].CREATORROLE;
     const newStatus = updatedOrder.status;
 
-    if (userRole === 'manager' && updatedOrder.status === 'Aprobada') {
-      throw new Error("Managers cannot set status to 'Aprobada'.");
-    }
-
-    // Validate transition
-    if (!validateStatusTransition(oldStatus, newStatus)) {
+    // Validate status transition based on role
+    if (!validateStatusTransition(oldStatus, newStatus, userRole)) {
       throw new Error(`Invalid status transition: ${oldStatus} → ${newStatus}`);
     }
 
-    let skipItemEdits = false;
+    // Check for changes on orderItems
+    const orderItemMap = new Map();
+    for (const row of orderData) {
+      orderItemMap.set(row.ORDERITEMID, row);
+    }
 
-    // Step: Check if items changed
-    const itemChanged = await checkItemChanges(conn, updatedItems);
+    const itemChanges = [];
+    for (const item of updatedItems) {
+      const original = orderItemMap.get(item.orderItemID);
+      if (!original) throw new Error(`OrderItem ${item.orderItemID} does not belong to this order.`);
 
-    if (itemChanged) {
-      // Block all item edits if order is not "Pendiente"
-      if (oldStatus !== "Pendiente") {
-        updatedItems = [];
-        skipItemEdits = true;
+      const differences = [];
+      if (original.PRODUCTID !== item.productID) differences.push("productID");
+      if (original.SOURCE !== item.source) differences.push("source");
+      if (Number(original.QUANTITY) !== Number(item.quantity)) differences.push("quantity");
+      if (Number(original.ITEMTOTAL) !== Number(item.itemTotal)) differences.push("itemTotal");
+
+      if (differences.length > 0) itemChanges.push({ item, differences });
+    }
+
+    // Prevent managers from changing item source to anything other than 'warehouse'
+    if (userRole === 'manager') {
+      for (const change of itemChanges) {
+        const { item } = change;
+        if (item.source !== 'warehouse') {
+          throw new Error(`Managers can only set item.source to "warehouse". Found: "${item.source}" in orderItem ${item.orderItemID}`);
+        }
       }
+    }
 
-      // Also block warehouse manager edits on manager-created orders
-      const [creator] = await conn.exec(
-        `SELECT TOP 1 oh.employeeID, u.role
-         FROM WUSAP.OrderHistory oh
-         JOIN WUSAP.Employees u ON oh.employeeID = u.employeeID
-         WHERE oh.orderID = ? AND oh.action = 'CREATED'`,
-        [orderID]
+    // Only allow edits in Pendiente
+    const isEdit = updatedOrder.orderTotal !== orderData[0].OLDTOTAL || updatedOrder.comments !== orderData[0].OLDCOMMENTS || itemChanges.length > 0;
+    if (isEdit && oldStatus !== "Pendiente") {
+      throw new Error("Order properties or items can only be modified when status is 'Pendiente'");
+    }
+
+    // Warehouse managers can't modify manager's order items
+    if (userRole === 'warehouse_manager' && creatorRole === 'manager' && itemChanges.length > 0) {
+      throw new Error("Warehouse managers cannot modify items on manager-created orders");
+    }
+
+    // Apply Order Updates
+    const orderUpdateFields = [];
+    if (Number(orderData[0].OLDTOTAL) !== Number(updatedOrder.orderTotal)) orderUpdateFields.push("orderTotal");
+    if (orderData[0].OLDCOMMENTS !== updatedOrder.comments) orderUpdateFields.push("comments");
+    if (orderData[0].OLDSTATUS !== updatedOrder.status) orderUpdateFields.push("status");
+
+    await conn.exec(
+      `UPDATE WUSAP.Orders SET orderTotal = ?, status = ?, comments = ? WHERE orderID = ?`,
+      [updatedOrder.orderTotal, updatedOrder.status, updatedOrder.comments, orderID]
+    );
+
+    if (orderUpdateFields.length > 0) {
+      await logToTableLogs({
+        employeeID,
+        tableName: "Orders",
+        recordID: orderID,
+        action: "UPDATE",
+        comment: `Updated order. ${orderUpdateFields.map(field => {
+          const oldVal = orderData[0][fieldMap[field]];
+          const newVal = updatedOrder[field];
+          return `${field}: ${oldVal} → ${newVal}`;
+        }).join(' | ')}`
+      });
+    }
+
+    for (const change of itemChanges) {
+      const { item, differences } = change;
+      await conn.exec(
+        `UPDATE WUSAP.OrderItems SET productID = ?, source = ?, quantity = ?, itemTotal = ?
+         WHERE orderItemID = ?`,
+        [item.productID, item.source, item.quantity, item.itemTotal, item.orderItemID]
       );
 
-      if (userRole === 'warehouse_manager' && creator.ROLE === 'manager') {
-        updatedItems = [];
-        skipItemEdits = true;
-      }
+      await logToTableLogs({
+        employeeID,
+        tableName: "OrderItems",
+        recordID: item.orderItemID,
+        action: "UPDATE",
+        comment: `Updated orderItem ${item.orderItemID}: ${differences.map(f => {
+          const old = orderItemMap.get(item.orderItemID)[f.toUpperCase()];
+          const newVal = item[f];
+          return `${f}: ${old} → ${newVal}`;
+        }).join(' | ')}`
+      });
     }
 
-    // Validate sources if manager
-    if (userRole === 'manager') {
-      const invalidItem = updatedItems.find(item => item.source !== 'warehouse');
-      if (invalidItem) {
-        throw new Error(`Managers must set item.source to "warehouse". Found: "${invalidItem.source}"`);
-      }
-    }
+    // Record order history
+    const orderChanges = orderUpdateFields.map(field => {
+      const oldVal = orderData[0][fieldMap[field]];
+      const newVal = updatedOrder[field];
+      return `${field}: ${oldVal} → ${newVal}`;
+    }).join(' | ');
 
-    // Queue inventory actions (only if we’re applying item updates)
-    const inventoryActions = [];
-    if (!skipItemEdits && userRole === 'warehouse_manager' && oldStatus === 'Pendiente' && newStatus === 'Aprobada') {
-      for (const item of updatedItems) {
-        const available = await getInventoryByStoreByProduct(1, item.productID);
-        if (!available.length || available[0].QUANTITY < item.quantity) {
-          throw new Error(`Not enough inventory for product ${item.productID}`);
-        }
-        inventoryActions.push({ ...item });
-      }
-    }
+    const itemChangesLog = itemChanges.map(change => {
+      return `Updated orderItem ${change.item.orderItemID}: ${change.differences.map(f => {
+        const old = orderItemMap.get(change.item.orderItemID)[f.toUpperCase()];
+        const newVal = change.item[f];
+        return `${f}: ${old} → ${newVal}`;
+      }).join(', ')}`;
+    }).join(' | ');
 
-    // Apply updates
-    const changes = await applyOrderUpdates(conn, orderID, updatedOrder, updatedItems, employeeID, skipItemEdits);
+    const historyComment = `Updated order. ${orderChanges}${itemChanges.length ? ' | Items: ' + itemChangesLog : ''}`;
 
-    const comment = `Updated order. ${changes.join(' | ')}`;
     await conn.exec(
       `INSERT INTO WUSAP.OrderHistory (orderID, timestamp, action, employeeID, comment)
        VALUES (?, CURRENT_TIMESTAMP, 'UPDATED', ?, ?)`,
-      [orderID, employeeID, comment]
+      [orderID, employeeID, historyComment]
     );
 
     const [historyRow] = await conn.exec('SELECT CURRENT_IDENTITY_VALUE() AS HISTORYID FROM DUMMY');
@@ -322,22 +404,42 @@ export async function updateOrder(orderID, updatedOrder, updatedItems, employeeI
       tableName: "OrderHistory",
       recordID: historyRow.HISTORYID,
       action: "INSERT",
-      comment
+      comment: `Inserted update history entry`
     });
 
+    // Subtract inventory if warehouse manager approves warehouse-sourced items
+    if (userRole === 'warehouse_manager' && oldStatus === 'Pendiente' && newStatus === 'Aprobada') {
+      // If warehouse manager is approving a manager's order, use original items directly
+      const warehouseItems =
+        userRole === 'warehouse_manager' && creatorRole === 'manager'
+          ? orderData
+              .filter(row => row.SOURCE === 'warehouse')
+              .map(row => ({
+                orderItemID: row.ORDERITEMID,
+                productID: row.PRODUCTID,
+                quantity: row.QUANTITY,
+                source: row.SOURCE
+              }))
+          : updatedItems.filter(item => item.source === 'warehouse');
+
+      for (const item of warehouseItems) {
+        const [inventory] = await getInventoryByStoreByProduct(1, item.productID);
+        if (!inventory || inventory.QUANTITY < item.quantity) {
+          throw new Error(`Not enough stock in warehouse for product ${item.productID}`);
+        }
+        const newQty = inventory.QUANTITY - item.quantity;
+        await conn.exec(`UPDATE WUSAP.Inventory SET quantity = ? WHERE inventoryID = ?`, [newQty, inventory.INVENTORYID]);
+        await logToTableLogs({
+          employeeID,
+          tableName: "Inventory",
+          recordID: inventory.INVENTORYID,
+          action: "UPDATE",
+          comment: `Subtracted ${item.quantity} of product ${item.productID} after approval`
+        });
+      }
+    }
+
     await conn.commit();
-
-    // Apply inventory subtraction when approved by another warehouse manager
-    if (oldStatus === "Pendiente" && newStatus === "Aprobada" && userRole === "warehouse_manager") {
-      await updateInventoryFromOrderStatus(orderID, updatedItems, "toAprobadaByWarehouseManager", employeeID);
-    }
-
-    // Apply inventory addition when order is delivered
-    if (newStatus === "Entregada") {
-      const [orderInfo] = await conn.exec(`SELECT storeID FROM WUSAP.Orders WHERE orderID = ?`, [orderID]);
-      await updateInventoryFromOrderStatus(orderID, updatedItems, "toEntregada", employeeID, orderInfo.STOREID);
-    }
-
     return { success: true };
   } catch (err) {
     await conn.rollback();
@@ -346,242 +448,3 @@ export async function updateOrder(orderID, updatedOrder, updatedItems, employeeI
     await pool.release(conn);
   }
 }
-
-function validateStatusTransition(from, to) {
-  const transitions = {
-    Pendiente: ["Aprobada", "Cancelada"],
-    Aprobada: ["Confirmada", "Cancelada", "Entregada"],
-    Confirmada: ["Entregada"]
-  };
-  return transitions[from]?.includes(to);
-}
-
-async function checkItemChanges(conn, updatedItems) {
-  for (const item of updatedItems) {
-    const [original] = await conn.exec(
-      'SELECT productID, source, quantity, itemTotal FROM WUSAP.OrderItems WHERE orderItemID = ?',
-      [item.orderItemID]
-    );
-
-    if (
-      original.PRODUCTID !== item.productID ||
-      original.SOURCE !== item.source ||
-      Number(original.QUANTITY) !== Number(item.quantity) ||
-      Number(original.ITEMTOTAL) !== Number(item.itemTotal)
-    ) {
-      return true;
-    }
-  }
-  return false;
-}
-
-async function applyOrderUpdates(conn, orderID, updatedOrder, updatedItems, employeeID, skipItemEdits = false) {
-  const changes = [];
-
-  const [original] = await conn.exec(
-    `SELECT orderTotal, status, comments FROM WUSAP.Orders WHERE orderID = ?`,
-    [orderID]
-  );
-
-  if (Number(original.ORDERTOTAL) !== Number(updatedOrder.orderTotal)) {
-    changes.push(`orderTotal: ${original.ORDERTOTAL} → ${updatedOrder.orderTotal}`);
-  }
-  if (original.STATUS !== updatedOrder.status) {
-    changes.push(`status: ${original.STATUS} → ${updatedOrder.status}`);
-  }
-  if ((original.COMMENTS || '') !== (updatedOrder.comments || '')) {
-    changes.push(`comments: ${original.COMMENTS || ''} → ${updatedOrder.comments || ''}`);
-  }
-
-  await conn.exec(
-    `UPDATE WUSAP.Orders SET orderTotal = ?, status = ?, comments = ? WHERE orderID = ?`,
-    [updatedOrder.orderTotal, updatedOrder.status, updatedOrder.comments, orderID]
-  );
-
-  await logToTableLogs({
-    employeeID,
-    tableName: "Orders",
-    recordID: orderID,
-    action: "UPDATE",
-    comment: `Updated: ${changes.join(', ')}`
-  });
-
-  if (!skipItemEdits) {
-    for (const item of updatedItems) {
-      const [originalItem] = await conn.exec(
-        `SELECT productID, source, quantity, itemTotal FROM WUSAP.OrderItems WHERE orderItemID = ?`,
-        [item.orderItemID]
-      );
-
-      const itemChanges = [];
-      if (originalItem.PRODUCTID !== item.productID)
-        itemChanges.push(`productID: ${originalItem.PRODUCTID} → ${item.productID}`);
-      if (originalItem.SOURCE !== item.source)
-        itemChanges.push(`source: ${originalItem.SOURCE} → ${item.source}`);
-      if (Number(originalItem.QUANTITY) !== Number(item.quantity))
-        itemChanges.push(`quantity: ${originalItem.QUANTITY} → ${item.quantity}`);
-      if (Number(originalItem.ITEMTOTAL) !== Number(item.itemTotal))
-        itemChanges.push(`itemTotal: ${originalItem.ITEMTOTAL} → ${item.itemTotal}`);
-
-      if (itemChanges.length > 0) {
-        await conn.exec(
-          `UPDATE WUSAP.OrderItems SET productID = ?, source = ?, quantity = ?, itemTotal = ?
-           WHERE orderItemID = ?`,
-          [item.productID, item.source, item.quantity, item.itemTotal, item.orderItemID]
-        );
-
-        const changeStr = `Item ${item.orderItemID}: ${itemChanges.join(', ')}`;
-        changes.push(changeStr);
-
-        await logToTableLogs({
-          employeeID,
-          tableName: "OrderItems",
-          recordID: item.orderItemID,
-          action: "UPDATE",
-          comment: changeStr
-        });
-      }
-    }
-  }
-
-  return changes;
-}
-
-async function validateManagerOrderOwnershipAndItemLink(orderID, updatedItems, employeeID, userRole) {
-  if (userRole !== 'manager') return;
-
-  const conn = await pool.acquire();
-  try {
-    // Ensure the manager is the creator
-    const [creator] = await conn.exec(
-      `SELECT TOP 1 oh.employeeID
-       FROM WUSAP.OrderHistory oh
-       WHERE oh.orderID = ? AND oh.action = 'CREATED'`,
-      [orderID]
-    );
-
-    if (!creator || creator.EMPLOYEEID !== employeeID) {
-      throw new Error("Managers can only modify their own orders");
-    }
-
-    // Check orderID match for each item
-    for (const item of updatedItems) {
-      const [row] = await conn.exec(
-        `SELECT orderID FROM WUSAP.OrderItems WHERE orderItemID = ?`,
-        [item.orderItemID]
-      );
-
-      if (!row || row.ORDERID !== orderID) {
-        throw new Error(`OrderItem ${item.orderItemID} does not belong to Order ${orderID}`);
-      }
-    }
-  } finally {
-    await pool.release(conn);
-  }
-}
-
-export const updateInventoryFromOrderStatus = async (
-  orderID,
-  updatedItems,
-  statusChange,
-  employeeID,
-  targetStoreID = null
-) => {
-  const conn = await pool.acquire();
-  try {
-    for (const item of updatedItems) {
-      const { productID, quantity } = item;
-
-      let action = '';
-      let storeID = 1;
-
-      // --- Check for creator to avoid unnecessary subtraction ---
-      if (statusChange === 'toAprobadaByWarehouseManager') {
-        const [creatorRow] = await conn.exec(
-          `SELECT TOP 1 oh.employeeID, e.role
-          FROM WUSAP.OrderHistory oh
-          JOIN WUSAP.Employees e ON oh.employeeID = e.employeeID
-          WHERE oh.orderID = ? AND oh.action = 'CREATED'`,
-          [orderID]
-        );
-
-        if (creatorRow?.EMPLOYEEID === employeeID) {
-          continue; // Approving own order → skip subtraction
-        }
-
-        action = 'SUBTRACT';
-        storeID = 1;
-
-        // Get inventory record
-        const [inventory] = await getInventoryByStoreByProduct(storeID, productID);
-        if (!inventory) {
-          throw new Error(`No inventory found for product ${productID} at warehouse`);
-        }
-
-        const inventoryID = inventory.INVENTORYID;
-        const currentQty = inventory.QUANTITY;
-        const newQty = currentQty - quantity;
-
-        if (newQty < 0) {
-          throw new Error(`Insufficient stock for product ${productID} at warehouse. Available: ${currentQty}, required: ${quantity}`);
-        }
-
-        // Apply update and logging
-        await conn.exec(
-          `UPDATE WUSAP.Inventory SET quantity = ? WHERE inventoryID = ?`,
-          [newQty, inventoryID]
-        );
-
-        await conn.exec(
-          `INSERT INTO WUSAP.TableLogs (employeeID, tableName, recordID, action, comment)
-          VALUES (?, 'Inventory', ?, 'UPDATE', ?)`,
-          [
-            employeeID,
-            inventoryID,
-            `SUBTRACT ${quantity} of product ${productID} for status Aprobada`
-          ]
-        );
-
-        continue; // Skip to next item (we handled it)
-      } else if (statusChange === 'toEntregada') {
-        action = 'ADD';
-        storeID = targetStoreID;
-      } else {
-        continue;
-      }
-
-      // Get current inventory
-      const [inventory] = await getInventoryByStoreByProduct(storeID, productID);
-      if (!inventory) {
-        throw new Error(`No inventory found for product ${productID} at store ${storeID}`);
-      }
-
-      const inventoryID = inventory.INVENTORYID;
-      const currentQty = inventory.QUANTITY;
-      const newQty = action === 'ADD' ? currentQty + quantity : currentQty - quantity;
-
-      // Update inventory
-      await conn.exec(
-        `UPDATE WUSAP.Inventory SET quantity = ? WHERE inventoryID = ?`,
-        [newQty, inventoryID]
-      );
-
-      // Log update
-      await conn.exec(
-        `INSERT INTO WUSAP.TableLogs (employeeID, tableName, recordID, action, comment)
-         VALUES (?, 'Inventory', ?, 'UPDATE', ?)`,
-        [
-          employeeID,
-          inventoryID,
-          `${action} ${quantity} of product ${productID} for status ${statusChange}`
-        ]
-      );
-    }
-
-    return { success: true };
-  } catch (err) {
-    throw err;
-  } finally {
-    pool.release(conn);
-  }
-};
