@@ -240,7 +240,7 @@ function validateStatusTransition(from, to, userRole) {
     },
     manager: {
       Pendiente: ["Pendiente","Cancelada"],
-      Aprobada: ["Entregada"]
+      Aprobada: ["Entregada", "Cancelada"]
     }
   };
 
@@ -460,6 +460,67 @@ export async function updateOrder(orderID, updatedOrder, updatedItems, employeeI
       comment: `Inserted update history entry`
     });
 
+    // --- Inventory Additions/Restorations ---
+    // 1. Add to target store inventory when order is "Entregada"
+    if (oldStatus !== "Entregada" && newStatus === "Entregada") {
+      // Use all current order items (not just updatedItems)
+      for (const row of orderData) {
+        // Get current inventory at store
+        const [inventory] = await getInventoryByStoreByProduct(storeID, row.PRODUCTID);
+        let newQty;
+        if (inventory) {
+          newQty = Number(inventory.QUANTITY) + Number(row.QUANTITY);
+          await conn.exec(
+            `UPDATE WUSAP.Inventory SET quantity = ? WHERE inventoryID = ?`,
+            [newQty, inventory.INVENTORYID]
+          );
+        } else {
+          // If no inventory record exists, create it (optional, comment out if you want strict existence)
+          await conn.exec(
+            `INSERT INTO WUSAP.Inventory (productID, storeID, quantity) VALUES (?, ?, ?)`,
+            [row.PRODUCTID, storeID, row.QUANTITY]
+          );
+        }
+        await logToTableLogs({
+          employeeID,
+          tableName: "Inventory",
+          recordID: inventory ? inventory.INVENTORYID : null,
+          action: "UPDATE",
+          comment: `Added ${row.QUANTITY} of product ${row.PRODUCTID} to store ${storeID} for delivery`
+        });
+      }
+    }
+
+    // 2. Restore warehouse inventory if "Aprobada" -> "Cancelada"
+    if (oldStatus === "Aprobada" && newStatus === "Cancelada") {
+      for (const row of orderData) {
+        // Only items that were sourced from warehouse
+        if (row.SOURCE === "warehouse") {
+          const [inventory] = await getInventoryByStoreByProduct(1, row.PRODUCTID);
+          let newQty;
+          if (inventory) {
+            newQty = Number(inventory.QUANTITY) + Number(row.QUANTITY);
+            await conn.exec(
+              `UPDATE WUSAP.Inventory SET quantity = ? WHERE inventoryID = ?`,
+              [newQty, inventory.INVENTORYID]
+            );
+          } else {
+            // If no inventory record exists, create it
+            await conn.exec(
+              `INSERT INTO WUSAP.Inventory (productID, storeID, quantity) VALUES (?, ?, ?)`,
+              [row.PRODUCTID, 1, row.QUANTITY]
+            );
+          }
+          await logToTableLogs({
+            employeeID,
+            tableName: "Inventory",
+            recordID: inventory ? inventory.INVENTORYID : null,
+            action: "UPDATE",
+            comment: `Restored ${row.QUANTITY} of product ${row.PRODUCTID} to warehouse after cancellation`
+          });
+        }
+      }
+    }
 
     // Subtract inventory if warehouse manager approves warehouse-sourced items
     if (userRole === 'warehouse_manager' && oldStatus === 'Pendiente' && newStatus === 'Aprobada') {
