@@ -29,7 +29,7 @@
     // Update order history
 
 import pool from '../db/hanaPool.js';
-import { editInventory, getInventoryByStoreByProduct } from './inventoryService.js';
+import { editInventory, getInventoryByStoreByProduct, assignInventoryToStore } from './inventoryService.js';
 import { logToTableLogs } from './tableLogService.js';
 
 /**
@@ -320,14 +320,14 @@ export async function updateOrder(orderID, updatedOrder, updatedItems, employeeI
       if (differences.length > 0) itemChanges.push({ item, differences });
     }
 
-    console.log("Items to update:", itemChanges.map(change => ({
-      orderItemID: change.item.orderItemID,
-      productID: change.item.productID,
-      source: change.item.source,
-      quantity: change.item.quantity,
-      itemTotal: change.item.itemTotal,
-      differences: change.differences
-    })));
+    // console.log("Items to update:", itemChanges.map(change => ({
+    //   orderItemID: change.item.orderItemID,
+    //   productID: change.item.productID,
+    //   source: change.item.source,
+    //   quantity: change.item.quantity,
+    //   itemTotal: change.item.itemTotal,
+    //   differences: change.differences
+    // })));
 
     // Prevent managers from changing item source to anything other than 'warehouse'
     if (userRole === 'manager') {
@@ -465,29 +465,23 @@ export async function updateOrder(orderID, updatedOrder, updatedItems, employeeI
     if (oldStatus !== "Entregada" && newStatus === "Entregada") {
       // Use all current order items (not just updatedItems)
       for (const row of orderData) {
-        // Get current inventory at store
-        const [inventory] = await getInventoryByStoreByProduct(storeID, row.PRODUCTID);
-        let newQty;
-        if (inventory) {
-          newQty = Number(inventory.QUANTITY) + Number(row.QUANTITY);
-          await conn.exec(
-            `UPDATE WUSAP.Inventory SET quantity = ? WHERE inventoryID = ?`,
-            [newQty, inventory.INVENTORYID]
-          );
-        } else {
-          // If no inventory record exists, create it (optional, comment out if you want strict existence)
-          await conn.exec(
-            `INSERT INTO WUSAP.Inventory (productID, storeID, quantity) VALUES (?, ?, ?)`,
-            [row.PRODUCTID, storeID, row.QUANTITY]
-          );
+        try {
+          // Try to get inventory
+          const [inventory] = await getInventoryByStoreByProduct(storeID, row.PRODUCTID);
+
+          if (inventory) {
+            // If inventory exists, edit (add) the quantity
+            const newQty = Number(inventory.QUANTITY) + Number(row.QUANTITY);
+            await editInventory(inventory.INVENTORYID, newQty, employeeID);
+          } else {
+            // If not found, assign/create inventory entry for this store-product
+            await assignInventoryToStore(row.PRODUCTID, storeID, Number(row.QUANTITY), employeeID);
+          }
+        } catch (err) {
+          // Handle unexpected DB/connection errors here (optional)
+          console.error(`Error updating inventory for store ${storeID}, product ${row.PRODUCTID}:`, err);
+          throw err; // If you want to abort everything, otherwise just log
         }
-        await logToTableLogs({
-          employeeID,
-          tableName: "Inventory",
-          recordID: inventory ? inventory.INVENTORYID : null,
-          action: "UPDATE",
-          comment: `Added ${row.QUANTITY} of product ${row.PRODUCTID} to store ${storeID} for delivery`
-        });
       }
     }
 

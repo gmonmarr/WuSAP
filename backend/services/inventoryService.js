@@ -58,7 +58,7 @@ export const getWarehouseProducts = async () => {
   }
 };
 
-export const assignInventoryToStore = async (productID, storeID, quantity, employeeID = 0) => {
+export const assignInventoryToStore = async (productID, storeID, quantity, employeeID) => {
   const conn = await pool.acquire();
   try {
     // 1. Check if inventory record exists for product + store
