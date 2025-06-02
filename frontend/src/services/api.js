@@ -405,5 +405,27 @@ export const orderService = {
       console.error('Error updating order:', error);
       throw error;
     }
+  },
+
+  // Get orders with details for current store (for order status/history pages)
+  getOrdersWithDetailsForStore: async () => {
+    try {
+      const response = await api.get('/api/orders/store/detailed');
+      return response;
+    } catch (error) {
+      console.error('Error fetching store orders with details:', error);
+      throw error;
+    }
+  },
+
+  // Get full order details including items and history
+  getOrderWithFullDetails: async (orderId) => {
+    try {
+      const response = await api.get(`/api/orders/${orderId}/full-details`);
+      return response;
+    } catch (error) {
+      console.error('Error fetching order full details:', error);
+      throw error;
+    }
   }
 }; 

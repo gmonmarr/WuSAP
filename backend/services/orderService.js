@@ -101,6 +101,99 @@ export async function getOrdersByStore(storeID) {
 }
 
 /**
+ * Get all orders for a specific store with detailed information including items and products
+ */
+export async function getOrdersWithDetailsForStore(storeID) {
+  const conn = await pool.acquire();
+  try {
+    // Get orders with aggregated item count and latest history action
+    const ordersQuery = `
+      SELECT 
+        o.ORDERID,
+        o.ORDERDATE,
+        o.ORDERTOTAL,
+        o.STATUS,
+        o.COMMENTS,
+        o.STOREID,
+        COALESCE(itemcount.ITEMCOUNT, 0) as ITEMCOUNT,
+        MAX(oh.TIMESTAMP) as LASTUPDATED
+      FROM WUSAP.Orders o
+      LEFT JOIN (
+        SELECT ORDERID, COUNT(*) as ITEMCOUNT
+        FROM WUSAP.OrderItems
+        GROUP BY ORDERID
+      ) itemcount ON o.ORDERID = itemcount.ORDERID
+      LEFT JOIN WUSAP.OrderHistory oh ON o.ORDERID = oh.ORDERID
+      WHERE o.STOREID = ?
+      GROUP BY o.ORDERID, o.ORDERDATE, o.ORDERTOTAL, o.STATUS, o.COMMENTS, o.STOREID, itemcount.ITEMCOUNT
+      ORDER BY o.ORDERDATE DESC, o.ORDERID DESC
+    `;
+    
+    return await conn.exec(ordersQuery, [storeID]);
+  } finally {
+    await pool.release(conn);
+  }
+}
+
+/**
+ * Get detailed order information with items and products for a specific order
+ */
+export async function getOrderWithFullDetails(orderID) {
+  const conn = await pool.acquire();
+  try {
+    // Get order basic info
+    const [order] = await conn.exec('SELECT * FROM WUSAP.Orders WHERE ORDERID = ?', [orderID]);
+    
+    if (!order) {
+      throw new Error('Order not found');
+    }
+
+    // Get order items with product details
+    const items = await conn.exec(`
+      SELECT 
+        oi.ORDERITEMID,
+        oi.ORDERID,
+        oi.PRODUCTID,
+        oi.SOURCE,
+        oi.QUANTITY,
+        oi.ITEMTOTAL,
+        p.NAME as PRODUCTNAME,
+        p.UNIT as PRODUCTUNIT,
+        p.SUGGESTEDPRICE as PRODUCTPRICE
+      FROM WUSAP.OrderItems oi
+      LEFT JOIN WUSAP.Products p ON oi.PRODUCTID = p.PRODUCTID
+      WHERE oi.ORDERID = ?
+      ORDER BY oi.ORDERITEMID
+    `, [orderID]);
+
+    // Get order history
+    const history = await conn.exec(`
+      SELECT 
+        oh.HISTORYID,
+        oh.ORDERID,
+        oh.TIMESTAMP,
+        oh.ACTION,
+        oh.EMPLOYEEID,
+        oh.COMMENT,
+        e.NAME as EMPLOYEENAME,
+        e.LASTNAME as EMPLOYEELASTNAME
+      FROM WUSAP.OrderHistory oh
+      LEFT JOIN WUSAP.Employees e ON oh.EMPLOYEEID = e.EMPLOYEEID
+      WHERE oh.ORDERID = ?
+      ORDER BY oh.TIMESTAMP DESC
+    `, [orderID]);
+
+    return {
+      order,
+      items,
+      history
+    };
+  } finally {
+    await pool.release(conn);
+  }
+}
+
+/**
  * Get all orders associated with a specific employee
  */
 export async function getOrdersByEmployee(employeeID) {
