@@ -72,23 +72,24 @@ const Navbar = () => {
 //Modify the Path Here to the Correct Page
 
   const navItems = [
-    { path: '/tablero', label: 'Tablero', icon: 'home' },
+    // Owner
+    { path: '/tablero', label: 'Owner:Tablero', icon: 'home' },
     // Manager
     { path: '/hacer-pedido', label: 'Manager: Hacer Pedido', icon: 'cart' },
     // Warehouse Manager
     { path: '/productos', label: 'Warehouse Manager: Gestion de Productos', icon: 'business-objects-experience' },
-    // Owner
-    { path: '/solicitar-material', label: 'Owner: Solicitar Material', icon: 'cart' },
-    // Owner/Manager
+    { path: '/solicitar-material', label: 'Warehouse Manager: Solicitar Material', icon: 'cart' },
+    // Owner/Manager/Warehouse Manager
     { path: '/inventario', label: 'Owner/Manager/Warehouse Manager: Estadisticas Inventario', icon: 'map' },
-    { path: '/productos-sucursal', label: 'Owner/Manager/Warehouse Manager :Productos Sucursal', icon: 'business-objects-experience' },
-    { path: '/historial-pedido', label: 'Owner/Manager: Historial de Pedidos', icon: 'business-objects-experience' },
-    { path: '/solicitudes', label: 'Owner/Manager: Solicitudes', icon: 'business-objects-experience' },
-    { path: '/orden-status', label: 'Owner/Manager: Ordenes de Producción', icon: 'business-objects-experience' },
+    { path: '/productos-sucursal', label: 'Owner/Manager/Warehouse Manager: Inventario', icon: 'business-objects-experience' },
+    { path: '/solicitudes', label: 'Manager/Warehouse Manager: Solicitudes', icon: 'business-objects-experience' },
+    { path: '/orden-status', label: 'Owner/Manager/Warehouse Manager: Ordenes de Producción', icon: 'business-objects-experience' },
     // Admin
     { path: '/lista-usuarios', label: 'Admin: Gestionar usuarios', icon: 'group' },
     { path: '/admin', label: 'Admin: Admin View', icon: 'group' },
     { path: '/admin/locations', label: 'Admin:Ubicaciones', icon: 'map' },
+
+    { path: '/historial-pedido', label: 'Removed: Historial de Pedidos ', icon: 'business-objects-experience' },
   ];
 
   return (

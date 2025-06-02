@@ -29,6 +29,7 @@ import {
   FormControl,
   InputLabel,
   FormHelperText,
+  Snackbar,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -40,7 +41,7 @@ import Navbar from "../../components/Navbar";
 import Header from "../../components/Header";
 import AvisoPerdidaInfo from "../../components/AvisoPerdidaInfo";
 import ProductCard from "../../components/ProductCard";
-import { inventoryService } from "../../services/api";
+import { inventoryService, orderService, locationService, authService } from "../../services/api";
 
 // Styled components
 const StyledPaper = styled(Paper)(({ theme }) => ({
@@ -104,6 +105,41 @@ const OrderPage = () => {
     contactNumber: "",
     notes: "",
   });
+  const [user, setUser] = useState(null);
+  const [storeName, setStoreName] = useState("");
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
+
+  // Cargar datos del usuario y sucursal
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const currentUser = authService.getUser();
+        setUser(currentUser);
+        
+        if (currentUser && currentUser.storeID) {
+          const location = await locationService.getLocationById(currentUser.storeID);
+          if (location && location.NAME) {
+            setStoreName(location.NAME);
+            // Prellenar los datos de envío
+            setShippingDetails(prev => ({
+              ...prev,
+              sucursal: location.NAME,
+              requestedBy: `${currentUser.name || ''} ${currentUser.lastName || ''}`.trim(),
+              contactNumber: currentUser.cellphone || ""
+            }));
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   // Función para obtener productos del almacén
   useEffect(() => {
@@ -143,6 +179,11 @@ const OrderPage = () => {
 
     fetchWarehouseProducts();
   }, []);
+
+  // Función para cerrar snackbar
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
 
   const steps = ["Seleccionar Materiales", "Detalles de Envío", "Confirmar Pedido"];
 
@@ -431,11 +472,12 @@ const OrderPage = () => {
                   label="Sucursal"
                   name="sucursal"
                   value={shippingDetails.sucursal}
-                  onChange={handleShippingChange}
-                  required
+                  disabled
+                  helperText="Sucursal asignada automáticamente según tu perfil"
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       borderRadius: '8px',
+                      backgroundColor: '#f5f5f5',
                     },
                   }}
                 />
@@ -446,11 +488,12 @@ const OrderPage = () => {
                   label="Solicitado por"
                   name="requestedBy"
                   value={shippingDetails.requestedBy}
-                  onChange={handleShippingChange}
-                  required
+                  disabled
+                  helperText="Información obtenida de tu perfil"
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       borderRadius: '8px',
+                      backgroundColor: '#f5f5f5',
                     },
                   }}
                 />
@@ -461,11 +504,12 @@ const OrderPage = () => {
                   label="Número de Contacto"
                   name="contactNumber"
                   value={shippingDetails.contactNumber}
-                  onChange={handleShippingChange}
-                  required
+                  disabled
+                  helperText="Número de contacto de tu perfil"
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       borderRadius: '8px',
+                      backgroundColor: '#f5f5f5',
                     },
                   }}
                 />
@@ -479,6 +523,8 @@ const OrderPage = () => {
                   onChange={handleShippingChange}
                   multiline
                   rows={4}
+                  placeholder="Agrega cualquier información adicional sobre tu pedido..."
+                  helperText="Campo opcional para instrucciones especiales o comentarios"
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       borderRadius: '8px',
@@ -618,28 +664,72 @@ const OrderPage = () => {
   const handleCheckout = async () => {
     setIsSubmitting(true);
     try {
-      // Here you would typically make an API call to your backend
-      console.log("Order submitted:", {
-        products: selectedProducts,
-        shippingDetails,
-      });
+      if (!user || !user.storeID) {
+        throw new Error("No se pudo identificar la información del usuario");
+      }
+
+      // Calcular el total de la orden
+      const orderTotal = selectedProducts.reduce((total, product) => {
+        return total + (product.price * product.quantity);
+      }, 0);
+
+      // Preparar datos de la orden
+      const orderData = {
+        orderTotal: orderTotal,
+        status: "Pending", // Estado inicial
+        comments: shippingDetails.notes || null,
+        storeID: user.storeID // Se obtiene del token JWT en el backend
+      };
+
+      // Preparar items de la orden
+      const orderItems = selectedProducts.map(product => ({
+        productID: product.id,
+        source: "warehouse", // Viene del almacén
+        quantity: product.quantity,
+        itemTotal: product.price * product.quantity
+      }));
+
+      console.log("Creating order with data:", { orderData, orderItems });
+
+      // Crear la orden
+      const response = await orderService.createOrder(orderData, orderItems);
       
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (response.data && response.data.success) {
+        setOrderSubmitted(true);
+        
+        // Mostrar mensaje de éxito
+        console.log("Order created successfully with ID:", response.data.orderID);
+        
+        // Limpiar el carrito y resetear el formulario
+        setSelectedProducts([]);
+        setQuantities({});
+        
+        // Resetear solo las notas, mantener los otros datos del usuario
+        setShippingDetails(prev => ({
+          ...prev,
+          notes: ""
+        }));
+        
+        setActiveStep(0);
+        
+        // Mostrar mensaje de éxito
+        setSnackbar({
+          open: true,
+          message: `¡Pedido creado exitosamente! ID de orden: ${response.data.orderID}`,
+          severity: 'success'
+        });
+        
+      } else {
+        throw new Error("Error en la respuesta del servidor");
+      }
       
-      setOrderSubmitted(true);
-      // Clear the cart and reset the form
-      setSelectedProducts([]);
-      setQuantities({});
-      setShippingDetails({
-        sucursal: "",
-        requestedBy: "",
-        contactNumber: "",
-        notes: "",
-      });
-      setActiveStep(0);
     } catch (error) {
       console.error("Error submitting order:", error);
+      setSnackbar({
+        open: true,
+        message: `Error al crear el pedido: ${error.message}`,
+        severity: 'error'
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -823,8 +913,8 @@ const OrderPage = () => {
                 color="primary"
                 onClick={handleNext}
                 disabled={
-                  (activeStep === 0 && selectedProducts.length === 0) ||
-                  (activeStep === 1 && (!shippingDetails.sucursal || !shippingDetails.requestedBy || !shippingDetails.contactNumber))
+                  (activeStep === 0 && selectedProducts.length === 0)
+                  // Los campos de envío se llenan automáticamente, no necesitan validación
                 }
                 sx={{
                   px: 4,
@@ -841,6 +931,22 @@ const OrderPage = () => {
           </Box>
         </StyledPaper>
       </Box>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert 
+          onClose={handleCloseSnackbar} 
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 };

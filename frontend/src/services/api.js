@@ -322,4 +322,112 @@ export const inventoryService = {
       throw error;
     }
   }
+};
+
+// Order services
+export const orderService = {
+  // Get all orders
+  getAllOrders: async () => {
+    try {
+      const response = await api.get('/api/orders');
+      return response;
+    } catch (error) {
+      console.error('Error fetching all orders:', error);
+      throw error;
+    }
+  },
+
+  // Get active orders
+  getAllActiveOrders: async () => {
+    try {
+      const response = await api.get('/api/orders/active');
+      return response;
+    } catch (error) {
+      console.error('Error fetching active orders:', error);
+      throw error;
+    }
+  },
+
+  // Get order by ID
+  getOrderById: async (orderId) => {
+    try {
+      const response = await api.get(`/api/orders/${orderId}`);
+      return response;
+    } catch (error) {
+      console.error('Error fetching order by ID:', error);
+      throw error;
+    }
+  },
+
+  // Get orders by current store
+  getOrdersByStore: async () => {
+    try {
+      const response = await api.get('/api/orders/store/current');
+      return response;
+    } catch (error) {
+      console.error('Error fetching store orders:', error);
+      throw error;
+    }
+  },
+
+  // Get orders by current employee
+  getOrdersByEmployee: async () => {
+    try {
+      const response = await api.get('/api/orders/employee/current');
+      return response;
+    } catch (error) {
+      console.error('Error fetching employee orders:', error);
+      throw error;
+    }
+  },
+
+  // Create new order
+  createOrder: async (orderData, orderItems) => {
+    try {
+      const response = await api.post('/api/orders', {
+        orderData,
+        orderItems
+      });
+      return response;
+    } catch (error) {
+      console.error('Error creating order:', error);
+      throw error;
+    }
+  },
+
+  // Update order
+  updateOrder: async (orderId, updatedOrder, updatedItems) => {
+    try {
+      const response = await api.put(`/api/orders/${orderId}`, {
+        updatedOrder,
+        updatedItems
+      });
+      return response;
+    } catch (error) {
+      console.error('Error updating order:', error);
+      throw error;
+    }
+  },
+
+  // Get orders with details for current store (for order status/history pages)
+  getOrdersWithDetailsForStore: async () => {
+    try {
+      const response = await api.get('/api/orders/store/detailed');
+      return response;
+    } catch (error) {
+      console.error('Error fetching store orders with details:', error);
+      throw error;
+    }
+  },
+
+  // Get full order details including items and history
+  getOrderWithFullDetails: async (orderId) => {
+    try {
+      const response = await api.get(`/api/orders/${orderId}/full-details`);
+      return response;
+    } catch (error) {
+      console.error('Error fetching order full details:', error);
+      throw error;
+    }
+  }
 }; 

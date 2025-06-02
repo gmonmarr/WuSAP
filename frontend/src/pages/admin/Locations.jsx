@@ -30,6 +30,7 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import { locationService } from '../../services/api';
 
 import "@ui5/webcomponents/dist/Table.js";
@@ -270,6 +271,20 @@ const Locations = () => {
                     }
                   }}
                 />
+                <Button
+                  variant="outlined"
+                  size="medium"
+                  onClick={fetchLocations}
+                  disabled={loading}
+                  sx={{
+                    minWidth: '48px',
+                    borderRadius: '8px',
+                    height: '42px',
+                    px: 2,
+                  }}
+                >
+                  <RefreshIcon />
+                </Button>
                 <Button
                   variant="contained"
                   color="primary"

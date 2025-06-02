@@ -1,11 +1,13 @@
 // controllers/inventoryController.js
 
-import { 
-    getAllInventory,
-    getInventoryByStore,
-    assignInventoryToStore,
-    getWarehouseProducts
-  } from '../services/inventoryService.js';
+import {
+  getAllInventory,
+  getInventoryByStore,
+  assignInventoryToStore,
+  getWarehouseProducts,
+  editInventory,
+  getInventoryByStoreByProduct
+} from '../services/inventoryService.js';
   
   export const getInventory = async (req, res) => {
     try {
@@ -58,4 +60,33 @@ import {
     }
   };
   
-  
+export const updateInventory = async (req, res) => {
+  const { inventoryID, quantity } = req.body;
+  const employeeID = req.user?.employeeID;
+
+  if (!inventoryID || quantity == null || employeeID == null) {
+    return res.status(400).json({ message: 'inventoryID, quantity y employeeID son requeridos.' });
+  }
+
+  try {
+    const result = await editInventory(inventoryID, quantity, employeeID);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getInventoryByStoreAndProduct = async (req, res) => {
+  const { storeID, productID } = req.query;
+
+  if (!storeID || !productID) {
+    return res.status(400).json({ message: 'storeID y productID son requeridos.' });
+  }
+
+  try {
+    const data = await getInventoryByStoreByProduct(storeID, productID);
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

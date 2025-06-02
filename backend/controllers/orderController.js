@@ -65,14 +65,15 @@ export async function createOrder(req, res) {
   const { orderData, orderItems } = req.body;
   const employeeID = req.user?.employeeID;
   const storeID = req.user?.storeID;
+  const userRole = req.user?.role;
 
-  if (!employeeID || !storeID) {
-    return res.status(401).json({ error: 'Unauthorized: Missing employee or store ID from token' });
+  if (!employeeID || !storeID || !userRole) {
+    return res.status(401).json({ error: 'Unauthorized: Missing employee, store ID, or role from token' });
   }
 
   try {
-    const enrichedOrderData = { ...orderData, storeID }; // Override storeID from token
-    const result = await orderService.createOrder(enrichedOrderData, orderItems, employeeID);
+    const enrichedOrderData = { ...orderData, storeID }; // Force storeID from token
+    const result = await orderService.createOrder(enrichedOrderData, orderItems, employeeID, userRole);
     res.status(201).json(result);
   } catch (err) {
     res.status(500).json({ error: 'Failed to create order', details: err.message });
@@ -83,15 +84,50 @@ export async function updateOrder(req, res) {
   const { id } = req.params;
   const { updatedOrder, updatedItems } = req.body;
   const employeeID = req.user?.employeeID;
+  const userRole = req.user?.role; // Asegúrate de que el JWT o middleware proporcione esto
 
-  if (!employeeID) {
-    return res.status(401).json({ error: 'Unauthorized: Missing employee ID from token' });
+  if (!employeeID || !userRole) {
+    return res.status(401).json({ error: 'Unauthorized: Missing employee ID or role from token' });
   }
 
   try {
-    const result = await orderService.updateOrder(Number(id), updatedOrder, updatedItems, employeeID);
+    const result = await orderService.updateOrder(
+      Number(id),
+      updatedOrder,
+      updatedItems,
+      employeeID,
+      userRole
+    );
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: 'Failed to update order', details: err.message });
   }
 }
+
+export async function getOrdersWithDetailsForStore(req, res) {
+  const storeID = req.user?.storeID;
+  if (!storeID) {
+    return res.status(401).json({ error: 'Unauthorized: Missing store ID from token' });
+  }
+
+  try {
+    const orders = await orderService.getOrdersWithDetailsForStore(Number(storeID));
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch store orders with details', details: err.message });
+  }
+}
+
+export async function getOrderWithFullDetails(req, res) {
+  const { id } = req.params;
+  try {
+    const orderData = await orderService.getOrderWithFullDetails(Number(id));
+    res.json(orderData);
+  } catch (err) {
+    if (err.message === 'Order not found') {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+    res.status(500).json({ error: 'Failed to fetch order details', details: err.message });
+  }
+}
+
