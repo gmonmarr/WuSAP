@@ -1,0 +1,58 @@
+name: Build and Deploy Frontend
+
+on:
+  # push:
+  #   branches: [ main ]
+  # pull_request:
+  #   branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run lint
+        run: npm run lint
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build Vite app
+        run: npm run build
+        env:
+          VITE_API_SERVER: ${{ secrets.VITE_API_SERVER }}
+
+      - name: Check vite VITE_API_SERVER
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_SERVER }}
+        run: |
+          echo "✅ VITE_API_SERVER is set: ${VITE_API_SERVER}"
+        continue-on-error: true
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: frontend/dist
+	
