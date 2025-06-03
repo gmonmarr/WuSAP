@@ -1,11 +1,11 @@
 // controllers/salesController.js
 
 import {
-  getAllSalesService,
-  getSaleByIdService,
-  createSaleService,
-  updateSaleService,
-  deleteSaleService
+    getAllSales as getAllSalesService,
+    getSaleById as getSaleByIdService,
+    postSale as createSaleService,
+    updateSale as updateSaleService,
+    deleteSale as deleteSaleService
 } from "../services/salesService.js";
 
 export const getAllSales = async (req, res) => {

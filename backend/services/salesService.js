@@ -1,7 +1,7 @@
 // services/salesService.js
 
 import pool from '../db/hanaPool.js';
-import { logToTableLogs } from './logService.js';
+import { logToTableLogs } from './tableLogService.js';
 
 // Get all sales
 export const getAllSales = async () => {
