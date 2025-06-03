@@ -25,6 +25,7 @@ import { styled } from "@mui/material/styles";
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
 import InventoryIcon from '@mui/icons-material/Inventory';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import Navbar from "../../components/Navbar";
 import Header from "../../components/Header";
 import AvisoPerdidaInfo from "../../components/AvisoPerdidaInfo";
@@ -173,6 +174,51 @@ const ProductosSucursalPage = () => {
     (product.description?.toLowerCase() || "").includes(searchTerm.toLowerCase())
   );
 
+  // Function to refresh inventory data
+  const refreshInventoryData = async () => {
+    setLoading(true);
+    try {
+      const inventoryResponse = await inventoryService.getStoreInventory();
+      let inventoryData = inventoryResponse.data;
+      
+      const productsResponse = await productService.getAllProducts();
+      const allProducts = productsResponse.data;
+      
+      const productMap = {};
+      allProducts.forEach(product => {
+        productMap[product.PRODUCTID] = product;
+      });
+      
+      inventoryData = inventoryData.map(inventory => {
+        const product = productMap[inventory.PRODUCTID];
+        return {
+          id: inventory.INVENTORYID,
+          productID: inventory.PRODUCTID,
+          storeID: inventory.STOREID,
+          quantity: inventory.QUANTITY,
+          name: product?.NAME || 'Producto Desconocido',
+          price: typeof product?.SUGGESTEDPRICE === 'string' 
+            ? parseFloat(product.SUGGESTEDPRICE) 
+            : product?.SUGGESTEDPRICE || 0,
+          suggestedPrice: product?.SUGGESTEDPRICE || 0,
+          unit: product?.UNIT || 'Pieza',
+          discontinued: product?.DISCONTINUED || false,
+          image: product?.image || getRandomImage(),
+          description: product?.description || `${product?.NAME || 'Producto'} - ${product?.UNIT || 'Pieza'}`,
+          stock: inventory.QUANTITY
+        };
+      });
+      
+      setInventoryProducts(inventoryData);
+      setError(""); // Clear any previous errors
+    } catch (error) {
+      console.error("Error refreshing inventory:", error);
+      setError("Error al actualizar inventario: " + (error.response?.data?.details || error.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Function to fetch products based on user role
   const fetchProductsForModal = async () => {
     setLoadingWarehouse(true);
@@ -289,46 +335,7 @@ const ProductosSucursalPage = () => {
       });
 
       // Refresh inventory data
-      const fetchData = async () => {
-        try {
-          const inventoryResponse = await inventoryService.getStoreInventory();
-          let inventoryData = inventoryResponse.data;
-          
-          const productsResponse = await productService.getAllProducts();
-          const allProducts = productsResponse.data;
-          
-          const productMap = {};
-          allProducts.forEach(product => {
-            productMap[product.PRODUCTID] = product;
-          });
-          
-          inventoryData = inventoryData.map(inventory => {
-            const product = productMap[inventory.PRODUCTID];
-            return {
-              id: inventory.INVENTORYID,
-              productID: inventory.PRODUCTID,
-              storeID: inventory.STOREID,
-              quantity: inventory.QUANTITY,
-              name: product?.NAME || 'Producto Desconocido',
-              price: typeof product?.SUGGESTEDPRICE === 'string' 
-                ? parseFloat(product.SUGGESTEDPRICE) 
-                : product?.SUGGESTEDPRICE || 0,
-              suggestedPrice: product?.SUGGESTEDPRICE || 0,
-              unit: product?.UNIT || 'Pieza',
-              discontinued: product?.DISCONTINUED || false,
-              image: product?.image || getRandomImage(),
-              description: product?.description || `${product?.NAME || 'Producto'} - ${product?.UNIT || 'Pieza'}`,
-              stock: inventory.QUANTITY
-            };
-          });
-          
-          setInventoryProducts(inventoryData);
-        } catch (error) {
-          console.error("Error refreshing inventory:", error);
-        }
-      };
-
-      await fetchData();
+      await refreshInventoryData();
       handleCloseWarehouseModal();
 
     } catch (error) {
@@ -442,6 +449,20 @@ const ProductosSucursalPage = () => {
                   }}
                 />
               </Box>
+              <Button
+                variant="outlined"
+                size="medium"
+                onClick={refreshInventoryData}
+                disabled={loading}
+                sx={{
+                  minWidth: '48px',
+                  borderRadius: '8px',
+                  py: 1,
+                  px: 2,
+                }}
+              >
+                <RefreshIcon />
+              </Button>
               {canAssignInventory && (
                 <Button
                   variant="contained"
