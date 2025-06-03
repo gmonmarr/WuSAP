@@ -1,8 +1,8 @@
 name: Deploy Backend & Frontend to SAP CF
 
 on:
-  push:
-    branches: [sap-cf]
+  # push:
+  #   branches: [sap-cf]
   workflow_dispatch:
 
 jobs:
