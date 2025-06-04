@@ -4,7 +4,7 @@ import {
     getAllSales as getAllSalesService,
     getSaleById as getSaleByIdService,
     postSale as createSaleService,
-    updateSale as updateSaleService,
+    // updateSale as updateSaleService,
     deleteSale as deleteSaleService
 } from "../services/salesService.js";
 
@@ -42,20 +42,20 @@ export const postSale = async (req, res) => {
   }
 };
 
-export const updateSale = async (req, res) => {
-  const { id } = req.params;
-  const { sale, saleItems } = req.body;
-  const employeeID = req.user?.employeeID;
-  if (!employeeID) {
-    return res.status(401).json({ success: false, message: "Unauthorized: Missing employee ID" });
-  }
-  try {
-    const result = await updateSaleService(Number(id), sale, saleItems, employeeID);
-    res.status(200).json(result);
-  } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
-  }
-};
+// export const updateSale = async (req, res) => {
+//   const { id } = req.params;
+//   const { sale, saleItems } = req.body;
+//   const employeeID = req.user?.employeeID;
+//   if (!employeeID) {
+//     return res.status(401).json({ success: false, message: "Unauthorized: Missing employee ID" });
+//   }
+//   try {
+//     const result = await updateSaleService(Number(id), sale, saleItems, employeeID);
+//     res.status(200).json(result);
+//   } catch (error) {
+//     res.status(400).json({ success: false, message: error.message });
+//   }
+// };
 
 export const deleteSale = async (req, res) => {
   try {

@@ -132,84 +132,84 @@ export const postSale = async (sale, saleItems, employeeID) => {
 };
 
 // Update sale and its items (replace all items)
-export const updateSale = async (saleID, sale, saleItems, employeeID) => {
-  const conn = await pool.acquire();
-  try {
-    await conn.setAutoCommit(false);
+// export const updateSale = async (saleID, sale, saleItems, employeeID) => {
+//   const conn = await pool.acquire();
+//   try {
+//     await conn.setAutoCommit(false);
 
-    // Update sale
-    await new Promise((resolve, reject) => {
-      conn.prepare(
-        `UPDATE WUSAP.Sale SET saleDate = ?, saleTotal = ? WHERE saleID = ?`,
-        (err, stmt) => {
-          if (err) return reject(err);
-          stmt.exec(
-            [sale.saleDate || new Date(), Number(sale.saleTotal).toFixed(2), saleID],
-            (err) => err ? reject(err) : resolve()
-          );
-        }
-      );
-    });
+//     // Update sale
+//     await new Promise((resolve, reject) => {
+//       conn.prepare(
+//         `UPDATE WUSAP.Sale SET saleDate = ?, saleTotal = ? WHERE saleID = ?`,
+//         (err, stmt) => {
+//           if (err) return reject(err);
+//           stmt.exec(
+//             [sale.saleDate || new Date(), Number(sale.saleTotal).toFixed(2), saleID],
+//             (err) => err ? reject(err) : resolve()
+//           );
+//         }
+//       );
+//     });
 
-    await logToTableLogs({
-      employeeID,
-      tableName: "Sale",
-      recordID: saleID,
-      action: "UPDATE",
-      comment: `Updated sale to total ${Number(sale.saleTotal).toFixed(2)}`
-    });
+//     await logToTableLogs({
+//       employeeID,
+//       tableName: "Sale",
+//       recordID: saleID,
+//       action: "UPDATE",
+//       comment: `Updated sale to total ${Number(sale.saleTotal).toFixed(2)}`
+//     });
 
-    // Delete old items
-    await new Promise((resolve, reject) => {
-      conn.exec(
-        `DELETE FROM WUSAP.SaleItems WHERE saleID = ?`,
-        [saleID],
-        (err) => err ? reject(err) : resolve()
-      );
-    });
+//     // Delete old items
+//     await new Promise((resolve, reject) => {
+//       conn.exec(
+//         `DELETE FROM WUSAP.SaleItems WHERE saleID = ?`,
+//         [saleID],
+//         (err) => err ? reject(err) : resolve()
+//       );
+//     });
 
-    // Insert new items
-    for (const item of saleItems) {
-      await new Promise((resolve, reject) => {
-        conn.prepare(
-          `INSERT INTO WUSAP.SaleItems (saleID, inventoryID, quantity, itemTotal)
-           VALUES (?, ?, ?, ?)`,
-          (err, stmt) => {
-            if (err) return reject(err);
-            stmt.exec(
-              [saleID, item.inventoryID, item.quantity, Number(item.itemTotal).toFixed(2)],
-              (err) => err ? reject(err) : resolve()
-            );
-          }
-        );
-      });
+//     // Insert new items
+//     for (const item of saleItems) {
+//       await new Promise((resolve, reject) => {
+//         conn.prepare(
+//           `INSERT INTO WUSAP.SaleItems (saleID, inventoryID, quantity, itemTotal)
+//            VALUES (?, ?, ?, ?)`,
+//           (err, stmt) => {
+//             if (err) return reject(err);
+//             stmt.exec(
+//               [saleID, item.inventoryID, item.quantity, Number(item.itemTotal).toFixed(2)],
+//               (err) => err ? reject(err) : resolve()
+//             );
+//           }
+//         );
+//       });
 
-      // Get saleItemID for logging
-      const saleItemID = await new Promise((resolve, reject) => {
-        conn.exec(
-          `SELECT CURRENT_IDENTITY_VALUE() AS saleItemID FROM DUMMY`,
-          (err, rows) => err ? reject(err) : resolve(rows[0].SALEITEMID)
-        );
-      });
+//       // Get saleItemID for logging
+//       const saleItemID = await new Promise((resolve, reject) => {
+//         conn.exec(
+//           `SELECT CURRENT_IDENTITY_VALUE() AS saleItemID FROM DUMMY`,
+//           (err, rows) => err ? reject(err) : resolve(rows[0].SALEITEMID)
+//         );
+//       });
 
-      await logToTableLogs({
-        employeeID,
-        tableName: "SaleItems",
-        recordID: saleItemID,
-        action: "INSERT",
-        comment: `Added sale item (inventoryID: ${item.inventoryID}, qty: ${item.quantity})`
-      });
-    }
+//       await logToTableLogs({
+//         employeeID,
+//         tableName: "SaleItems",
+//         recordID: saleItemID,
+//         action: "INSERT",
+//         comment: `Added sale item (inventoryID: ${item.inventoryID}, qty: ${item.quantity})`
+//       });
+//     }
 
-    await conn.commit();
-    return { success: true, saleID };
-  } catch (err) {
-    await conn.rollback();
-    throw err;
-  } finally {
-    pool.release(conn);
-  }
-};
+//     await conn.commit();
+//     return { success: true, saleID };
+//   } catch (err) {
+//     await conn.rollback();
+//     throw err;
+//   } finally {
+//     pool.release(conn);
+//   }
+// };
 
 // Delete sale (and its items)
 export const deleteSale = async (saleID, employeeID) => {
