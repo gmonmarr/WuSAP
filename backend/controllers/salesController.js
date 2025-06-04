@@ -60,7 +60,13 @@ export const postSale = async (req, res) => {
 export const deleteSale = async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await deleteSaleService(Number(id));
+    const employeeID = req.user?.employeeID; // <-- take from token
+
+    if (!employeeID) {
+      return res.status(401).json({ success: false, message: "No autorizado, falta employeeID." });
+    }
+
+    const result = await deleteSaleService(Number(id), employeeID);
     res.status(200).json(result);
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
