@@ -2,6 +2,8 @@
 
 import pool from '../db/hanaPool.js';
 
+import { logToTableLogs } from './tableLogService.js';
+
 export const getAllInventory = async () => {
   const conn = await pool.acquire();
   try {
@@ -131,37 +133,60 @@ export const assignInventoryToStore = async (productID, storeID, quantity, emplo
   }
 };
 
-export const editInventory = async (inventoryID, quantity, employeeID) => {
-  const conn = await pool.acquire();
+export const editInventory = async (inventoryID, quantity, employeeID, conn = null) => {
+  let localConn = conn;
+  let acquiredHere = false;
+  if (!localConn) {
+    localConn = await pool.acquire();
+    acquiredHere = true;
+  }
   try {
-    // 1. Update the inventory record
-    const updateSql = `UPDATE WUSAP.Inventory SET quantity = ? WHERE inventoryID = ?`;
-    await new Promise((resolve, reject) => {
-      conn.prepare(updateSql, (err, stmt) => {
-        if (err) return reject(err);
-        stmt.exec([quantity, inventoryID], (err) => err ? reject(err) : resolve());
-      });
-    });
-
-    // 2. Log the action into TableLogs
-    const logSql = `
-      INSERT INTO WUSAP.TableLogs (employeeID, tableName, recordID, action)
-      VALUES (?, ?, ?, 'UPDATE')
-    `;
-    await new Promise((resolve, reject) => {
-      conn.prepare(logSql, (err, stmt) => {
-        if (err) return reject(err);
-        stmt.exec([employeeID, "Inventory", inventoryID], (err) =>
-          err ? reject(err) : resolve()
+    console.log("[editInventory] About to SELECT old quantity for inventoryID:", inventoryID);
+    const [oldInventory] = await Promise.race([
+      new Promise((resolve, reject) => {
+        localConn.exec(
+          `SELECT quantity FROM WUSAP.Inventory WHERE inventoryID = ?`,
+          [inventoryID],
+          (err, rows) => err ? reject(err) : resolve(rows)
         );
-      });
-    });
+      }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout on SELECT")), 8000))
+    ]);
+    console.log("[editInventory] SELECT finished for inventoryID:", inventoryID);
+
+    const oldQuantity = oldInventory ? Number(oldInventory.QUANTITY) : null;
+
+    const updateSql = `UPDATE WUSAP.Inventory SET quantity = ? WHERE inventoryID = ?`;
+    console.log("[editInventory] About to UPDATE quantity for inventoryID:", inventoryID, "to", quantity);
+    await Promise.race([
+      new Promise((resolve, reject) => {
+        localConn.prepare(updateSql, (err, stmt) => {
+          if (err) return reject(err);
+          stmt.exec([quantity, inventoryID], (err) => err ? reject(err) : resolve());
+        });
+      }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout on UPDATE")), 8000))
+    ]);
+    console.log("[editInventory] UPDATE finished for inventoryID:", inventoryID);
+
+    console.log("[editInventory] About to log TableLogs for inventoryID:", inventoryID);
+    await logToTableLogs({
+      employeeID,
+      tableName: "Inventory",
+      recordID: inventoryID,
+      action: "UPDATE",
+      comment: `Inventory updated: inventoryID=${inventoryID}, quantity: ${oldQuantity} → ${quantity}, by employeeID=${employeeID}`
+    }, localConn);
+    console.log("[editInventory] TableLogs logging finished for inventoryID:", inventoryID);
+
+    console.log(`Inventory updated: inventoryID=${inventoryID}, quantity: ${oldQuantity} → ${quantity}, by employeeID=${employeeID}`);
 
     return { success: true, message: 'Inventario actualizado exitosamente' };
   } finally {
-    pool.release(conn);
+    if (acquiredHere) await pool.release(localConn);
   }
-}
+};
+
 
 export const getInventoryByStoreByProduct = async (storeID, productID) => {
   const conn = await pool.acquire();
@@ -177,3 +202,23 @@ export const getInventoryByStoreByProduct = async (storeID, productID) => {
     pool.release(conn);
   }
 }
+
+export const getInventoryByID = async (inventoryID, conn = null) => {
+  let localConn = conn;
+  let acquiredHere = false;
+  if (!localConn) {
+    localConn = await pool.acquire();
+    acquiredHere = true;
+  }
+  try {
+    return await new Promise((resolve, reject) => {
+      localConn.exec(
+        `SELECT * FROM WUSAP.Inventory WHERE inventoryID = ?`,
+        [inventoryID],
+        (err, result) => err ? reject(err) : resolve(result)
+      );
+    });
+  } finally {
+    if (acquiredHere) await pool.release(localConn);
+  }
+};

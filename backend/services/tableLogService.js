@@ -12,8 +12,13 @@ export async function logToTableLogs({
   recordID,
   action,
   comment = ''
-}) {
-  const conn = await pool.acquire();
+}, conn = null) {
+  let localConn = conn;
+  let acquiredHere = false;
+  if (!localConn) {
+    localConn = await pool.acquire();
+    acquiredHere = true;
+  }
   try {
     if (!employeeID || isNaN(Number(employeeID))) {
       console.error(`[logToTableLogs] Invalid employeeID:`, employeeID);
@@ -29,9 +34,12 @@ export async function logToTableLogs({
       VALUES (?, ?, ?, ?, ?)
     `;
 
-    await conn.exec(sql, [Number(employeeID), tableName, recordID, action, comment]);
+    await localConn.exec(sql, [Number(employeeID), tableName, recordID, action, comment]);
+    console.log(`[logToTableLogs] Log entry created:`, {
+      employeeID, tableName, recordID, action, comment
+    });
   } finally {
-    await pool.release(conn);
+    if (acquiredHere) await pool.release(localConn);
   }
 }
 

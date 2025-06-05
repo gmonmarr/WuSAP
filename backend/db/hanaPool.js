@@ -34,7 +34,7 @@ const factory = {
 };
 
 const pool = createPool(factory, {
-  max: 10, // Max concurrent DB connections
+  max: 50, // Max concurrent DB connections
   min: 2,
   idleTimeoutMillis: 30000,
 });
