@@ -133,44 +133,60 @@ export const assignInventoryToStore = async (productID, storeID, quantity, emplo
   }
 };
 
-export const editInventory = async (inventoryID, quantity, employeeID) => {
-  const conn = await pool.acquire();
+export const editInventory = async (inventoryID, quantity, employeeID, conn = null) => {
+  let localConn = conn;
+  let acquiredHere = false;
+  if (!localConn) {
+    localConn = await pool.acquire();
+    acquiredHere = true;
+  }
   try {
-    // Get old quantity before updating
-    const [oldInventory] = await new Promise((resolve, reject) => {
-      conn.exec(
-        `SELECT quantity FROM WUSAP.Inventory WHERE inventoryID = ?`,
-        [inventoryID],
-        (err, rows) => err ? reject(err) : resolve(rows)
-      );
-    });
+    console.log("[editInventory] About to SELECT old quantity for inventoryID:", inventoryID);
+    const [oldInventory] = await Promise.race([
+      new Promise((resolve, reject) => {
+        localConn.exec(
+          `SELECT quantity FROM WUSAP.Inventory WHERE inventoryID = ?`,
+          [inventoryID],
+          (err, rows) => err ? reject(err) : resolve(rows)
+        );
+      }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout on SELECT")), 8000))
+    ]);
+    console.log("[editInventory] SELECT finished for inventoryID:", inventoryID);
+
     const oldQuantity = oldInventory ? Number(oldInventory.QUANTITY) : null;
 
-    // 1. Update the inventory record
     const updateSql = `UPDATE WUSAP.Inventory SET quantity = ? WHERE inventoryID = ?`;
-    await new Promise((resolve, reject) => {
-      conn.prepare(updateSql, (err, stmt) => {
-        if (err) return reject(err);
-        stmt.exec([quantity, inventoryID], (err) => err ? reject(err) : resolve());
-      });
-    });
+    console.log("[editInventory] About to UPDATE quantity for inventoryID:", inventoryID, "to", quantity);
+    await Promise.race([
+      new Promise((resolve, reject) => {
+        localConn.prepare(updateSql, (err, stmt) => {
+          if (err) return reject(err);
+          stmt.exec([quantity, inventoryID], (err) => err ? reject(err) : resolve());
+        });
+      }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout on UPDATE")), 8000))
+    ]);
+    console.log("[editInventory] UPDATE finished for inventoryID:", inventoryID);
 
-    // 2. Log the action into TableLogs with old -> new quantity
+    console.log("[editInventory] About to log TableLogs for inventoryID:", inventoryID);
     await logToTableLogs({
       employeeID,
       tableName: "Inventory",
       recordID: inventoryID,
       action: "UPDATE",
       comment: `Inventory updated: inventoryID=${inventoryID}, quantity: ${oldQuantity} → ${quantity}, by employeeID=${employeeID}`
-    });
+    }, localConn);
+    console.log("[editInventory] TableLogs logging finished for inventoryID:", inventoryID);
 
     console.log(`Inventory updated: inventoryID=${inventoryID}, quantity: ${oldQuantity} → ${quantity}, by employeeID=${employeeID}`);
 
     return { success: true, message: 'Inventario actualizado exitosamente' };
   } finally {
-    pool.release(conn);
+    if (acquiredHere) await pool.release(localConn);
   }
-}
+};
+
 
 export const getInventoryByStoreByProduct = async (storeID, productID) => {
   const conn = await pool.acquire();
@@ -187,17 +203,22 @@ export const getInventoryByStoreByProduct = async (storeID, productID) => {
   }
 }
 
-export const getInventoryByID = async (inventoryID) => {
-  const conn = await pool.acquire();
+export const getInventoryByID = async (inventoryID, conn = null) => {
+  let localConn = conn;
+  let acquiredHere = false;
+  if (!localConn) {
+    localConn = await pool.acquire();
+    acquiredHere = true;
+  }
   try {
     return await new Promise((resolve, reject) => {
-      conn.exec(
+      localConn.exec(
         `SELECT * FROM WUSAP.Inventory WHERE inventoryID = ?`,
         [inventoryID],
         (err, result) => err ? reject(err) : resolve(result)
       );
     });
   } finally {
-    pool.release(conn);
+    if (acquiredHere) await pool.release(localConn);
   }
 };

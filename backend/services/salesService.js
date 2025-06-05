@@ -145,23 +145,14 @@ export const postSale = async (sale, saleItems, employeeID) => {
     console.log("🧾 saleItems received:", saleItems);
 
     // Insert sale
-    await new Promise((resolve, reject) => {
-      conn.prepare(
-        `INSERT INTO WUSAP.Sale (saleDate, employeeID, saleTotal) VALUES (?, ?, ?)`,
-        (err, stmt) => {
-          if (err) return reject(err);
-          stmt.exec([sale.saleDate || new Date(), employeeID, Number(sale.saleTotal).toFixed(2)], (err) => err ? reject(err) : resolve());
-        }
-      );
-    });
+    await conn.exec(
+      `INSERT INTO WUSAP.Sale (saleDate, employeeID, saleTotal) VALUES (?, ?, ?)`,
+      [sale.saleDate || new Date(), employeeID, Number(sale.saleTotal).toFixed(2)]
+    );
 
-    // Get saleID
-    const saleID = await new Promise((resolve, reject) => {
-      conn.exec(
-        `SELECT CURRENT_IDENTITY_VALUE() AS saleID FROM DUMMY`,
-        (err, rows) => err ? reject(err) : resolve(rows[0].SALEID)
-      );
-    });
+    // Get saleID (Check your DB: alias might need to be UPPERCASE)
+    const [saleRow] = await conn.exec(`SELECT CURRENT_IDENTITY_VALUE() AS SALEID FROM DUMMY`);
+    const saleID = saleRow.SALEID;
 
     await logToTableLogs({
       employeeID,
@@ -169,20 +160,19 @@ export const postSale = async (sale, saleItems, employeeID) => {
       recordID: saleID,
       action: "INSERT",
       comment: `Sale created: saleID=${saleID}, employeeID=${employeeID}, total=${Number(sale.saleTotal).toFixed(2)}, date=${sale.saleDate || new Date()}`
-    });
+    }, conn);
 
     // Insert items and reduce inventory
     for (const item of saleItems) {
       console.log("🔹 Processing saleItem:", item);
 
-      // Defensive: check required field
       if (!item.inventoryID) {
         console.error("❌ saleItem missing inventoryID:", item);
         throw new Error(`saleItem missing inventoryID. Got: ${JSON.stringify(item)}`);
       }
 
       // Fetch inventory by inventoryID
-      const [inventory] = await getInventoryByID(item.inventoryID);
+      const [inventory] = await getInventoryByID(item.inventoryID, conn);
       console.log(`🔍 Inventory lookup for inventoryID=${item.inventoryID}:`, inventory);
 
       if (!inventory || inventory.QUANTITY < item.quantity) {
@@ -190,30 +180,27 @@ export const postSale = async (sale, saleItems, employeeID) => {
         throw new Error(`Not enough inventory for inventoryID=${item.inventoryID}`);
       }
       const newQty = Number(inventory.QUANTITY) - Number(item.quantity);
+
+      console.log(`🔄 Updating inventory: inventoryID=${item.inventoryID}, oldQty=${inventory.QUANTITY}, newQty=${newQty}`);
+
       await editInventory(item.inventoryID, newQty, employeeID);
 
+      console.log(`✅ Inventory updated for inventoryID=${item.inventoryID}: newQty=${newQty}`);
+
       // Insert sale item
-      await new Promise((resolve, reject) => {
-        conn.prepare(
-          `INSERT INTO WUSAP.SaleItems (saleID, inventoryID, quantity, itemTotal)
-           VALUES (?, ?, ?, ?)`,
-          (err, stmt) => {
-            if (err) return reject(err);
-            stmt.exec(
-              [saleID, item.inventoryID, item.quantity, Number(item.itemTotal).toFixed(2)],
-              (err) => err ? reject(err) : resolve()
-            );
-          }
-        );
-      });
+      await conn.exec(
+        `INSERT INTO WUSAP.SaleItems (saleID, inventoryID, quantity, itemTotal)
+         VALUES (?, ?, ?, ?)`,
+        [saleID, item.inventoryID, item.quantity, Number(item.itemTotal).toFixed(2)]
+      );
+
+      console.log(`✅ Sale item inserted for saleID=${saleID}:`, item);
 
       // Get saleItemID for logging
-      const saleItemID = await new Promise((resolve, reject) => {
-        conn.exec(
-          `SELECT CURRENT_IDENTITY_VALUE() AS saleItemID FROM DUMMY`,
-          (err, rows) => err ? reject(err) : resolve(rows[0].SALEITEMID)
-        );
-      });
+      const [saleItemRow] = await conn.exec(
+        `SELECT CURRENT_IDENTITY_VALUE() AS SALEITEMID FROM DUMMY`
+      );
+      const saleItemID = saleItemRow.SALEITEMID;
 
       await logToTableLogs({
         employeeID,
@@ -221,7 +208,7 @@ export const postSale = async (sale, saleItems, employeeID) => {
         recordID: saleItemID,
         action: "INSERT",
         comment: `Sold: saleID=${saleID}, saleItemID=${saleItemID}, inventoryID=${item.inventoryID}, qty=${item.quantity}, price=${Number(item.itemTotal).toFixed(2)}, employeeID=${employeeID}`
-      });
+      }, conn);
     }
 
     await conn.commit();
@@ -230,10 +217,9 @@ export const postSale = async (sale, saleItems, employeeID) => {
     await conn.rollback();
     throw err;
   } finally {
-    pool.release(conn);
+    await pool.release(conn);
   }
 };
-
 
 // Delete sale (and its items), restore inventory, detailed logs
 export const deleteSale = async (saleID, employeeID) => {
@@ -278,7 +264,7 @@ export const deleteSale = async (saleID, employeeID) => {
             const oldQty = Number(inventory.QUANTITY);
             const restoreQty = Number(item.QUANTITY);
             const newQty = oldQty + restoreQty;
-            await editInventory(inventory.INVENTORYID, newQty, employeeID);
+            await editInventory(inventory.INVENTORYID, newQty, employeeID, conn);
 
             await logToTableLogs({
               employeeID,
@@ -286,7 +272,7 @@ export const deleteSale = async (saleID, employeeID) => {
               recordID: inventory.INVENTORYID,
               action: "UPDATE",
               comment: `Refunded inventory on sale deletion: saleID=${saleID}, saleItemID=${item.SALEITEMID}, inventoryID=${inventory.INVENTORYID}, qtyRestored=${restoreQty}, oldQty=${oldQty}, newQty=${newQty}, deletedBy=${employeeID}`
-            });
+            }, conn);
           } else {
             // If no inventory exists for some reason, still log with descriptive recordID
             await logToTableLogs({
@@ -295,7 +281,7 @@ export const deleteSale = async (saleID, employeeID) => {
               recordID: `missing-inventory-${item.INVENTORYID}`,
               action: "SKIP_REFUND",
               comment: `Tried to refund inventory on sale deletion but no inventory found for inventoryID=${item.INVENTORYID}, saleItemID=${item.SALEITEMID}, saleID=${saleID}`
-            });
+            }, conn);
           }
         } catch (err) {
           console.error(`Error refunding inventory for saleItemID=${item.SALEITEMID}:`, err);
@@ -321,7 +307,7 @@ export const deleteSale = async (saleID, employeeID) => {
         recordID: item.SALEITEMID,
         action: "DELETE",
         comment: `Deleted saleItem: saleID=${saleID}, inventoryID=${item.INVENTORYID}, qty=${item.QUANTITY}, deletedBy=${employeeID}`
-      });
+      }, conn);
     }
 
     // Delete sale
@@ -337,7 +323,7 @@ export const deleteSale = async (saleID, employeeID) => {
       recordID: saleID,
       action: "DELETE",
       comment: `Deleted sale: saleID=${saleID}, employeeID=${employeeID}, total=${oldSale.SALETOTAL ?? 'unknown'}, date=${oldSale.SALEDATE ?? 'unknown'}`
-    });
+    }, conn);
 
     await conn.commit();
     console.log(`[deleteSale] SUCCESS: saleID=${saleID} deleted, inventory refunded.`);
