@@ -141,8 +141,8 @@ export const postSale = async (sale, saleItems, employeeID) => {
   try {
     await conn.setAutoCommit(false);
 
-    console.log("🧾 postSale called. Sale:", sale);
-    console.log("🧾 saleItems received:", saleItems);
+    // console.log("🧾 postSale called. Sale:", sale);
+    // console.log("🧾 saleItems received:", saleItems);
 
     // Insert sale
     await conn.exec(
@@ -164,28 +164,28 @@ export const postSale = async (sale, saleItems, employeeID) => {
 
     // Insert items and reduce inventory
     for (const item of saleItems) {
-      console.log("🔹 Processing saleItem:", item);
+      // console.log("🔹 Processing saleItem:", item);
 
       if (!item.inventoryID) {
-        console.error("❌ saleItem missing inventoryID:", item);
+        // console.error("❌ saleItem missing inventoryID:", item);
         throw new Error(`saleItem missing inventoryID. Got: ${JSON.stringify(item)}`);
       }
 
       // Fetch inventory by inventoryID
       const [inventory] = await getInventoryByID(item.inventoryID, conn);
-      console.log(`🔍 Inventory lookup for inventoryID=${item.inventoryID}:`, inventory);
+      // console.log(`🔍 Inventory lookup for inventoryID=${item.inventoryID}:`, inventory);
 
       if (!inventory || inventory.QUANTITY < item.quantity) {
-        console.error(`❌ Not enough inventory or missing for inventoryID=${item.inventoryID}`, {inventory});
+        // console.error(`❌ Not enough inventory or missing for inventoryID=${item.inventoryID}`, {inventory});
         throw new Error(`Not enough inventory for inventoryID=${item.inventoryID}`);
       }
       const newQty = Number(inventory.QUANTITY) - Number(item.quantity);
 
-      console.log(`🔄 Updating inventory: inventoryID=${item.inventoryID}, oldQty=${inventory.QUANTITY}, newQty=${newQty}`);
+      // console.log(`🔄 Updating inventory: inventoryID=${item.inventoryID}, oldQty=${inventory.QUANTITY}, newQty=${newQty}`);
 
       await editInventory(item.inventoryID, newQty, employeeID);
 
-      console.log(`✅ Inventory updated for inventoryID=${item.inventoryID}: newQty=${newQty}`);
+      // console.log(`✅ Inventory updated for inventoryID=${item.inventoryID}: newQty=${newQty}`);
 
       // Insert sale item
       await conn.exec(
@@ -194,7 +194,7 @@ export const postSale = async (sale, saleItems, employeeID) => {
         [saleID, item.inventoryID, item.quantity, Number(item.itemTotal).toFixed(2)]
       );
 
-      console.log(`✅ Sale item inserted for saleID=${saleID}:`, item);
+      // console.log(`✅ Sale item inserted for saleID=${saleID}:`, item);
 
       // Get saleItemID for logging
       const [saleItemRow] = await conn.exec(
@@ -237,7 +237,7 @@ export const deleteSale = async (saleID, employeeID) => {
     });
 
     if (!oldSale) {
-      console.error(`[deleteSale] No sale found for saleID=${saleID}.`);
+      // console.error(`[deleteSale] No sale found for saleID=${saleID}.`);
       throw new Error(`Sale not found for saleID=${saleID}`);
     }
 
@@ -250,8 +250,8 @@ export const deleteSale = async (saleID, employeeID) => {
       );
     });
 
-    console.log(`[deleteSale] saleID=${saleID}, employeeID=${employeeID}`);
-    console.log(`[deleteSale] Fetched oldItems:`, oldItems);
+    // console.log(`[deleteSale] saleID=${saleID}, employeeID=${employeeID}`);
+    // console.log(`[deleteSale] Fetched oldItems:`, oldItems);
 
     // Restore inventory (refund quantities)
     if (oldItems.length > 0) {
@@ -284,12 +284,12 @@ export const deleteSale = async (saleID, employeeID) => {
             }, conn);
           }
         } catch (err) {
-          console.error(`Error refunding inventory for saleItemID=${item.SALEITEMID}:`, err);
+          // console.error(`Error refunding inventory for saleItemID=${item.SALEITEMID}:`, err);
           throw err;
         }
       }
     } else {
-      console.log(`[deleteSale] No sale items to refund for saleID=${saleID}`);
+      // console.log(`[deleteSale] No sale items to refund for saleID=${saleID}`);
     }
 
     // Delete SaleItems (will do nothing if none)
@@ -326,11 +326,11 @@ export const deleteSale = async (saleID, employeeID) => {
     }, conn);
 
     await conn.commit();
-    console.log(`[deleteSale] SUCCESS: saleID=${saleID} deleted, inventory refunded.`);
+    // console.log(`[deleteSale] SUCCESS: saleID=${saleID} deleted, inventory refunded.`);
     return { success: true, saleID };
   } catch (err) {
     await conn.rollback();
-    console.error(`[deleteSale] ERROR:`, err);
+    // console.error(`[deleteSale] ERROR:`, err);
     throw err;
   } finally {
     pool.release(conn);
