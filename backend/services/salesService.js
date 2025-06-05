@@ -249,67 +249,78 @@ export const deleteSale = async (saleID, employeeID) => {
         (err, rows) => err ? reject(err) : resolve(rows[0])
       );
     });
+
+    if (!oldSale) {
+      console.error(`[deleteSale] No sale found for saleID=${saleID}.`);
+      throw new Error(`Sale not found for saleID=${saleID}`);
+    }
+
+    // Get all saleItems with their inventoryID and quantities
     const oldItems = await new Promise((resolve, reject) => {
       conn.exec(
-        `SELECT si.*, i.productID, i.storeID
-         FROM WUSAP.SaleItems si
-         JOIN WUSAP.Inventory i ON si.inventoryID = i.inventoryID
-         WHERE si.saleID = ?`,
+        `SELECT * FROM WUSAP.SaleItems WHERE saleID = ?`,
         [saleID],
         (err, rows) => err ? reject(err) : resolve(rows)
       );
     });
 
+    console.log(`[deleteSale] saleID=${saleID}, employeeID=${employeeID}`);
+    console.log(`[deleteSale] Fetched oldItems:`, oldItems);
+
     // Restore inventory (refund quantities)
-    for (const item of oldItems) {
-      try {
-        const [inventory] = await getInventoryByStoreByProduct(item.storeID, item.productID);
+    if (oldItems.length > 0) {
+      for (const item of oldItems) {
+        try {
+          // Now, get inventory directly by inventoryID
+          const [inventory] = await getInventoryByID(item.INVENTORYID);
 
-        if (inventory) {
-          const oldQty = Number(inventory.QUANTITY);
-          const restoreQty = Number(item.QUANTITY);
-          const newQty = oldQty + restoreQty;
-          await editInventory(inventory.INVENTORYID, newQty, employeeID);
+          if (inventory) {
+            const oldQty = Number(inventory.QUANTITY);
+            const restoreQty = Number(item.QUANTITY);
+            const newQty = oldQty + restoreQty;
+            await editInventory(inventory.INVENTORYID, newQty, employeeID);
 
-          await logToTableLogs({
-            employeeID,
-            tableName: "Inventory",
-            recordID: inventory.INVENTORYID,
-            action: "UPDATE",
-            comment: `Refunded inventory on sale deletion: saleID=${saleID}, saleItemID=${item.SALEITEMID}, inventoryID=${inventory.INVENTORYID}, productID=${item.productID}, storeID=${item.storeID}, qtyRestored=${restoreQty}, oldQty=${oldQty}, newQty=${newQty}, deletedBy=${employeeID}`
-          });
-        } else {
-          // Skip if inventory link is missing (do not create)
-          console.warn(`[deleteSale] No inventory record for storeID=${item.storeID}, productID=${item.productID}, skipping refund.`);
-          await logToTableLogs({
-            employeeID,
-            tableName: "Inventory",
-            recordID: null,
-            action: "SKIP_REFUND",
-            comment: `Tried to refund inventory on sale deletion but no inventory found for productID=${item.productID}, storeID=${item.storeID}`
-          });
+            await logToTableLogs({
+              employeeID,
+              tableName: "Inventory",
+              recordID: inventory.INVENTORYID,
+              action: "UPDATE",
+              comment: `Refunded inventory on sale deletion: saleID=${saleID}, saleItemID=${item.SALEITEMID}, inventoryID=${inventory.INVENTORYID}, qtyRestored=${restoreQty}, oldQty=${oldQty}, newQty=${newQty}, deletedBy=${employeeID}`
+            });
+          } else {
+            // If no inventory exists for some reason, still log with descriptive recordID
+            await logToTableLogs({
+              employeeID,
+              tableName: "Inventory",
+              recordID: `missing-inventory-${item.INVENTORYID}`,
+              action: "SKIP_REFUND",
+              comment: `Tried to refund inventory on sale deletion but no inventory found for inventoryID=${item.INVENTORYID}, saleItemID=${item.SALEITEMID}, saleID=${saleID}`
+            });
+          }
+        } catch (err) {
+          console.error(`Error refunding inventory for saleItemID=${item.SALEITEMID}:`, err);
+          throw err;
         }
-      } catch (err) {
-        console.error(`Error refunding inventory for saleItemID=${item.SALEITEMID}:`, err);
-        throw err;
       }
+    } else {
+      console.log(`[deleteSale] No sale items to refund for saleID=${saleID}`);
     }
 
-    // Delete SaleItems
+    // Delete SaleItems (will do nothing if none)
     await new Promise((resolve, reject) => {
       conn.exec(`DELETE FROM WUSAP.SaleItems WHERE saleID = ?`, [saleID], (err) =>
         err ? reject(err) : resolve()
       );
     });
 
-    // Log sale item deletions
+    // Log sale item deletions (if any)
     for (const item of oldItems) {
       await logToTableLogs({
         employeeID,
         tableName: "SaleItems",
         recordID: item.SALEITEMID,
         action: "DELETE",
-        comment: `Deleted saleItem: saleID=${saleID}, inventoryID=${item.inventoryID}, productID=${item.productID}, storeID=${item.storeID}, qty=${item.QUANTITY}, deletedBy=${employeeID}`
+        comment: `Deleted saleItem: saleID=${saleID}, inventoryID=${item.INVENTORYID}, qty=${item.QUANTITY}, deletedBy=${employeeID}`
       });
     }
 
@@ -325,13 +336,15 @@ export const deleteSale = async (saleID, employeeID) => {
       tableName: "Sale",
       recordID: saleID,
       action: "DELETE",
-      comment: `Deleted sale: saleID=${saleID}, employeeID=${employeeID}, total=${oldSale.SALETOTAL}, date=${oldSale.SALEDATE}`
+      comment: `Deleted sale: saleID=${saleID}, employeeID=${employeeID}, total=${oldSale.SALETOTAL ?? 'unknown'}, date=${oldSale.SALEDATE ?? 'unknown'}`
     });
 
     await conn.commit();
+    console.log(`[deleteSale] SUCCESS: saleID=${saleID} deleted, inventory refunded.`);
     return { success: true, saleID };
   } catch (err) {
     await conn.rollback();
+    console.error(`[deleteSale] ERROR:`, err);
     throw err;
   } finally {
     pool.release(conn);

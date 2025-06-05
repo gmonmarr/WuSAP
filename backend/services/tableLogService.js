@@ -30,6 +30,9 @@ export async function logToTableLogs({
     `;
 
     await conn.exec(sql, [Number(employeeID), tableName, recordID, action, comment]);
+    console.log(`[logToTableLogs] Log entry created:`, {
+      employeeID, tableName, recordID, action, comment
+    });
   } finally {
     await pool.release(conn);
   }

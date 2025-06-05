@@ -164,6 +164,8 @@ export const editInventory = async (inventoryID, quantity, employeeID) => {
       comment: `Inventory updated: inventoryID=${inventoryID}, quantity: ${oldQuantity} → ${quantity}, by employeeID=${employeeID}`
     });
 
+    console.log(`Inventory updated: inventoryID=${inventoryID}, quantity: ${oldQuantity} → ${quantity}, by employeeID=${employeeID}`);
+
     return { success: true, message: 'Inventario actualizado exitosamente' };
   } finally {
     pool.release(conn);
