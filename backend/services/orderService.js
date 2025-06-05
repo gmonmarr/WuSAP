@@ -413,15 +413,6 @@ export async function updateOrder(orderID, updatedOrder, updatedItems, employeeI
       if (differences.length > 0) itemChanges.push({ item, differences });
     }
 
-    // console.log("Items to update:", itemChanges.map(change => ({
-    //   orderItemID: change.item.orderItemID,
-    //   productID: change.item.productID,
-    //   source: change.item.source,
-    //   quantity: change.item.quantity,
-    //   itemTotal: change.item.itemTotal,
-    //   differences: change.differences
-    // })));
-
     // Prevent managers from changing item source to anything other than 'warehouse'
     if (userRole === 'manager') {
       for (const change of itemChanges) {
