@@ -38,13 +38,25 @@ export const getSaleById = async (saleID) => {
       );
     });
     if (!sale) return null;
-    // Items
+    // Items with product details
     const saleItems = await new Promise((resolve, reject) => {
       conn.exec(
-        `SELECT si.*, i.productID, i.storeID
+        `SELECT 
+          si.saleItemID,
+          si.saleID,
+          si.inventoryID,
+          si.quantity,
+          si.itemTotal,
+          i.productID,
+          i.storeID,
+          p.name AS productName,
+          p.unit AS productUnit,
+          p.suggestedPrice AS productPrice
          FROM WUSAP.SaleItems si
          LEFT JOIN WUSAP.Inventory i ON si.inventoryID = i.inventoryID
-         WHERE si.saleID = ?`,
+         LEFT JOIN WUSAP.Products p ON i.productID = p.productID
+         WHERE si.saleID = ?
+         ORDER BY si.saleItemID`,
         [saleID],
         (err, rows) => err ? reject(err) : resolve(rows)
       );

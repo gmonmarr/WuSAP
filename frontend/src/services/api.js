@@ -42,10 +42,10 @@ export const authService = {
     try {
       const response = await api.post('/api/auth/login', { email, password });
       
-      // Si la petición es exitosa, guardar el token y datos de usuario en sessionStorage
+      // Si la petición es exitosa, guardar el token y datos de usuario en localStorage
       if (response.data && response.data.token) {
-        sessionStorage.setItem('token', response.data.token);
-        sessionStorage.setItem('user', JSON.stringify(response.data.user));
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
       }
       
       return response.data;
@@ -57,7 +57,7 @@ export const authService = {
   
   register: async (userData) => {
     try {
-      const token = sessionStorage.getItem('token');
+      const token = localStorage.getItem('token');
       
       if (!token) {
         throw new Error('No estás autorizado para realizar esta acción. Por favor, inicia sesión nuevamente.');
@@ -96,22 +96,22 @@ export const authService = {
   },
   
   logout: () => {
-    // Eliminar token y datos de usuario de sessionStorage
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('user');
+    // Eliminar token y datos de usuario de localStorage
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
   },
   
   getToken: () => {
-    return sessionStorage.getItem('token');
+    return localStorage.getItem('token');
   },
   
   getUser: () => {
-    const userStr = sessionStorage.getItem('user');
+    const userStr = localStorage.getItem('user');
     return userStr ? JSON.parse(userStr) : null;
   },
   
   isAuthenticated: () => {
-    return !!sessionStorage.getItem('token');
+    return !!localStorage.getItem('token');
   }
 };
 
@@ -297,6 +297,28 @@ export const inventoryService = {
     }
   },
 
+  // Get store inventory with product details for sales
+  getStoreInventoryWithPrices: async () => {
+    try {
+      const response = await api.get('/api/inventory/store/products');
+      return response;
+    } catch (error) {
+      console.error('Error fetching store inventory with products:', error);
+      throw error;
+    }
+  },
+
+  // Get store inventory with complete product information (NEW)
+  getStoreInventoryWithProducts: async () => {
+    try {
+      const response = await api.get('/api/inventory/store/products');
+      return response;
+    } catch (error) {
+      console.error('Error fetching store inventory with product details:', error);
+      throw error;
+    }
+  },
+
   // Get warehouse products (storeid = 1)
   getWarehouseProducts: async () => {
     try {
@@ -319,6 +341,56 @@ export const inventoryService = {
       return response;
     } catch (error) {
       console.error('Error assigning inventory to store:', error);
+      throw error;
+    }
+  }
+};
+
+// Sales services
+export const salesService = {
+  // Get all sales
+  getAllSales: async () => {
+    try {
+      const response = await api.get('/api/sales/');
+      return response;
+    } catch (error) {
+      console.error('Error fetching all sales:', error);
+      throw error;
+    }
+  },
+
+  // Get sale by ID
+  getSaleById: async (saleId) => {
+    try {
+      const response = await api.get(`/api/sales/${saleId}`);
+      return response;
+    } catch (error) {
+      console.error('Error fetching sale by ID:', error);
+      throw error;
+    }
+  },
+
+  // Create new sale
+  createSale: async (saleData, saleItems) => {
+    try {
+      const response = await api.post('/api/sales/', {
+        sale: saleData,  // Backend espera 'sale', no 'saleData'
+        saleItems
+      });
+      return response;
+    } catch (error) {
+      console.error('Error creating sale:', error);
+      throw error;
+    }
+  },
+
+  // Delete sale
+  deleteSale: async (saleId) => {
+    try {
+      const response = await api.delete(`/api/sales/${saleId}`);
+      return response;
+    } catch (error) {
+      console.error('Error deleting sale:', error);
       throw error;
     }
   }
