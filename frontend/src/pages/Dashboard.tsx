@@ -11,6 +11,9 @@ import { BarChart, ColumnChart, DonutChart, LineChart, PieChart } from "@ui5/web
 import Navbar from "../components/Navbar";
 import Header from "../components/Header";
 import "@ui5/webcomponents/dist/Button.js";
+import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from "react";
+
 
 const dataset = [
     { month: "January", data: 65, data2: 120},
@@ -22,7 +25,8 @@ const dataset = [
     { month: "July", data: 40, data2: 120 },
   ];
 
-const alertCount = [1];
+
+
 
 const calculatePercentage = (title) => {
   switch (title) {
@@ -42,6 +46,48 @@ const calculatePercentage = (title) => {
 };
 
 export function DashboardGeneral() {
+     const navigate = useNavigate();
+  const [alerts, setAlerts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+
+    useEffect(() => {
+    const token = sessionStorage.getItem("token");
+    if (!token) {
+      setError("No token available. Por favor inicia sesión.");
+      return;
+    }
+    setLoading(true);
+    fetch(`${import.meta.env.VITE_API_SERVER}/api/predicciones`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.alerts)) {
+          setAlerts(data.alerts);
+        } else {
+          setError("Formato de datos inválido");
+        }
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
+  
+
+  const handleClick = () => {
+    // Pass the alerts data when navigating
+    navigate("/alertas", { state: { alerts } });
+  };
+
+  {error && (
+  <p style={{ color: "red", marginBottom: "1rem" }}>
+    Error al cargar alertas: {error}
+  </p>
+)}
     return (
  
         <div 
@@ -137,19 +183,22 @@ export function DashboardGeneral() {
                     }}
                 >
                     <Button 
-                        design="Negative" 
-                        style={{
-                            width: "100%",
-                            height: "48px",
-                            borderRadius: "4px",
-                            fontWeight: "normal",
-                            backgroundColor: "#fff0f0",
-                            color: "#d32f2f",
-                            boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
-                        }}
-                    >
-                        {alertCount} Alertas
-                    </Button>
+                    design="Negative" 
+                    style={{
+                      width: "100%",
+                      height: "48px",
+                      borderRadius: "4px",
+                      fontWeight: "normal",
+                      backgroundColor: "#fff0f0",
+                      color: "#d32f2f",
+                      boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
+                    }}
+                    onClick={handleClick}
+                    disabled={loading}
+                  >
+                    {loading ? "Cargando alertas..." : `${alerts.length} Alertas`}
+                  </Button>
+
                 </FlexBox>
             
                 {/* ROW 2- 1 columna con el resto del espacio */}
