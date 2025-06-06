@@ -21,11 +21,11 @@ export async function logToTableLogs({
   }
   try {
     if (!employeeID || isNaN(Number(employeeID))) {
-      console.error(`[logToTableLogs] Invalid employeeID:`, employeeID);
+      // console.error(`[logToTableLogs] Invalid employeeID:`, employeeID);
       throw new Error("Missing or invalid employeeID for TableLogs");
     }
     if (!tableName || !recordID || !action) {
-      console.error(`[logToTableLogs] Missing required fields`, { tableName, recordID, action });
+      // console.error(`[logToTableLogs] Missing required fields`, { tableName, recordID, action });
       throw new Error("Missing tableName, recordID or action in TableLogs");
     }
 
@@ -35,9 +35,9 @@ export async function logToTableLogs({
     `;
 
     await localConn.exec(sql, [Number(employeeID), tableName, recordID, action, comment]);
-    console.log(`[logToTableLogs] Log entry created:`, {
-      employeeID, tableName, recordID, action, comment
-    });
+    // console.log(`[logToTableLogs] Log entry created:`, {
+    //   employeeID, tableName, recordID, action, comment
+    // });
   } finally {
     if (acquiredHere) await pool.release(localConn);
   }
