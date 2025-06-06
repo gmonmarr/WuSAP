@@ -28,3 +28,4 @@ dist-ssr
 
 sonar-project.properties
 sonarlocal.txt
+*/coverage/*
