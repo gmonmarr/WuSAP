@@ -42,15 +42,15 @@ export const loginUser = async (email, password) => {
           );
 
           // Console log para imprimir el JWT token
-          console.log("🔑 JWT Token generado para login:");
-          console.log("📧 Email:", user.EMAIL);
-          console.log("🎫 Token:", token);
-          console.log("👤 Payload:", {
-            employeeID: user.EMPLOYEEID,
-            email: user.EMAIL,
-            role: user.ROLE,
-            storeID: user.STOREID,
-          });
+          // console.log("🔑 JWT Token generado para login:");
+          // console.log("📧 Email:", user.EMAIL);
+          // console.log("🎫 Token:", token);
+          // console.log("👤 Payload:", {
+          //   employeeID: user.EMPLOYEEID,
+          //   email: user.EMAIL,
+          //   role: user.ROLE,
+          //   storeID: user.STOREID,
+          // });
 
           resolve({
             success: true,

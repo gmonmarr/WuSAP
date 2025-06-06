@@ -19,6 +19,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import "../App.css";
 import { authService } from "../services/api.js";
+import { getDefaultPageForRole } from "../config/rolePermissions.js";
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(6),
@@ -81,7 +82,11 @@ const Login = () => {
       if (result && result.success) {
         // El token ya ha sido guardado por el servicio de autenticación
         console.log("Inicio de sesión exitoso, redirigiendo...");
-        navigate("/tablero");
+        
+        // Obtener usuario y redirigir basado en su rol
+        const user = authService.getUser();
+        const defaultPage = getDefaultPageForRole(user.role);
+        navigate(defaultPage);
       } else {
         alert(result.message || "Credenciales incorrectas.");
       }

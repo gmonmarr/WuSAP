@@ -1,9 +1,10 @@
 // src/pages/general/OrdenStatus.jsx
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Header from "../../components/Header";
 import NavBar from "../../components/Navbar";
 import OrdenStatusCard from "../../components/OrdenStatusCard";
+import { orderService, authService } from "../../services/api";
 import "@ui5/webcomponents/dist/Card";
 import "@ui5/webcomponents/dist/Label";
 import "@ui5/webcomponents/dist/Input.js";
@@ -11,108 +12,205 @@ import "@ui5/webcomponents-icons/dist/search.js";
 import { useNavigate } from "react-router-dom";
 import "@ui5/webcomponents/dist/Button";
 import "@ui5/webcomponents-icons/dist/detail-view.js";
+import "@ui5/webcomponents-icons/dist/refresh.js";
+import { CircularProgress, Alert, Box } from "@mui/material";
 
 const OrdenStatus = () => {
   const navigate = useNavigate();
-  // eslint-disable-next-line no-unused-vars
-  const [orders, setOrders] = useState([
-    {
-      id: 'ORD001',
-      name: 'ORD001',
-      date: '2024-04-01',
-      status: 'delivered',
-      deliveryDate: '2024-04-03',
-      products: [
-        { name: 'Acero Inoxidable', quantity: 100, unit: 'kg' },
-        { name: 'Tornillos Hexagonales', quantity: 500, unit: 'piezas' }
-      ],
-      total: 15000
-    },
-    {
-      id: 'ORD002',
-      name: 'ORD002',
-      date: '2024-04-02',
-      status: 'on_route',
-      estimatedDelivery: '2024-04-04',
-      products: [
-        { name: 'Alambre de Cobre', quantity: 200, unit: 'metros' },
-        { name: 'Pintura Industrial', quantity: 50, unit: 'litros' }
-      ],
-      total: 12000
-    },
-    {
-      id: 'ORD003',
-      name: 'ORD003',
-      date: '2024-04-03',
-      status: 'in_progress',
-      estimatedDelivery: '2024-04-05',
-      products: [
-        { name: 'Resina Epóxica', quantity: 30, unit: 'kg' },
-        { name: 'Tuercas de Seguridad', quantity: 1000, unit: 'piezas' }
-      ],
-      total: 8000
-    },
-    {
-      id: 'ORD004',
-      name: 'ORD004',
-      date: '2024-04-04',
-      status: 'delivered',
-      deliveryDate: '2024-04-06',
-      products: [
-        { name: 'Acero Inoxidable', quantity: 150, unit: 'kg' },
-        { name: 'Pintura Industrial', quantity: 30, unit: 'litros' }
-      ],
-      total: 11000
-    },
-    {
-      id: 'ORD005',
-      name: 'ORD005',
-      date: '2024-04-05',
-      status: 'on_route',
-      estimatedDelivery: '2024-04-07',
-      products: [
-        { name: 'Tornillos Hexagonales', quantity: 800, unit: 'piezas' },
-        { name: 'Alambre de Cobre', quantity: 150, unit: 'metros' }
-      ],
-      total: 9500
-    }
-  ]);
-  
-  const [selectedOrden, setSelectedOrden] = useState(orders[0]);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedOrden, setSelectedOrden] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [user, setUser] = useState(null);
+
+  // Load user and orders on component mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Get current user
+        const currentUser = authService.getUser();
+        setUser(currentUser);
+        
+        // Fetch orders with details for current store
+        const response = await orderService.getOrdersWithDetailsForStore();
+        const ordersData = response.data || [];
+        
+        // Transform and set orders
+        setOrders(ordersData);
+        
+        // Set first order as selected if available
+        if (ordersData.length > 0) {
+          setSelectedOrden(ordersData[0]);
+        }
+        
+      } catch (err) {
+        console.error('Error loading orders:', err);
+        setError('Error al cargar las órdenes: ' + (err.response?.data?.details || err.message));
+        setOrders([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  // Function to refresh orders
+  const refreshOrders = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await orderService.getOrdersWithDetailsForStore();
+      const ordersData = response.data || [];
+      
+      setOrders(ordersData);
+      
+      // Keep selected order if it still exists, otherwise select first
+      if (selectedOrden) {
+        const stillExists = ordersData.find(order => order.ORDERID === selectedOrden.ORDERID);
+        if (stillExists) {
+          setSelectedOrden(stillExists);
+        } else if (ordersData.length > 0) {
+          setSelectedOrden(ordersData[0]);
+        }
+      } else if (ordersData.length > 0) {
+        setSelectedOrden(ordersData[0]);
+      }
+      
+    } catch (err) {
+      console.error('Error refreshing orders:', err);
+      setError('Error al actualizar las órdenes: ' + (err.response?.data?.details || err.message));
+    } finally {
+      setLoading(false);
+    }
+  };
   
   // Filtrar órdenes basadas en la búsqueda
   const filteredOrdenes = orders.filter(orden => 
-    orden.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    orden.id.toLowerCase().includes(searchQuery.toLowerCase())
+    `REQ${orden.ORDERID}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (orden.COMMENTS || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    orden.STATUS.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Función para obtener el progreso basado en el status
+  const getProgress = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'pendiente': return 25;
+      case 'aprobada': return 50;
+      case 'confirmada': return 75;
+      case 'entregada': return 100;
+      case 'cancelada': return 0;
+      default: return 0;
+    }
+  };
+
+  // Función para obtener la fase actual
+  const getFaseActual = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'pendiente': return 'Solicitud Pendiente';
+      case 'aprobada': return 'Solicitud Aprobada';
+      case 'confirmada': return 'Pedido Confirmado';
+      case 'entregada': return 'Orden Completada';
+      case 'cancelada': return 'Orden Cancelada';
+      default: return 'Estado Desconocido';
+    }
+  };
+
+  // Función para obtener color del estado
+  const getEstadoColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'entregada': return '#107e3e'; // Verde
+      case 'confirmada': return '#0a6ed1'; // Azul
+      case 'aprobada': return '#e9730c'; // Naranja
+      case 'pendiente': return '#6a6d70'; // Gris
+      case 'cancelada': return '#bb0000'; // Rojo
+      default: return '#6a6d70';
+    }
+  };
+
+  // Función para formatear fecha
+  const formatDate = (dateString) => {
+    if (!dateString) return 'No disponible';
+    try {
+      return new Date(dateString).toLocaleDateString('es-ES');
+    } catch {
+      return 'Fecha inválida';
+    }
+  };
+
+  // Función para formatear moneda
+  const formatCurrency = (amount) => {
+    if (!amount) return '$0.00';
+    return new Intl.NumberFormat('es-ES', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount);
+  };
 
   // Agregar esta función para navegación
   const verDetallesOrden = (ordenId) => {
     navigate(`/orden-status/${ordenId}`);
   };
 
+  if (loading) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#f5f5f5", display: "flex", flexDirection: "column" }}>
+        <NavBar />
+        <Header title="Orden & Status" />
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          height: '300px' 
+        }}>
+          <CircularProgress />
+        </Box>
+      </div>
+    );
+  }
+
   return (
-    <div style={{ minHeight: "100vh", background: "#f5f5f5" }}>
+    <div style={{ minHeight: "100vh", background: "#f5f5f5", display: "flex", flexDirection: "column" }}>
       <NavBar />
       <Header title="Orden & Status" />
+      
+      {error && (
+        <Box sx={{ p: 2 }}>
+          <Alert severity="error" onClose={() => setError(null)}>
+            {error}
+          </Alert>
+        </Box>
+      )}
       
       <div style={{ 
         padding: "1.5rem", 
         display: "flex", 
         gap: "1.5rem",
         flexDirection: "row",
-        flexWrap: "wrap"
+        flexWrap: "wrap",
+        flex: 1
       }}>
         {/* Columna izquierda - Buscador y Tarjetas de órdenes */}
-        <div style={{ flex: "1", minWidth: "300px" }}>
-          {/* Buscador */}
-          <div style={{ marginBottom: "1rem" }}>
+        <div style={{ 
+          flex: "1", 
+          minWidth: "300px",
+          display: "flex",
+          flexDirection: "column",
+          maxHeight: "calc(100vh - 200px)",
+          overflow: "hidden"
+        }}>
+          {/* Buscador y botón refresh */}
+          <div style={{ marginBottom: "1rem", display: "flex", gap: "0.5rem", flexShrink: 0 }}>
             <ui5-input
-              placeholder="Buscar por número de orden o material..."
+              placeholder="Buscar por número de orden, comentarios o status..."
               value={searchQuery}
               onInput={(e) => setSearchQuery(e.target.value)}
-              style={{ width: "100%" }}
+              style={{ flex: 1 }}
               show-clear-icon
             >
               <ui5-icon 
@@ -126,35 +224,51 @@ const OrdenStatus = () => {
                 }}
               ></ui5-icon>
             </ui5-input>
+            <ui5-button 
+              icon="refresh" 
+              design="Emphasized"
+              onClick={refreshOrders}
+              disabled={loading}
+              tooltip="Actualizar órdenes"
+            ></ui5-button>
           </div>
           
-          {/* Tarjetas de órdenes */}
-          {filteredOrdenes.length > 0 ? (
-            filteredOrdenes.map((orden) => (
-              <div 
-                key={orden.id} 
-                onClick={() => setSelectedOrden(orden)}
-                style={{ cursor: "pointer" }}
-              >
-                <OrdenStatusCard
-                  ordenNumber={orden.id}
-                  numOrden={orden.name}
-                  material={orden.products.map(p => `${p.name} (${p.quantity} ${p.unit})`).join(', ')}
-                  isSelected={selectedOrden.id === orden.id}
-                />
+          {/* Contenedor scrolleable de tarjetas de órdenes */}
+          <div style={{
+            flex: 1,
+            overflowY: "auto",
+            overflowX: "hidden",
+            paddingRight: "8px",
+            marginRight: "-8px"
+          }}>
+            {/* Tarjetas de órdenes */}
+            {filteredOrdenes.length > 0 ? (
+              filteredOrdenes.map((orden) => (
+                <div 
+                  key={orden.ORDERID} 
+                  onClick={() => setSelectedOrden(orden)}
+                  style={{ cursor: "pointer", marginBottom: "0.5rem" }}
+                >
+                  <OrdenStatusCard
+                    ordenNumber={`REQ${orden.ORDERID}`}
+                    numOrden={`REQ${orden.ORDERID}`}
+                    material={`${orden.ITEMCOUNT} producto(s) - ${orden.STATUS}`}
+                    isSelected={selectedOrden && selectedOrden.ORDERID === orden.ORDERID}
+                  />
+                </div>
+              ))
+            ) : (
+              <div style={{ 
+                padding: "1rem", 
+                textAlign: "center", 
+                background: "#fff", 
+                borderRadius: "8px",
+                boxShadow: "0 1px 4px rgba(0,0,0,0.1)"
+              }}>
+                {orders.length === 0 ? 'No hay órdenes disponibles' : 'No se encontraron órdenes'}
               </div>
-            ))
-          ) : (
-            <div style={{ 
-              padding: "1rem", 
-              textAlign: "center", 
-              background: "#fff", 
-              borderRadius: "8px",
-              boxShadow: "0 1px 4px rgba(0,0,0,0.1)"
-            }}>
-              No se encontraron órdenes
-            </div>
-          )}
+            )}
+          </div>
         </div>
         
         {/* Columna derecha - Dashboard de progreso */}
@@ -166,164 +280,293 @@ const OrdenStatus = () => {
           padding: "1.5rem",
           boxShadow: "0 1px 4px rgba(0,0,0,0.1)"
         }}>
-          <div style={{ 
-            display: "flex", 
-            justifyContent: "space-between", 
-            alignItems: "center",
-            marginBottom: "1.5rem"
-          }}>
-            <h3 style={{ 
-              fontSize: "1.25rem", 
-              margin: 0,
-              color: "#333"
-            }}>
-              Progreso de orden {selectedOrden.id}:
-            </h3>
-            
-            {/* Nuevo botón para ver detalles */}
-            <ui5-button 
-              icon="detail-view" 
-              design="Transparent"
-              onClick={() => verDetallesOrden(selectedOrden.id)}
-              tooltip="Ver detalles completos"
-            >
-              Ver detalles
-            </ui5-button>
-          </div>
-          
-          <div style={{ marginBottom: "2rem" }}>
-            <div style={{ 
-              display: "flex", 
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: "1.5rem 0"
-            }}>
-              {/* Gráfico circular más grande y elegante */}
-              <div style={{ 
-                width: "280px", 
-                height: "280px", 
-                borderRadius: "50%", 
-                position: "relative",
-                background: "white",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: "0px 0px 20px rgba(0,0,0,0.08)",
-                marginBottom: "2rem"
-              }}>
-                {/* Círculo exterior dividido en 4 partes */}
-                <div style={{
-                  position: "absolute",
-                  width: "100%",
-                  height: "100%",
-                  borderRadius: "50%",
-                  background: `conic-gradient(
-                    #567bff 0% 25%, 
-                    #3a57e5 25% 50%, 
-                    #2e4bc6 50% 75%, 
-                    #1d377a 75% 100%
-                  )`
-                }}></div>
-                {/* Círculo interior blanco */}
-                <div style={{
-                  position: "absolute",
-                  width: "70%",
-                  height: "70%",
-                  borderRadius: "50%",
-                  background: "white",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  boxShadow: "inset 0px 0px 10px rgba(0,0,0,0.03)"
-                }}>
-                  <div style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center"
-                  }}>
-                    <div style={{
-                      fontSize: "1rem",
-                      fontWeight: "500",
-                      color: "#666",
-                      marginBottom: "0.25rem"
-                    }}>
-                      TOTAL:
-                    </div>
-                    <div style={{
-                      fontSize: "2.25rem",
-                      fontWeight: "600",
-                      color: "#3f51b5"
-                    }}>
-                      ${selectedOrden.total.toLocaleString()}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Leyenda de fases (en lugar de barras de progreso) */}
+          {selectedOrden ? (
+            <>
               <div style={{ 
                 display: "flex", 
                 justifyContent: "space-between", 
-                width: "100%",
-                maxWidth: "500px",
-                margin: "0 auto"
+                alignItems: "center",
+                marginBottom: "1.5rem"
               }}>
-                {[
-                  { label: "Fase 1", color: "#567bff" },
-                  { label: "Fase 2", color: "#3a57e5" },
-                  { label: "Fase 3", color: "#2e4bc6" },
-                  { label: "Fase 4", color: "#1d377a" }
-                ].map((fase, index) => (
-                  <div key={index} style={{ 
-                    display: "flex", 
+                <h3 style={{ 
+                  fontSize: "1.25rem", 
+                  margin: 0,
+                  color: "#333"
+                }}>
+                  Progreso de orden REQ{selectedOrden.ORDERID}:
+                </h3>
+                
+                {/* Botón para ver detalles */}
+                <ui5-button 
+                  icon="detail-view" 
+                  design="Transparent"
+                  onClick={() => verDetallesOrden(selectedOrden.ORDERID)}
+                  tooltip="Ver detalles completos"
+                >
+                  Ver detalles
+                </ui5-button>
+              </div>
+              
+              <div style={{ marginBottom: "2rem" }}>
+                <div style={{ 
+                  display: "flex", 
+                  gap: "2.5rem",
+                  alignItems: "stretch",
+                  justifyContent: "space-between",
+                  padding: "1rem 0",
+                  minHeight: "400px"
+                }}>
+                  {/* Información de la orden a la izquierda */}
+                  <div style={{
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "1.5rem",
+                    minWidth: "320px",
+                    justifyContent: "center"
+                  }}>
+                    {/* Primera fila - Información principal */}
+                    <div style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: "1rem"
+                    }}>
+                      {/* Tarjeta de Fecha */}
+                      <div style={{
+                        background: "#f8f9ff",
+                        padding: "1.25rem",
+                        borderRadius: "12px",
+                        border: "1px solid #e1e5ff",
+                        textAlign: "center",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
+                      }}>
+                        <div style={{ fontSize: "0.75rem", color: "#666", marginBottom: "0.5rem", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                          Fecha de Pedido
+                        </div>
+                        <div style={{ fontSize: "1.1rem", fontWeight: "600", color: "#333" }}>
+                          {formatDate(selectedOrden.ORDERDATE)}
+                        </div>
+                      </div>
+
+                      {/* Tarjeta de Total */}
+                      <div style={{
+                        background: "#f0f9ff",
+                        padding: "1.25rem",
+                        borderRadius: "12px",
+                        border: "1px solid #bae6fd",
+                        textAlign: "center",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
+                      }}>
+                        <div style={{ fontSize: "0.75rem", color: "#666", marginBottom: "0.5rem", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                          Total
+                        </div>
+                        <div style={{ fontSize: "1.3rem", fontWeight: "700", color: "#0369a1" }}>
+                          {formatCurrency(selectedOrden.ORDERTOTAL)}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Segunda fila - Estado y productos */}
+                    <div style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: "1rem"
+                    }}>
+                      {/* Tarjeta de Productos */}
+                      <div style={{
+                        background: "#f0fdf4",
+                        padding: "1.25rem",
+                        borderRadius: "12px",
+                        border: "1px solid #bbf7d0",
+                        textAlign: "center",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
+                      }}>
+                        <div style={{ fontSize: "0.75rem", color: "#666", marginBottom: "0.5rem", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                          Productos
+                        </div>
+                        <div style={{ fontSize: "1.1rem", fontWeight: "600", color: "#166534" }}>
+                          {selectedOrden.ITEMCOUNT} artículos
+                        </div>
+                      </div>
+
+                      {/* Tarjeta de Estado */}
+                      <div style={{
+                        background: getEstadoColor(selectedOrden.STATUS) + "15",
+                        padding: "1.25rem",
+                        borderRadius: "12px",
+                        border: `1px solid ${getEstadoColor(selectedOrden.STATUS)}30`,
+                        textAlign: "center",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
+                      }}>
+                        <div style={{ fontSize: "0.75rem", color: "#666", marginBottom: "0.5rem", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                          Estado Actual
+                        </div>
+                        <div style={{ 
+                          fontSize: "1.1rem", 
+                          fontWeight: "600", 
+                          color: getEstadoColor(selectedOrden.STATUS)
+                        }}>
+                          {selectedOrden.STATUS}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Información adicional en fila completa */}
+                    {(selectedOrden.COMMENTS || selectedOrden.LASTUPDATED) && (
+                      <div style={{
+                        background: "#fafafa",
+                        padding: "1.25rem",
+                        borderRadius: "12px",
+                        border: "1px solid #e5e5e5",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
+                      }}>
+                        {selectedOrden.COMMENTS && selectedOrden.LASTUPDATED ? (
+                          <div style={{
+                            display: "grid",
+                            gridTemplateColumns: "1fr 1fr",
+                            gap: "1.5rem"
+                          }}>
+                            <div>
+                              <div style={{ fontSize: "0.75rem", color: "#666", marginBottom: "0.5rem", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                                Comentarios
+                              </div>
+                              <div style={{ fontSize: "0.9rem", color: "#333", lineHeight: "1.4" }}>
+                                {selectedOrden.COMMENTS}
+                              </div>
+                            </div>
+                            <div>
+                              <div style={{ fontSize: "0.75rem", color: "#666", marginBottom: "0.5rem", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                                Última Actualización
+                              </div>
+                              <div style={{ fontSize: "0.9rem", color: "#333" }}>
+                                {formatDate(selectedOrden.LASTUPDATED)}
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            {selectedOrden.COMMENTS && (
+                              <>
+                                <div style={{ fontSize: "0.75rem", color: "#666", marginBottom: "0.5rem", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                                  Comentarios
+                                </div>
+                                <div style={{ fontSize: "0.9rem", color: "#333", lineHeight: "1.4" }}>
+                                  {selectedOrden.COMMENTS}
+                                </div>
+                              </>
+                            )}
+                            {selectedOrden.LASTUPDATED && (
+                              <>
+                                <div style={{ fontSize: "0.75rem", color: "#666", marginBottom: "0.5rem", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                                  Última Actualización
+                                </div>
+                                <div style={{ fontSize: "0.9rem", color: "#333" }}>
+                                  {formatDate(selectedOrden.LASTUPDATED)}
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Gráfico circular a la derecha */}
+                  <div style={{ 
+                    flexShrink: 0,
+                    display: "flex",
+                    flexDirection: "column",
                     alignItems: "center",
-                    marginRight: index < 3 ? "1rem" : 0
+                    justifyContent: "center"
                   }}>
                     <div style={{ 
-                      width: "12px", 
-                      height: "12px", 
-                      borderRadius: "50%",
-                      background: fase.color,
-                      marginRight: "0.5rem"
-                    }}></div>
-                    <span style={{ 
-                      fontSize: "0.875rem", 
-                      color: "#555"
+                      width: "360px", 
+                      height: "360px", 
+                      borderRadius: "50%", 
+                      position: "relative",
+                      background: "white",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: "0px 0px 30px rgba(0,0,0,0.12)"
                     }}>
-                      {fase.label}
-                    </span>
+                      {/* Círculo exterior */}
+                      <div style={{
+                        position: "absolute",
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: "50%",
+                        background: `conic-gradient(
+                          ${getProgress(selectedOrden.STATUS) >= 25 ? '#567bff' : '#e0e0e0'} 0% 25%, 
+                          ${getProgress(selectedOrden.STATUS) >= 50 ? '#3a57e5' : '#e0e0e0'} 25% 50%, 
+                          ${getProgress(selectedOrden.STATUS) >= 75 ? '#2e4bc6' : '#e0e0e0'} 50% 75%, 
+                          ${getProgress(selectedOrden.STATUS) >= 100 ? '#1d377a' : '#e0e0e0'} 75% 100%
+                        )`
+                      }}></div>
+                      {/* Círculo interior */}
+                      <div style={{
+                        position: "absolute",
+                        width: "70%",
+                        height: "70%",
+                        borderRadius: "50%",
+                        background: "white",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        boxShadow: "inset 0px 0px 20px rgba(0,0,0,0.06)"
+                      }}>
+                        <div style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center"
+                        }}>
+                          <div style={{
+                            fontSize: "1.2rem",
+                            fontWeight: "500",
+                            color: "#666",
+                            marginBottom: "0.7rem",
+                            letterSpacing: "0.5px"
+                          }}>
+                            PROGRESO
+                          </div>
+                          <div style={{
+                            fontSize: "3.5rem",
+                            fontWeight: "700",
+                            color: getEstadoColor(selectedOrden.STATUS),
+                            lineHeight: "1"
+                          }}>
+                            {getProgress(selectedOrden.STATUS)}%
+                          </div>
+                          <div style={{
+                            fontSize: "1rem",
+                            color: "#999",
+                            textAlign: "center",
+                            marginTop: "0.7rem",
+                            lineHeight: "1.3",
+                            maxWidth: "180px",
+                            fontWeight: "500"
+                          }}>
+                            {getFaseActual(selectedOrden.STATUS)}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
-          
-          <div>
-            <ui5-label style={{ 
-              fontWeight: "bold", 
-              marginBottom: "0.5rem", 
-              display: "block",
-              fontSize: "1rem",
-              color: "#333"
-            }}>
-              Materiales:
-            </ui5-label>
-            <div style={{ 
-              minHeight: "100px", 
-              padding: "0.75rem",
-              background: "#f9f9f9",
-              borderRadius: "4px",
-              color: "#666",
-              fontSize: "0.9rem"
-            }}>
-              {selectedOrden.products.map((product, index) => (
-                <div key={index} style={{ marginBottom: "0.5rem" }}>
-                  {product.name}: {product.quantity} {product.unit}
                 </div>
-              ))}
+              </div>
+            </>
+          ) : (
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              height: "200px",
+              color: "#666",
+              fontSize: "1.1rem"
+            }}>
+              Selecciona una orden para ver su progreso
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

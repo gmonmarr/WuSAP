@@ -27,8 +27,7 @@ router.get('/locations/:id/employees', verifyToken, verifyRoles("admin"), getEmp
 // Get all locations (admin only)
 router.get('/locations', verifyToken, verifyRoles("admin"), getAllLocations);
 
-// Get location by ID (admin only)
-router.get('/locations/:id', verifyToken, verifyRoles("admin", "manager", "owner", "warehouse_manager"), getLocationById);
+router.get('/locations/:id', verifyToken, verifyRoles("admin", "manager", "owner", "warehouse_manager", "sales"), getLocationById);
 
 // Create a new location (admin only)
 router.post('/locations', verifyToken, verifyRoles("admin"), createLocation);

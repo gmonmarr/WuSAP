@@ -15,7 +15,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     defaults:
       run:
         working-directory: frontend
@@ -49,7 +49,7 @@ jobs:
         run: |
           echo "✅ VITE_API_SERVER is set: ${VITE_API_SERVER}"
         continue-on-error: true
-        
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:

@@ -27,6 +27,7 @@ import { styled } from "@mui/material/styles";
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import Navbar from "../../components/Navbar";
 import Header from "../../components/Header";
 import AvisoPerdidaInfo from "../../components/AvisoPerdidaInfo";
@@ -434,6 +435,20 @@ const ProductsPage = () => {
                   }}
                 />
               </Box>
+              <Button
+                variant="outlined"
+                size="medium"
+                onClick={refreshProductList}
+                disabled={loading}
+                sx={{
+                  minWidth: '48px',
+                  borderRadius: '8px',
+                  py: 1,
+                  px: 2,
+                }}
+              >
+                <RefreshIcon />
+              </Button>
               <Button
                 variant="contained"
                 color="primary"

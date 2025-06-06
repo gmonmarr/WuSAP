@@ -11,6 +11,7 @@ import inventoryRoutes from './routes/inventoryRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import employeeRoutes from './routes/employeeRoutes.js';
 import locationRoutes from './routes/locationRoutes.js';
+import salesRoutes from './routes/salesRoutes.js';
 import prediccionRoutes from './routes/prediccionRoutes.js';
 import hanaPool from './db/hanaPool.js';
 
@@ -37,6 +38,7 @@ const corsOptions = {
   credentials: true,
 };
 
+
 // Middleware
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
@@ -50,6 +52,7 @@ app.use('/api', inventoryRoutes);
 app.use('/api', orderRoutes);
 app.use('/api', employeeRoutes);
 app.use('/api', locationRoutes);
+app.use('/api', salesRoutes);
 app.use('/api', prediccionRoutes);
 
 // Test Route

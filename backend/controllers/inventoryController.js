@@ -6,7 +6,8 @@ import {
   assignInventoryToStore,
   getWarehouseProducts,
   editInventory,
-  getInventoryByStoreByProduct
+  getInventoryByStoreByProduct,
+  getStoreInventoryWithProducts
 } from '../services/inventoryService.js';
   
   export const getInventory = async (req, res) => {
@@ -88,5 +89,26 @@ export const getInventoryByStoreAndProduct = async (req, res) => {
     res.json(data);
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+// Nueva función para obtener inventario de tienda con detalles de productos
+export const getStoreInventoryWithProductsController = async (req, res) => {
+  try {
+    const storeID = req.user?.storeID;
+    if (!storeID) {
+      return res.status(400).json({ message: 'Store ID not found in token.' });
+    }
+
+    const data = await getStoreInventoryWithProducts(storeID);
+    res.json({
+      success: true,
+      data: data
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false,
+      message: error.message 
+    });
   }
 };

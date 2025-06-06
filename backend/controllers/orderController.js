@@ -104,3 +104,30 @@ export async function updateOrder(req, res) {
   }
 }
 
+export async function getOrdersWithDetailsForStore(req, res) {
+  const storeID = req.user?.storeID;
+  if (!storeID) {
+    return res.status(401).json({ error: 'Unauthorized: Missing store ID from token' });
+  }
+
+  try {
+    const orders = await orderService.getOrdersWithDetailsForStore(Number(storeID));
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch store orders with details', details: err.message });
+  }
+}
+
+export async function getOrderWithFullDetails(req, res) {
+  const { id } = req.params;
+  try {
+    const orderData = await orderService.getOrderWithFullDetails(Number(id));
+    res.json(orderData);
+  } catch (err) {
+    if (err.message === 'Order not found') {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+    res.status(500).json({ error: 'Failed to fetch order details', details: err.message });
+  }
+}
+

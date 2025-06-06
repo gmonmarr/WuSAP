@@ -516,6 +516,20 @@ const UserList = () => {
                   }}
                 />
                 <Button
+                  variant="outlined"
+                  size="medium"
+                  onClick={fetchEmployees}
+                  disabled={loading}
+                  sx={{
+                    minWidth: '48px',
+                    borderRadius: '8px',
+                    height: '42px',
+                    px: 2,
+                  }}
+                >
+                  <RefreshIcon />
+                </Button>
+                <Button
                   variant="contained"
                   color="primary"
                   startIcon={<AddIcon />}

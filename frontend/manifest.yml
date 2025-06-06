@@ -1,0 +1,6 @@
+applications:
+  - name: wusap-frontend
+    path: dist
+    memory: 128M
+    buildpacks:
+      - staticfile_buildpack
