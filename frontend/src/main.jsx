@@ -6,6 +6,8 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import App from './App';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
+import ProtectedRoute from './components/ProtectedRoute';
+import { ROLES } from './config/rolePermissions';
 import OrdenStatus from './pages/general/OrdenStatus';
 import { InventoryDashboard } from './pages/Proveedor/Inventario';
 import UserList from './pages/admin/UserList';
@@ -29,26 +31,108 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     {/* <Router basename="/WuSAP/"> */}
     <Router>
       <Routes>
+{/* Rutas públicas */}
         <Route path="/" element={<App />} />
         <Route path="/inicio-sesion" element={<Login />} />
-        <Route path="/perfil" element={<Profile />} />
-        <Route path="/inventario" element={<InventoryDashboard/>} />
-        <Route path="/orden-status" element={<OrdenStatus/>} />
-        <Route path="/lista-usuarios" element={<UserList />} />
-        <Route path="/tablero" element={<DashboardGeneral />}/>
-        <Route path="/hacer-pedido" element={<OrderPage />}/>
-        <Route path="/registrar-ventas" element={<SalesPage />}/>
-        <Route path="/orden-status/:ordenId" element={<OrdenStatusInfo />} />
-        <Route path="/admin" element={<AdminMain />} />
-        <Route path="/admin/locations" element={<Locations />} />
-        <Route path="/productos" element={<ProductsPage />} />
-        <Route path="/productos-sucursal" element={<ProductosSucursalPage />} />
-        {/*<Route path='/lista-productos' element={<ProductCatalog/>} />*/}
-                  <Route path='/historial-ventas' element={<SalesHistory/>} />
-        <Route path='/solicitudes' element={<Requests/>} />
-        <Route path='/solicitar-material' element={<OrderProvider/>} />
-        <Route path='/catalogo-productos' element={<ProductsPage/>} />
-        <Route path='/alertas' element={<Alertas/>} />
+        
+        {/* Rutas protegidas - Perfil (cualquier usuario autenticado) */}
+        <Route path="/perfil" element={
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
+        } />
+        
+        {/* Dashboard - Owner, Manager (Sales removed) */}
+        <Route path="/tablero" element={
+          <ProtectedRoute allowedRoles={[ROLES.OWNER, ROLES.MANAGER]}>
+            <DashboardGeneral />
+          </ProtectedRoute>
+        } />
+        
+        {/* Pedidos - Manager */}
+        <Route path="/hacer-pedido" element={
+          <ProtectedRoute allowedRoles={[ROLES.MANAGER]}>
+            <OrderPage />
+          </ProtectedRoute>
+        } />
+        
+        {/* Ventas - Manager, Sales */}
+        <Route path="/registrar-ventas" element={
+          <ProtectedRoute allowedRoles={[ROLES.MANAGER, ROLES.SALES]}>
+            <SalesPage />
+          </ProtectedRoute>
+        } />
+        <Route path='/historial-ventas' element={
+          <ProtectedRoute allowedRoles={[ROLES.MANAGER, ROLES.SALES]}>
+            <SalesHistory />
+          </ProtectedRoute>
+        } />
+        
+        {/* Productos - Warehouse Manager */}
+        <Route path="/productos" element={
+          <ProtectedRoute allowedRoles={[ROLES.WAREHOUSE_MANAGER]}>
+            <ProductsPage />
+          </ProtectedRoute>
+        } />
+        <Route path='/solicitar-material' element={
+          <ProtectedRoute allowedRoles={[ROLES.WAREHOUSE_MANAGER]}>
+            <OrderProvider />
+          </ProtectedRoute>
+        } />
+        <Route path='/catalogo-productos' element={
+          <ProtectedRoute allowedRoles={[ROLES.WAREHOUSE_MANAGER]}>
+            <ProductsPage />
+          </ProtectedRoute>
+        } />
+        
+        {/* Inventario - Owner, Manager, Warehouse Manager */}
+        <Route path="/inventario" element={
+          <ProtectedRoute allowedRoles={[ROLES.OWNER, ROLES.MANAGER, ROLES.WAREHOUSE_MANAGER]}>
+            <InventoryDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/productos-sucursal" element={
+          <ProtectedRoute allowedRoles={[ROLES.OWNER, ROLES.MANAGER, ROLES.WAREHOUSE_MANAGER]}>
+            <ProductosSucursalPage />
+          </ProtectedRoute>
+        } />
+        <Route path='/solicitudes' element={
+          <ProtectedRoute allowedRoles={[ROLES.MANAGER, ROLES.WAREHOUSE_MANAGER]}>
+            <Requests />
+          </ProtectedRoute>
+        } />
+        <Route path="/orden-status" element={
+          <ProtectedRoute allowedRoles={[ROLES.OWNER, ROLES.MANAGER, ROLES.WAREHOUSE_MANAGER]}>
+            <OrdenStatus />
+          </ProtectedRoute>
+        } />
+        <Route path="/orden-status/:ordenId" element={
+          <ProtectedRoute allowedRoles={[ROLES.OWNER, ROLES.MANAGER, ROLES.WAREHOUSE_MANAGER]}>
+            <OrdenStatusInfo />
+          </ProtectedRoute>
+        } />
+        <Route path='/alertas' element={
+          <ProtectedRoute allowedRoles={[ROLES.OWNER, ROLES.MANAGER, ROLES.WAREHOUSE_MANAGER]}>
+            <Alertas />
+          </ProtectedRoute>
+        } />
+        
+        {/* Admin - Solo Admin */}
+        <Route path="/lista-usuarios" element={
+          <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+            <UserList />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin" element={
+          <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+            <AdminMain />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/locations" element={
+          <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+            <Locations />
+          </ProtectedRoute>
+        } />
       </Routes>
     </Router>
   </React.StrictMode>

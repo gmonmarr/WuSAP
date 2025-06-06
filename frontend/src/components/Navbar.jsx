@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import './Navbar.css'; 
 import { authService } from '../services/api.js';
+import { getNavigationForRole } from '../config/rolePermissions.js';
 
 import "@ui5/webcomponents/dist/Avatar.js";
 import "@ui5/webcomponents/dist/Icon.js";
@@ -21,29 +22,35 @@ import "@ui5/webcomponents-icons/dist/map.js";
 const Navbar = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userInitials, setUserInitials] = useState('');
+  const [navItems, setNavItems] = useState([]);
   const location = useLocation();
   const navigate = useNavigate();
   const currentYear = new Date().getFullYear();
 
   useEffect(() => {
-    // Obtener datos del usuario y actualizar las iniciales
-    const updateUserInitials = () => {
+    // Obtener datos del usuario y actualizar las iniciales y navegación
+    const updateUserData = () => {
       const user = authService.getUser();
       if (user && user.name && user.lastName) {
         // Obtener la primera letra del nombre y apellido
         const firstInitial = user.name.charAt(0).toUpperCase();
         const lastInitial = user.lastName.charAt(0).toUpperCase();
         setUserInitials(`${firstInitial}${lastInitial}`);
+        
+        // Obtener elementos de navegación basados en el rol
+        const userNavItems = getNavigationForRole(user.role);
+        setNavItems(userNavItems);
       } else {
         setUserInitials('');
+        setNavItems([]);
       }
     };
 
-    updateUserInitials();
+    updateUserData();
     
-    // Escuchar eventos de cambio en sessionStorage
+    // Escuchar eventos de cambio en localStorage
     const handleStorageChange = () => {
-      updateUserInitials();
+      updateUserData();
     };
     
     window.addEventListener('storage', handleStorageChange);
@@ -69,30 +76,7 @@ const Navbar = () => {
     setSidebarOpen(false);
   };
 
-//Modify the Path Here to the Correct Page
-
-  const navItems = [
-    // Owner
-    { path: '/tablero', label: 'Owner:Tablero', icon: 'home' },
-    // Manager
-    { path: '/hacer-pedido', label: 'Manager: Hacer Pedido', icon: 'cart' },
-    // Sales
-    { path: '/registrar-ventas', label: 'Sales: Registrar Ventas', icon: 'cart' },
-    // Warehouse Manager
-    { path: '/productos', label: 'Warehouse Manager: Gestion de Productos', icon: 'business-objects-experience' },
-    { path: '/solicitar-material', label: 'Warehouse Manager: Solicitar Material', icon: 'cart' },
-    // Owner/Manager/Warehouse Manager
-    { path: '/inventario', label: 'Owner/Manager/Warehouse Manager: Estadisticas Inventario', icon: 'map' },
-    { path: '/productos-sucursal', label: 'Owner/Manager/Warehouse Manager: Inventario', icon: 'business-objects-experience' },
-    { path: '/solicitudes', label: 'Manager/Warehouse Manager: Solicitudes', icon: 'business-objects-experience' },
-    { path: '/orden-status', label: 'Owner/Manager/Warehouse Manager: Ordenes de Producción', icon: 'business-objects-experience' },
-    // Admin
-    { path: '/lista-usuarios', label: 'Admin: Gestionar usuarios', icon: 'group' },
-    { path: '/admin', label: 'Admin: Admin View', icon: 'group' },
-    { path: '/admin/locations', label: 'Admin:Ubicaciones', icon: 'map' },
-
-    { path: '/historial-ventas', label: 'Historial de Ventas', icon: 'business-objects-experience' },
-  ];
+// Navigation items are now loaded dynamically based on user role
 
   return (
     <>

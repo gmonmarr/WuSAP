@@ -42,10 +42,10 @@ export const authService = {
     try {
       const response = await api.post('/api/auth/login', { email, password });
       
-      // Si la petición es exitosa, guardar el token y datos de usuario en sessionStorage
+      // Si la petición es exitosa, guardar el token y datos de usuario en localStorage
       if (response.data && response.data.token) {
-        sessionStorage.setItem('token', response.data.token);
-        sessionStorage.setItem('user', JSON.stringify(response.data.user));
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
       }
       
       return response.data;
@@ -57,7 +57,7 @@ export const authService = {
   
   register: async (userData) => {
     try {
-      const token = sessionStorage.getItem('token');
+      const token = localStorage.getItem('token');
       
       if (!token) {
         throw new Error('No estás autorizado para realizar esta acción. Por favor, inicia sesión nuevamente.');
@@ -96,22 +96,22 @@ export const authService = {
   },
   
   logout: () => {
-    // Eliminar token y datos de usuario de sessionStorage
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('user');
+    // Eliminar token y datos de usuario de localStorage
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
   },
   
   getToken: () => {
-    return sessionStorage.getItem('token');
+    return localStorage.getItem('token');
   },
   
   getUser: () => {
-    const userStr = sessionStorage.getItem('user');
+    const userStr = localStorage.getItem('user');
     return userStr ? JSON.parse(userStr) : null;
   },
   
   isAuthenticated: () => {
-    return !!sessionStorage.getItem('token');
+    return !!localStorage.getItem('token');
   }
 };
 
