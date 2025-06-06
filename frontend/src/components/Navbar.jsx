@@ -76,6 +76,8 @@ const Navbar = () => {
     { path: '/tablero', label: 'Owner:Tablero', icon: 'home' },
     // Manager
     { path: '/hacer-pedido', label: 'Manager: Hacer Pedido', icon: 'cart' },
+    // Sales
+    { path: '/registrar-ventas', label: 'Sales: Registrar Ventas', icon: 'cart' },
     // Warehouse Manager
     { path: '/productos', label: 'Warehouse Manager: Gestion de Productos', icon: 'business-objects-experience' },
     { path: '/solicitar-material', label: 'Warehouse Manager: Solicitar Material', icon: 'cart' },
@@ -89,7 +91,7 @@ const Navbar = () => {
     { path: '/admin', label: 'Admin: Admin View', icon: 'group' },
     { path: '/admin/locations', label: 'Admin:Ubicaciones', icon: 'map' },
 
-    { path: '/historial-pedido', label: 'Removed: Historial de Pedidos ', icon: 'business-objects-experience' },
+    { path: '/historial-ventas', label: 'Historial de Ventas', icon: 'business-objects-experience' },
   ];
 
   return (

@@ -11,11 +11,12 @@ import { InventoryDashboard } from './pages/Proveedor/Inventario';
 import UserList from './pages/admin/UserList';
 import { DashboardGeneral } from './pages/Dashboard';
 import OrderPage from './pages/general/OrderPage';
+import SalesPage from './pages/general/SalesPage';
 import OrdenStatusInfo from './pages/general/OrdenStatusInfo';
 import AdminMain from './pages/admin/AdminMain';
 import Locations from './pages/admin/Locations';
 // import { ProductCatalog } from './pages/ListaProductos';
-import OrderHistory from './pages/general/OrderHistory';
+import SalesHistory from './pages/general/SalesHistory';
 import Requests from './pages/Proveedor/Requests';
 import OrderProvider from './pages/Proveedor/OrderProvider';
 import ProductsPage from './pages/general/ProductsPage';
@@ -36,13 +37,14 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/lista-usuarios" element={<UserList />} />
         <Route path="/tablero" element={<DashboardGeneral />}/>
         <Route path="/hacer-pedido" element={<OrderPage />}/>
+        <Route path="/registrar-ventas" element={<SalesPage />}/>
         <Route path="/orden-status/:ordenId" element={<OrdenStatusInfo />} />
         <Route path="/admin" element={<AdminMain />} />
         <Route path="/admin/locations" element={<Locations />} />
         <Route path="/productos" element={<ProductsPage />} />
         <Route path="/productos-sucursal" element={<ProductosSucursalPage />} />
         {/*<Route path='/lista-productos' element={<ProductCatalog/>} />*/}
-        <Route path='/historial-pedido' element={<OrderHistory/>} />
+                  <Route path='/historial-ventas' element={<SalesHistory/>} />
         <Route path='/solicitudes' element={<Requests/>} />
         <Route path='/solicitar-material' element={<OrderProvider/>} />
         <Route path='/catalogo-productos' element={<ProductsPage/>} />

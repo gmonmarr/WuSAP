@@ -60,6 +60,34 @@ export const getWarehouseProducts = async () => {
   }
 };
 
+export const getStoreInventoryWithProducts = async (storeID) => {
+  const conn = await pool.acquire();
+  try {
+    return await new Promise((resolve, reject) => {
+      conn.exec(
+        `SELECT 
+          p.PRODUCTID,
+          p.NAME,
+          p.SUGGESTEDPRICE,
+          p.UNIT,
+          p.DISCONTINUED,
+          i.QUANTITY,
+          i.INVENTORYID
+        FROM WUSAP.Products p
+        INNER JOIN WUSAP.Inventory i ON p.PRODUCTID = i.PRODUCTID
+        WHERE i.STOREID = ? 
+          AND (p.DISCONTINUED IS NULL OR p.DISCONTINUED = '' OR p.DISCONTINUED = 'FALSE' OR p.DISCONTINUED = FALSE)
+          AND i.QUANTITY > 0
+        ORDER BY p.NAME`,
+        [storeID],
+        (err, result) => err ? reject(err) : resolve(result)
+      );
+    });
+  } finally {
+    pool.release(conn);
+  }
+};
+
 export const assignInventoryToStore = async (productID, storeID, quantity, employeeID) => {
   const conn = await pool.acquire();
   try {
