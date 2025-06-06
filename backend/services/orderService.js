@@ -324,7 +324,7 @@ export async function createOrder(orderData, orderItems, employeeID, userRole) {
 /**
  * Update an existing order with new items and history, and log to TableLogs
  */
-function validateStatusTransition(from, to, userRole) {
+export function validateStatusTransition(from, to, userRole) {
   const transitionsByRole = {
     warehouse_manager: {
       Pendiente: ["Pendiente", "Aprobada", "Cancelada"],
