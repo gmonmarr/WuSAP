@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
-    "test": "node --experimental-vm-modules ./node_modules/.bin/jest --verbose"
+    "test": "node --experimental-vm-modules ./node_modules/.bin/jest --verbose --coverage"
   },
   "keywords": [],
   "author": "",
