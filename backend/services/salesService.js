@@ -2,7 +2,7 @@
 
 import pool from '../db/hanaPool.js';
 import { logToTableLogs } from './tableLogService.js';
-import { getInventoryByStoreByProduct, editInventory, getInventoryByID } from './inventoryService.js';
+import { editInventory, getInventoryByID } from './inventoryService.js';
 
 // Get all sales
 export const getAllSales = async () => {
@@ -199,6 +199,7 @@ export const deleteSale = async (saleID, employeeID) => {
             }, conn);
           }
         } catch (err) {
+          conn.rollback();
           throw err;
         }
       }

@@ -171,7 +171,6 @@ export const editInventory = async (inventoryID, quantity, employeeID, conn = nu
     acquiredHere = true;
   }
   try {
-    // console.log("[editInventory] About to SELECT old quantity for inventoryID:", inventoryID);
     const [oldInventory] = await Promise.race([
       new Promise((resolve, reject) => {
         localConn.exec(
@@ -182,12 +181,10 @@ export const editInventory = async (inventoryID, quantity, employeeID, conn = nu
       }),
       new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout on SELECT")), 8000))
     ]);
-    // console.log("[editInventory] SELECT finished for inventoryID:", inventoryID);
 
     const oldQuantity = oldInventory ? Number(oldInventory.QUANTITY) : null;
 
     const updateSql = `UPDATE WUSAP.Inventory SET quantity = ? WHERE inventoryID = ?`;
-    // console.log("[editInventory] About to UPDATE quantity for inventoryID:", inventoryID, "to", quantity);
     await Promise.race([
       new Promise((resolve, reject) => {
         localConn.prepare(updateSql, (err, stmt) => {
@@ -197,9 +194,7 @@ export const editInventory = async (inventoryID, quantity, employeeID, conn = nu
       }),
       new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout on UPDATE")), 8000))
     ]);
-    // console.log("[editInventory] UPDATE finished for inventoryID:", inventoryID);
 
-    // console.log("[editInventory] About to log TableLogs for inventoryID:", inventoryID);
     await logToTableLogs({
       employeeID,
       tableName: "Inventory",
@@ -207,9 +202,6 @@ export const editInventory = async (inventoryID, quantity, employeeID, conn = nu
       action: "UPDATE",
       comment: `Inventory updated: inventoryID=${inventoryID}, quantity: ${oldQuantity} → ${quantity}, by employeeID=${employeeID}`
     }, localConn);
-    // console.log("[editInventory] TableLogs logging finished for inventoryID:", inventoryID);
-
-    // console.log(`Inventory updated: inventoryID=${inventoryID}, quantity: ${oldQuantity} → ${quantity}, by employeeID=${employeeID}`);
 
     return { success: true, message: 'Inventario actualizado exitosamente' };
   } finally {

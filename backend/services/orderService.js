@@ -762,7 +762,6 @@ export async function updateOrder(
 
     const oldStatus = orderData[0].OLDSTATUS;
     const storeID = orderData[0].STOREID;
-    const creatorID = orderData[0].CREATORID;
     const creatorRole = orderData[0].CREATORROLE;
     const newStatus = updatedOrder.status;
 
