@@ -10,7 +10,7 @@ export const getAllInventory = async () => {
     return await new Promise((resolve, reject) => {
       conn.exec(
         `SELECT * FROM WUSAP.Inventory`,
-        (err, result) => err ? reject(err) : resolve(result)
+        (err, result) => err ? reject(err instanceof Error ? err : new Error(err)) : resolve(result)
       );
     });
   } finally {
@@ -25,7 +25,7 @@ export const getInventoryByStore = async (storeID) => {
       conn.exec(
         `SELECT * FROM WUSAP.Inventory WHERE storeID = ?`,
         [storeID],
-        (err, result) => err ? reject(err) : resolve(result)
+        (err, result) => err ? reject(err instanceof Error ? err : new Error(err)) : resolve(result)
       );
     });
   } finally {
@@ -52,7 +52,7 @@ export const getWarehouseProducts = async () => {
           AND (p.DISCONTINUED IS NULL OR p.DISCONTINUED = '' OR p.DISCONTINUED = 'FALSE' OR p.DISCONTINUED = FALSE)
           AND i.QUANTITY > 0
         ORDER BY p.NAME`,
-        (err, result) => err ? reject(err) : resolve(result)
+        (err, result) => err ? reject(err instanceof Error ? err : new Error(err)) : resolve(result)
       );
     });
   } finally {
@@ -80,7 +80,7 @@ export const getStoreInventoryWithProducts = async (storeID) => {
           AND i.QUANTITY > 0
         ORDER BY p.NAME`,
         [storeID],
-        (err, result) => err ? reject(err) : resolve(result)
+        (err, result) => err ? reject(err instanceof Error ? err : new Error(err)) : resolve(result)
       );
     });
   } finally {
@@ -96,7 +96,7 @@ export const assignInventoryToStore = async (productID, storeID, quantity, emplo
       const checkSql = `SELECT * FROM WUSAP.Inventory WHERE productID = ? AND storeID = ?`;
       conn.prepare(checkSql, (err, stmt) => {
         if (err) return reject(err instanceof Error ? err : new Error(err));
-        stmt.exec([productID, storeID], (err, rows) => err ? reject(err) : resolve(rows));
+        stmt.exec([productID, storeID], (err, rows) => err ? reject(err instanceof Error ? err : new Error(String(err))) : resolve(rows));
       });
     });
 
@@ -108,8 +108,8 @@ export const assignInventoryToStore = async (productID, storeID, quantity, emplo
       const updateSql = `UPDATE WUSAP.Inventory SET quantity = ? WHERE productID = ? AND storeID = ?`;
       await new Promise((resolve, reject) => {
         conn.prepare(updateSql, (err, stmt) => {
-          if (err) return reject(err instanceof Error ? err : new Error(err));
-          stmt.exec([quantity, productID, storeID], (err) => err ? reject(err) : resolve());
+          if (err) return reject(err instanceof Error ? err : new Error(String(err)));
+          stmt.exec([quantity, productID, storeID], (err) => err ? reject(err instanceof Error ? err : new Error(String(err))) : resolve());
         });
       });
 
@@ -121,13 +121,15 @@ export const assignInventoryToStore = async (productID, storeID, quantity, emplo
       await new Promise((resolve, reject) => {
         conn.prepare(insertSql, (err, stmt) => {
           if (err) return reject(err instanceof Error ? err : new Error(err));
-          stmt.exec([productID, storeID, quantity], (err) => err ? reject(err) : resolve());
+          stmt.exec([productID, storeID, quantity], (err) => err ? reject(err instanceof Error ? err : new Error(String(err))) : resolve());
         });
       });
 
       const result = await new Promise((resolve, reject) => {
-        conn.exec(`SELECT CURRENT_IDENTITY_VALUE() AS recordID FROM DUMMY`, (err, res) =>
-          err ? reject(err) : resolve(res[0])
+        conn.exec(
+          `SELECT CURRENT_IDENTITY_VALUE() AS recordID FROM DUMMY`,
+          (err, res) =>
+            err ? reject(err instanceof Error ? err : new Error(String(err))) : resolve(res[0])
         );
       });
 
@@ -144,7 +146,7 @@ export const assignInventoryToStore = async (productID, storeID, quantity, emplo
       conn.prepare(logSql, (err, stmt) => {
         if (err) return reject(err instanceof Error ? err : new Error(err));
         stmt.exec([employeeID, "Inventory", recordID, actionType], (err) =>
-          err ? reject(err) : resolve()
+          err ? reject(err instanceof Error ? err : new Error(String(err))) : resolve()
         );
       });
     });
@@ -175,7 +177,7 @@ export const editInventory = async (inventoryID, quantity, employeeID, conn = nu
         localConn.exec(
           `SELECT quantity FROM WUSAP.Inventory WHERE inventoryID = ?`,
           [inventoryID],
-          (err, rows) => err ? reject(err) : resolve(rows)
+          (err, rows) => err ? reject(err instanceof Error ? err : new Error(String(err))) : resolve(rows)
         );
       }),
       new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout on SELECT")), 8000))
@@ -190,7 +192,7 @@ export const editInventory = async (inventoryID, quantity, employeeID, conn = nu
       new Promise((resolve, reject) => {
         localConn.prepare(updateSql, (err, stmt) => {
           if (err) return reject(err instanceof Error ? err : new Error(err));
-          stmt.exec([quantity, inventoryID], (err) => err ? reject(err) : resolve());
+          stmt.exec([quantity, inventoryID], (err) => err ? reject(err instanceof Error ? err : new Error(String(err))) : resolve());
         });
       }),
       new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout on UPDATE")), 8000))
@@ -223,7 +225,7 @@ export const getInventoryByStoreByProduct = async (storeID, productID) => {
       conn.exec(
         `SELECT * FROM WUSAP.Inventory WHERE storeID = ? AND productID = ?`,
         [storeID, productID],
-        (err, result) => err ? reject(err) : resolve(result)
+        (err, result) => err ? reject(err instanceof Error ? err : new Error(err)) : resolve(result)
       );
     });
   } finally {
@@ -243,7 +245,7 @@ export const getInventoryByID = async (inventoryID, conn = null) => {
       localConn.exec(
         `SELECT * FROM WUSAP.Inventory WHERE inventoryID = ?`,
         [inventoryID],
-        (err, result) => err ? reject(err) : resolve(result)
+        (err, result) => err ? reject(err instanceof Error ? err : new Error(err)) : resolve(result)
       );
     });
   } finally {

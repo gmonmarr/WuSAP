@@ -14,7 +14,7 @@ export const getAllSales = async () => {
          FROM WUSAP.Sale s
          LEFT JOIN WUSAP.Employees e ON s.employeeID = e.employeeID
          ORDER BY s.saleDate DESC`,
-        (err, result) => err ? reject(err) : resolve(result)
+        (err, result) => err ? reject(err instanceof Error ? err : new Error(String(err))) : resolve(result)
       );
     });
   } finally {
@@ -34,7 +34,7 @@ export const getSaleById = async (saleID) => {
          LEFT JOIN WUSAP.Employees e ON s.employeeID = e.employeeID
          WHERE s.saleID = ?`,
         [saleID],
-        (err, rows) => err ? reject(err) : resolve(rows[0])
+        (err, rows) => err ? reject(err instanceof Error ? err : new Error(err)) : resolve(rows[0])
       );
     });
     if (!sale) return null;
@@ -58,7 +58,7 @@ export const getSaleById = async (saleID) => {
          WHERE si.saleID = ?
          ORDER BY si.saleItemID`,
         [saleID],
-        (err, rows) => err ? reject(err) : resolve(rows)
+        (err, rows) => err ? reject(err instanceof Error ? err : new Error(err)) : resolve(rows)
       );
     });
     return { ...sale, saleItems };
@@ -151,7 +151,7 @@ export const deleteSale = async (saleID, employeeID) => {
       conn.exec(
         `SELECT * FROM WUSAP.Sale WHERE saleID = ?`,
         [saleID],
-        (err, rows) => err ? reject(err) : resolve(rows[0])
+        (err, rows) => err ? reject(err instanceof Error ? err : new Error(err)) : resolve(rows[0])
       );
     });
 
@@ -164,7 +164,7 @@ export const deleteSale = async (saleID, employeeID) => {
       conn.exec(
         `SELECT * FROM WUSAP.SaleItems WHERE saleID = ?`,
         [saleID],
-        (err, rows) => err ? reject(err) : resolve(rows)
+        (err, rows) => err ? reject(err instanceof Error ? err : new Error(err)) : resolve(rows)
       );
     });
 
@@ -207,7 +207,7 @@ export const deleteSale = async (saleID, employeeID) => {
     // Delete SaleItems (will do nothing if none)
     await new Promise((resolve, reject) => {
       conn.exec(`DELETE FROM WUSAP.SaleItems WHERE saleID = ?`, [saleID], (err) =>
-        err ? reject(err) : resolve()
+        err ? reject(err instanceof Error ? err : new Error(String(err))) : resolve()
       );
     });
 
@@ -225,7 +225,7 @@ export const deleteSale = async (saleID, employeeID) => {
     // Delete sale
     await new Promise((resolve, reject) => {
       conn.exec(`DELETE FROM WUSAP.Sale WHERE saleID = ?`, [saleID], (err) =>
-        err ? reject(err) : resolve()
+        err ? reject(err instanceof Error ? err : new Error(String(err))) : resolve()
       );
     });
 

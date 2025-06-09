@@ -39,15 +39,17 @@ export const addProduct = async (name, suggestedPrice, unit, discontinued = fals
     const insertSql = `INSERT INTO WUSAP.Products (NAME, SUGGESTEDPRICE, UNIT, DISCONTINUED) VALUES (?, ?, ?, ?)`;
     await new Promise((resolve, reject) => {
       conn.prepare(insertSql, (err, stmt) => {
-        if (err) return reject(err);
-        stmt.exec([name, suggestedPrice, unit, discontinued], (err) => err ? reject(err) : resolve());
+        if (err) return reject(err instanceof Error ? err : new Error(String(err)));
+        stmt.exec([name, suggestedPrice, unit, discontinued], (err) =>
+          err ? reject(err instanceof Error ? err : new Error(String(err))) : resolve()
+        );
       });
     });
 
     // Get inserted product ID
     const result = await new Promise((resolve, reject) => {
       conn.exec(`SELECT CURRENT_IDENTITY_VALUE() AS productID FROM DUMMY`, (err, res) =>
-        err ? reject(err) : resolve(res[0])
+        err ? reject(err instanceof Error ? err : new Error(err)) : resolve(res[0])
       );
     });
 
@@ -60,9 +62,9 @@ export const addProduct = async (name, suggestedPrice, unit, discontinued = fals
     `;
     await new Promise((resolve, reject) => {
       conn.prepare(logSql, (err, stmt) => {
-        if (err) return reject(err);
+        if (err) return reject(err instanceof Error ? err : new Error(String(err)));
         stmt.exec([employeeID, "Products", newProductID, "INSERT"], (err) =>
-          err ? reject(err) : resolve()
+          err ? reject(err instanceof Error ? err : new Error(err)) : resolve()
         );
       });
     });
@@ -92,7 +94,7 @@ export const updateProduct = async (productID, productData, updatedByID) => {
     // Check if product exists
     const checkResult = await new Promise((resolve, reject) => {
       conn.exec(`SELECT * FROM WUSAP.Products WHERE PRODUCTID = ?`, [productID], (err, result) =>
-        err ? reject(err) : resolve(result)
+        err ? reject(err instanceof Error ? err : new Error(err)) : resolve(result)
       );
     });
 
@@ -140,8 +142,8 @@ export const updateProduct = async (productID, productData, updatedByID) => {
     
     await new Promise((resolve, reject) => {
       conn.prepare(updateSQL, (err, stmt) => {
-        if (err) return reject(err);
-        stmt.exec(params, (err) => err ? reject(err) : resolve());
+        if (err) return reject(err instanceof Error ? err : new Error(String(err)));
+        stmt.exec(params, (err) => err ? reject(err instanceof Error ? err : new Error(err)) : resolve());
       });
     });
     
@@ -151,8 +153,8 @@ export const updateProduct = async (productID, productData, updatedByID) => {
         INSERT INTO WUSAP.TableLogs (employeeID, tableName, recordID, action)
         VALUES (?, 'Products', ?, 'UPDATE')
       `, (err, stmt) => {
-        if (err) return reject(err);
-        stmt.exec([updatedByID, productID], (err) => err ? reject(err) : resolve());
+        if (err) return reject(err instanceof Error ? err : new Error(String(err)));
+        stmt.exec([updatedByID, productID], (err) => err ? reject(err instanceof Error ? err : new Error(err)) : resolve());
       });
     });
     
@@ -177,7 +179,7 @@ export const deleteProduct = async (productID, deletedByID) => {
     // Check if product exists
     const checkResult = await new Promise((resolve, reject) => {
       conn.exec(`SELECT * FROM WUSAP.Products WHERE PRODUCTID = ?`, [productID], (err, result) =>
-        err ? reject(err) : resolve(result)
+        err ? reject(err instanceof Error ? err : new Error(err)) : resolve(result)
       );
     });
 
@@ -192,7 +194,7 @@ export const deleteProduct = async (productID, deletedByID) => {
         FROM WUSAP.Inventory
         WHERE PRODUCTID = ?
       `, [productID], (err, result) =>
-        err ? reject(err) : resolve(result)
+        err ? reject(err instanceof Error ? err : new Error(err)) : resolve(result)
       );
     });
 
@@ -203,7 +205,7 @@ export const deleteProduct = async (productID, deletedByID) => {
     // Delete the product
     await new Promise((resolve, reject) => {
       conn.exec(`DELETE FROM WUSAP.Products WHERE PRODUCTID = ?`, [productID], (err) =>
-        err ? reject(err) : resolve()
+        err ? reject(err instanceof Error ? err : new Error(err)) : resolve()
       );
     });
 
@@ -213,8 +215,8 @@ export const deleteProduct = async (productID, deletedByID) => {
         INSERT INTO WUSAP.TableLogs (employeeID, tableName, recordID, action)
         VALUES (?, 'Products', ?, 'DELETE')
       `, (err, stmt) => {
-        if (err) return reject(err);
-        stmt.exec([deletedByID, productID], (err) => err ? reject(err) : resolve());
+        if (err) return reject(err instanceof Error ? err : new Error(String(err)));
+        stmt.exec([deletedByID, productID], (err) => err ? reject(err instanceof Error ? err : new Error(err)) : resolve());
       });
     });
 
