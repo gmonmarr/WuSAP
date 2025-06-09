@@ -53,7 +53,7 @@ export function DashboardGeneral() {
   
 
     useEffect(() => {
-    const token = sessionStorage.getItem("token");
+    const token = localStorage.getItem("token");
     if (!token) {
       setError("No token available. Por favor inicia sesión.");
       return;

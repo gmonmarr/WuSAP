@@ -38,7 +38,7 @@ const Alertas = () => {
     alerts.map((item, idx) => ({
       id: idx + 1,
       priority: item.priority || "Baja",
-      subject: `Producto ${item.productName} - Tienda ${item.storeName}`,
+      subject: `Producto ${item.PRODUCTNAME ?? "Desconocido"} - Tienda ${item.STORENAME ?? "Desconocida"}`,
       time: new Date().toLocaleTimeString(),
       predicted_quantity: item.predicted_quantity ?? 0,
       quantity: item.quantity ?? 0,
