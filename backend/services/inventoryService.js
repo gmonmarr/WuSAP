@@ -95,7 +95,7 @@ export const assignInventoryToStore = async (productID, storeID, quantity, emplo
     const existing = await new Promise((resolve, reject) => {
       const checkSql = `SELECT * FROM WUSAP.Inventory WHERE productID = ? AND storeID = ?`;
       conn.prepare(checkSql, (err, stmt) => {
-        if (err) return reject(err);
+        if (err) return reject(err instanceof Error ? err : new Error(err));
         stmt.exec([productID, storeID], (err, rows) => err ? reject(err) : resolve(rows));
       });
     });
@@ -108,7 +108,7 @@ export const assignInventoryToStore = async (productID, storeID, quantity, emplo
       const updateSql = `UPDATE WUSAP.Inventory SET quantity = ? WHERE productID = ? AND storeID = ?`;
       await new Promise((resolve, reject) => {
         conn.prepare(updateSql, (err, stmt) => {
-          if (err) return reject(err);
+          if (err) return reject(err instanceof Error ? err : new Error(err));
           stmt.exec([quantity, productID, storeID], (err) => err ? reject(err) : resolve());
         });
       });
@@ -120,7 +120,7 @@ export const assignInventoryToStore = async (productID, storeID, quantity, emplo
       const insertSql = `INSERT INTO WUSAP.Inventory (productID, storeID, quantity) VALUES (?, ?, ?)`;
       await new Promise((resolve, reject) => {
         conn.prepare(insertSql, (err, stmt) => {
-          if (err) return reject(err);
+          if (err) return reject(err instanceof Error ? err : new Error(err));
           stmt.exec([productID, storeID, quantity], (err) => err ? reject(err) : resolve());
         });
       });
@@ -142,7 +142,7 @@ export const assignInventoryToStore = async (productID, storeID, quantity, emplo
     `;
     await new Promise((resolve, reject) => {
       conn.prepare(logSql, (err, stmt) => {
-        if (err) return reject(err);
+        if (err) return reject(err instanceof Error ? err : new Error(err));
         stmt.exec([employeeID, "Inventory", recordID, actionType], (err) =>
           err ? reject(err) : resolve()
         );
@@ -189,7 +189,7 @@ export const editInventory = async (inventoryID, quantity, employeeID, conn = nu
     await Promise.race([
       new Promise((resolve, reject) => {
         localConn.prepare(updateSql, (err, stmt) => {
-          if (err) return reject(err);
+          if (err) return reject(err instanceof Error ? err : new Error(err));
           stmt.exec([quantity, inventoryID], (err) => err ? reject(err) : resolve());
         });
       }),

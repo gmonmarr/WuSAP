@@ -12,10 +12,10 @@ export const loginUser = async (email, password) => {
   try {
     return await new Promise((resolve, reject) => {
       conn.prepare(sql, async (err, statement) => {
-        if (err) return reject(err);
+        if (err) return reject(err instanceof Error ? err : new Error(err));
 
         statement.exec([email], async (err, results) => {
-          if (err) return reject(err);
+          if (err) return reject(err instanceof Error ? err : new Error(err));
           if (!results || results.length === 0) return reject(new Error("Usuario no encontrado"));
 
           const user = results[0];
@@ -86,9 +86,9 @@ export const registerUser = async (createdByID, name, lastname, email, cellphone
     const checkSql = `SELECT * FROM WUSAP.Employees WHERE EMAIL = ?`;
     const existing = await new Promise((resolve, reject) => {
       conn.prepare(checkSql, (err, stmt) => {
-        if (err) return reject(err);
+        if (err) return reject(err instanceof Error ? err : new Error(err));
         stmt.exec([email], (err, results) => {
-          if (err) return reject(err);
+          if (err) return reject(err instanceof Error ? err : new Error(err));
           resolve(results);
         });
       });
@@ -108,9 +108,9 @@ export const registerUser = async (createdByID, name, lastname, email, cellphone
     `;
     await new Promise((resolve, reject) => {
       conn.prepare(insertSql, (err, stmt) => {
-        if (err) return reject(err);
+        if (err) return reject(err instanceof Error ? err : new Error(err));
         stmt.exec([name, lastname, email, hashedPassword, role, cellphone, storeID], (err) => {
-          if (err) return reject(err);
+          if (err) return reject(err instanceof Error ? err : new Error(err));
           resolve();
         });
       });
@@ -119,7 +119,7 @@ export const registerUser = async (createdByID, name, lastname, email, cellphone
     // 4. Get inserted employeeID
     const result = await new Promise((resolve, reject) => {
       conn.exec(`SELECT CURRENT_IDENTITY_VALUE() AS employeeID FROM DUMMY`, (err, res) => {
-        if (err) return reject(err);
+        if (err) return reject(err instanceof Error ? err : new Error(err));
         if (!res || res.length === 0 || res[0].employeeID === null) {
           return reject(new Error("No se pudo obtener el ID del empleado recién creado"));
         }
@@ -137,9 +137,9 @@ export const registerUser = async (createdByID, name, lastname, email, cellphone
       `;
       await new Promise((resolve, reject) => {
         conn.prepare(logSql, (err, stmt) => {
-          if (err) return reject(err);
+          if (err) return reject(err instanceof Error ? err : new Error(err));
           stmt.exec([createdByID, "Employees", newEmployeeID, "INSERT"], (err) => {
-            if (err) return reject(err);
+            if (err) return reject(err instanceof Error ? err : new Error(err));
             resolve();
           });
         });

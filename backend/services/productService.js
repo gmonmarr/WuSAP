@@ -8,7 +8,7 @@ export const getAllProducts = async () => {
     return await new Promise((resolve, reject) => {
       conn.exec(
         `SELECT * FROM WUSAP.Products`,
-        (err, result) => err ? reject(err) : resolve(result)
+        (err, result) => err ? reject(err instanceof Error ? err : new Error(err)) : resolve(result)
       );
     });
   } finally {
@@ -22,7 +22,7 @@ export const getActiveProductsService = async () => {
     return await new Promise((resolve, reject) => {
       conn.exec(
         `SELECT * FROM WUSAP.Products WHERE discontinued = FALSE`,
-        (err, result) => err ? reject(err) : resolve(result)
+        (err, result) => err ? reject(err instanceof Error ? err : new Error(err)) : resolve(result)
       );
     });
   } finally {

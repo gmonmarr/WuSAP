@@ -67,94 +67,11 @@ export const getSaleById = async (saleID) => {
   }
 };
 
-// Update sale and its items (replace all items)
-// export const updateSale = async (saleID, sale, saleItems, employeeID) => {
-//   const conn = await pool.acquire();
-//   try {
-//     await conn.setAutoCommit(false);
-
-//     // Update sale
-//     await new Promise((resolve, reject) => {
-//       conn.prepare(
-//         `UPDATE WUSAP.Sale SET saleDate = ?, saleTotal = ? WHERE saleID = ?`,
-//         (err, stmt) => {
-//           if (err) return reject(err);
-//           stmt.exec(
-//             [sale.saleDate || new Date(), Number(sale.saleTotal).toFixed(2), saleID],
-//             (err) => err ? reject(err) : resolve()
-//           );
-//         }
-//       );
-//     });
-
-//     await logToTableLogs({
-//       employeeID,
-//       tableName: "Sale",
-//       recordID: saleID,
-//       action: "UPDATE",
-//       comment: `Updated sale to total ${Number(sale.saleTotal).toFixed(2)}`
-//     });
-
-//     // Delete old items
-//     await new Promise((resolve, reject) => {
-//       conn.exec(
-//         `DELETE FROM WUSAP.SaleItems WHERE saleID = ?`,
-//         [saleID],
-//         (err) => err ? reject(err) : resolve()
-//       );
-//     });
-
-//     // Insert new items
-//     for (const item of saleItems) {
-//       await new Promise((resolve, reject) => {
-//         conn.prepare(
-//           `INSERT INTO WUSAP.SaleItems (saleID, inventoryID, quantity, itemTotal)
-//            VALUES (?, ?, ?, ?)`,
-//           (err, stmt) => {
-//             if (err) return reject(err);
-//             stmt.exec(
-//               [saleID, item.inventoryID, item.quantity, Number(item.itemTotal).toFixed(2)],
-//               (err) => err ? reject(err) : resolve()
-//             );
-//           }
-//         );
-//       });
-
-//       // Get saleItemID for logging
-//       const saleItemID = await new Promise((resolve, reject) => {
-//         conn.exec(
-//           `SELECT CURRENT_IDENTITY_VALUE() AS saleItemID FROM DUMMY`,
-//           (err, rows) => err ? reject(err) : resolve(rows[0].SALEITEMID)
-//         );
-//       });
-
-//       await logToTableLogs({
-//         employeeID,
-//         tableName: "SaleItems",
-//         recordID: saleItemID,
-//         action: "INSERT",
-//         comment: `Added sale item (inventoryID: ${item.inventoryID}, qty: ${item.quantity})`
-//       });
-//     }
-
-//     await conn.commit();
-//     return { success: true, saleID };
-//   } catch (err) {
-//     await conn.rollback();
-//     throw err;
-//   } finally {
-//     pool.release(conn);
-//   }
-// };
-
 // Create new sale (+items), reduce inventory and detailed log
 export const postSale = async (sale, saleItems, employeeID) => {
   const conn = await pool.acquire();
   try {
     await conn.setAutoCommit(false);
-
-    // console.log("🧾 postSale called. Sale:", sale);
-    // console.log("🧾 saleItems received:", saleItems);
 
     // Insert sale
     await conn.exec(
@@ -176,28 +93,20 @@ export const postSale = async (sale, saleItems, employeeID) => {
 
     // Insert items and reduce inventory
     for (const item of saleItems) {
-      // console.log("🔹 Processing saleItem:", item);
 
       if (!item.inventoryID) {
-        // console.error("❌ saleItem missing inventoryID:", item);
         throw new Error(`saleItem missing inventoryID. Got: ${JSON.stringify(item)}`);
       }
 
       // Fetch inventory by inventoryID
       const [inventory] = await getInventoryByID(item.inventoryID, conn);
-      // console.log(`🔍 Inventory lookup for inventoryID=${item.inventoryID}:`, inventory);
 
       if (!inventory || inventory.QUANTITY < item.quantity) {
-        // console.error(`❌ Not enough inventory or missing for inventoryID=${item.inventoryID}`, {inventory});
         throw new Error(`Not enough inventory for inventoryID=${item.inventoryID}`);
       }
       const newQty = Number(inventory.QUANTITY) - Number(item.quantity);
 
-      // console.log(`🔄 Updating inventory: inventoryID=${item.inventoryID}, oldQty=${inventory.QUANTITY}, newQty=${newQty}`);
-
       await editInventory(item.inventoryID, newQty, employeeID);
-
-      // console.log(`✅ Inventory updated for inventoryID=${item.inventoryID}: newQty=${newQty}`);
 
       // Insert sale item
       await conn.exec(
@@ -205,8 +114,6 @@ export const postSale = async (sale, saleItems, employeeID) => {
          VALUES (?, ?, ?, ?)`,
         [saleID, item.inventoryID, item.quantity, Number(item.itemTotal).toFixed(2)]
       );
-
-      // console.log(`✅ Sale item inserted for saleID=${saleID}:`, item);
 
       // Get saleItemID for logging
       const [saleItemRow] = await conn.exec(
@@ -249,7 +156,6 @@ export const deleteSale = async (saleID, employeeID) => {
     });
 
     if (!oldSale) {
-      // console.error(`[deleteSale] No sale found for saleID=${saleID}.`);
       throw new Error(`Sale not found for saleID=${saleID}`);
     }
 
@@ -261,9 +167,6 @@ export const deleteSale = async (saleID, employeeID) => {
         (err, rows) => err ? reject(err) : resolve(rows)
       );
     });
-
-    // console.log(`[deleteSale] saleID=${saleID}, employeeID=${employeeID}`);
-    // console.log(`[deleteSale] Fetched oldItems:`, oldItems);
 
     // Restore inventory (refund quantities)
     if (oldItems.length > 0) {
@@ -296,12 +199,9 @@ export const deleteSale = async (saleID, employeeID) => {
             }, conn);
           }
         } catch (err) {
-          // console.error(`Error refunding inventory for saleItemID=${item.SALEITEMID}:`, err);
           throw err;
         }
       }
-    } else {
-      // console.log(`[deleteSale] No sale items to refund for saleID=${saleID}`);
     }
 
     // Delete SaleItems (will do nothing if none)
@@ -338,11 +238,9 @@ export const deleteSale = async (saleID, employeeID) => {
     }, conn);
 
     await conn.commit();
-    // console.log(`[deleteSale] SUCCESS: saleID=${saleID} deleted, inventory refunded.`);
     return { success: true, saleID };
   } catch (err) {
     await conn.rollback();
-    // console.error(`[deleteSale] ERROR:`, err);
     throw err;
   } finally {
     pool.release(conn);
