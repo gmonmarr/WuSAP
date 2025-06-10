@@ -28,7 +28,6 @@ import InventoryIcon from '@mui/icons-material/Inventory';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import Navbar from "../../components/Navbar";
 import Header from "../../components/Header";
-import AvisoPerdidaInfo from "../../components/AvisoPerdidaInfo";
 import ProductCard from "../../components/ProductCard";
 import { inventoryService, productService, locationService, authService } from "../../services/api";
 
@@ -362,7 +361,6 @@ const ProductosSucursalPage = () => {
 
   return (
     <div style={{ minHeight: "100vh", background: "#f8f9fa", display: "flex", flexDirection: "column" }}>
-      <AvisoPerdidaInfo />
       <Navbar />
       <Header title={pageTitle} />
       <Box sx={{ 
@@ -745,4 +743,4 @@ const ProductosSucursalPage = () => {
   );
 };
 
-export default ProductosSucursalPage; 
+export default ProductosSucursalPage;

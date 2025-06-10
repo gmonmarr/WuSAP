@@ -39,7 +39,6 @@ import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
 import Navbar from "../../components/Navbar";
 import Header from "../../components/Header";
-import AvisoPerdidaInfo from "../../components/AvisoPerdidaInfo";
 import ProductCard from "../../components/ProductCard";
 import { inventoryService, orderService, locationService, authService } from "../../services/api";
 
@@ -737,7 +736,6 @@ const OrderPage = () => {
 
   return (
     <div style={{ minHeight: "100vh", background: "#f8f9fa", display: "flex", flexDirection: "column" }}>
-      <AvisoPerdidaInfo />
       <Navbar />
       <Header title="Solicitar Materiales del Almacén" />
 

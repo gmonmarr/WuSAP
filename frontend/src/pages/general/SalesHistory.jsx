@@ -36,7 +36,6 @@ import UndoIcon from '@mui/icons-material/Undo';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import Navbar from '../../components/Navbar';
 import Header from '../../components/Header';
-import AvisoPerdidaInfo from "../../components/AvisoPerdidaInfo";
 import { salesService } from '../../services/api';
 
 // Styled components
@@ -186,7 +185,6 @@ const SalesHistory = () => {
   if (loading) {
     return (
       <div style={{ minHeight: "100vh", background: "#f8f9fa", display: "flex", flexDirection: "column" }}>
-        <AvisoPerdidaInfo />
         <Navbar />
         <Header title="Historial de Ventas" />
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
@@ -198,7 +196,6 @@ const SalesHistory = () => {
 
   return (
     <div style={{ minHeight: "100vh", background: "#f8f9fa", display: "flex", flexDirection: "column" }}>
-      <AvisoPerdidaInfo />
       <Navbar />
       <Header title="Historial de Ventas" />
       
@@ -542,4 +539,4 @@ const SalesHistory = () => {
   );
 };
 
-export default SalesHistory; 
+export default SalesHistory;

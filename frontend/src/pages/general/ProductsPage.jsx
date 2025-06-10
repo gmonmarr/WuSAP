@@ -30,7 +30,6 @@ import SearchIcon from '@mui/icons-material/Search';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import Navbar from "../../components/Navbar";
 import Header from "../../components/Header";
-import AvisoPerdidaInfo from "../../components/AvisoPerdidaInfo";
 import ProductCard from "../../components/ProductCard";
 import { productService } from "../../services/api";
 
@@ -332,7 +331,6 @@ const ProductsPage = () => {
 
   return (
     <div style={{ minHeight: "100vh", background: "#f8f9fa", display: "flex", flexDirection: "column" }}>
-      <AvisoPerdidaInfo />
       <Navbar />
       <Header title="Gestión de Productos" />
       <Box sx={{ 
@@ -715,4 +713,4 @@ const ProductsPage = () => {
   );
 };
 
-export default ProductsPage; 
+export default ProductsPage;
