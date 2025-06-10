@@ -30,3 +30,4 @@ sonar-project.properties
 sonarlocal.txt
 */coverage/*
 */testResults/*
+backend/test-results.json
