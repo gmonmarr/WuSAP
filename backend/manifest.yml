@@ -1,7 +1,7 @@
 applications:
   - name: wusap-backend
     path: .
-    memory: 3G
+    memory: 512M
     buildpacks:
       - nodejs_buildpack
       - python_buildpack
