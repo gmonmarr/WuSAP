@@ -13,6 +13,7 @@ export const ROLES = {
 export const ROUTE_PERMISSIONS = {
   // Rutas públicas (no requieren autenticación)
   '/': [],
+  '/inicio-sesion': [],
   
   // Rutas que requieren autenticación pero sin restricción de rol específico
   '/perfil': ['authenticated'],

@@ -6,6 +6,6 @@ import { controllerFunction } from '../controllers/prediccionController.js';
 
 const router = express.Router();
 
-router.get('/predicciones',verifyToken, verifyRoles("admin","owner","manager","warehouse_manager"),  controllerFunction);
+router.get('/predicciones',verifyToken, verifyRoles("admin","owner" , "manager", "warehouse_manager"),  controllerFunction);
 
 export default router;
