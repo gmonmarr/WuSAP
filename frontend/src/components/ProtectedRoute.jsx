@@ -106,7 +106,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
 
   // Si no está autenticado, redirigir al login
   if (!isAuthenticated) {
-    return <Navigate to="/inicio-sesion" state={{ from: location }} replace />;
+    return <Navigate to="/" state={{ from: location }} replace />;
   }
 
   // Si está autenticado pero no tiene permisos, mostrar página de acceso denegado
