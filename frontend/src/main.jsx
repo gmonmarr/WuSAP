@@ -33,7 +33,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <Routes>
 {/* Rutas públicas */}
         <Route path="/" element={<App />} />
-        <Route path="/inicio-sesion" element={<Login />} />
         
         {/* Rutas protegidas - Perfil (cualquier usuario autenticado) */}
         <Route path="/perfil" element={

@@ -13,6 +13,7 @@ import employeeRoutes from './routes/employeeRoutes.js';
 import locationRoutes from './routes/locationRoutes.js';
 import salesRoutes from './routes/salesRoutes.js';
 import prediccionRoutes from './routes/prediccionRoutes.js';
+import dashboardRoutes from './routes/dashboardRoutes.js';
 import hanaPool from './db/hanaPool.js';
 
 dotenv.config();
@@ -54,6 +55,7 @@ app.use('/api', employeeRoutes);
 app.use('/api', locationRoutes);
 app.use('/api', salesRoutes);
 app.use('/api', prediccionRoutes);
+app.use('/api', dashboardRoutes);
 
 // Test Route
 app.get('/api/test', (req, res) => {

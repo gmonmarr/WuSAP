@@ -1,4 +1,5 @@
 // pages/Dashboard.tsx
+import React from "react";
 import {
   Card,
   CardHeader,
@@ -13,74 +14,223 @@ import Header from "../components/Header";
 import "@ui5/webcomponents/dist/Button.js";
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from "react";
+import { dashboardService, authService, predictionsService } from "../services/api";
 
 
-const dataset = [
-    { month: "January", data: 65, data2: 120},
-    { month: "February", data: 59, data2: 120 },
-    { month: "March", data: 80, data2: 120 },
-    { month: "April", data: 81, data2: 120 },
-    { month: "May", data: 56, data2: 120 },
-    { month: "June", data: 55, data2: 120 },
-    { month: "July", data: 40, data2: 120 },
-  ];
-
-
-
-
-const calculatePercentage = (title) => {
-  switch (title) {
-    case "Ciclo de tiempo de pedido":
-      return (Math.random() * 30 + 50).toFixed(2) + "%"; // Example formula
-    case "Tasa de entrega a tiempo":
-      return (Math.random() * 10 + 85).toFixed(2) + "%";
-    case "Rotación de inventario":
-      return (Math.random() * 40 + 20).toFixed(2) + "%";
-    case "Tiempo de ciclo de aprobación de compras":
-      return (Math.random() * 20 + 60).toFixed(2) + "%";
-    case "Tasa de cumplimiento de proveedores":
-      return (Math.random() * 15 + 80).toFixed(2) + "%";
-    default:
-      return "N/A";
+// Formatear datos para gráficos
+const formatChartData = (salesTimeline) => {
+  if (!salesTimeline || salesTimeline.length === 0) {
+    return [
+      { day: "Sin datos", sales: 0, transactions: 0 }
+    ];
   }
+  
+  return salesTimeline.slice(0, 7).reverse().map(item => ({
+    day: new Date(item.SALEDAY).toLocaleDateString('es-ES', { weekday: 'short' }),
+    sales: parseFloat(item.DAILYSALES || 0),
+    transactions: parseInt(item.DAILYTRANSACTIONS || 0)
+  }));
 };
 
+// Formatear datos de productos para gráfica de donut
+const formatProductsData = (topProducts) => {
+  if (!topProducts || topProducts.length === 0) {
+    return [{ product: "Sin datos", quantity: 1 }];
+  }
+  
+  return topProducts.slice(0, 5).map(item => ({
+    product: item.PRODUCTNAME,
+    quantity: parseFloat(item.TOTALQUANTITYSOLD || 0)
+  }));
+};
+
+interface DashboardData {
+  kpis: {
+    totalSales: number;
+    pendingOrders: number;
+    lowStockProducts: number;
+    activeEmployees: number;
+    avgTicket: number;
+  };
+  employees: Array<{
+    employeeID: number;
+    name: string;
+    lastname: string;
+    role: string;
+    totalSales: number;
+    salesCount: number;
+    avgSale: number;
+  }>;
+  topProducts: Array<{
+    PRODUCTNAME: string;
+    TOTALQUANTITYSOLD: number;
+  }>;
+  salesTimeline: Array<{
+    SALEDAY: string;
+    DAILYSALES: number;
+    DAILYTRANSACTIONS: number;
+  }>;
+  ordersStatus: Array<{
+    STATUS: string;
+    ORDERCOUNT: number;
+  }>;
+}
+
 export function DashboardGeneral() {
-     const navigate = useNavigate();
+  const navigate = useNavigate();
   const [alerts, setAlerts] = useState([]);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
 
-    useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setError("No token available. Por favor inicia sesión.");
-      return;
-    }
-    setLoading(true);
-    fetch(`${import.meta.env.VITE_API_SERVER}/api/predicciones`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success && Array.isArray(data.alerts)) {
-          setAlerts(data.alerts);
-        } else {
-          setError("Formato de datos inválido");
+  // Obtener datos del dashboard
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      setLoading(true);
+      try {
+        console.log('Loading dashboard data...');
+        
+        // Verificar si hay un token válido antes de hacer las peticiones
+        const token = authService.getToken();
+        if (!token) {
+          setError("No hay token de autenticación. Por favor, inicia sesión nuevamente.");
+          return;
         }
+
+        // Cargar datos del dashboard y predicciones en paralelo
+        const [dashboardResponse, predictionsResponse] = await Promise.all([
+          dashboardService.getDashboardData(),
+          predictionsService.getPredictions()
+        ]);
+
+        console.log('Dashboard response:', dashboardResponse);
+        console.log('Predictions response:', predictionsResponse);
+
+        if (dashboardResponse.data.success) {
+          console.log('Dashboard data received:', dashboardResponse.data.data);
+          setDashboardData(dashboardResponse.data.data);
+        }
+
+        if (predictionsResponse.data.success && Array.isArray(predictionsResponse.data.alerts)) {
+          setAlerts(predictionsResponse.data.alerts);
+        } else if (predictionsResponse.data.message) {
+          console.error('Predictions API error:', predictionsResponse.data.message);
+          setError(`Error en predicciones: ${predictionsResponse.data.message}`);
+        }
+      } catch (err) {
+        console.error('Error loading dashboard:', err);
+        
+        // Si es un error de autenticación, redirigir al login
+        if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+          console.log('Token expirado o inválido, redirigiendo al login...');
+          authService.logout(); // Limpiar datos locales
+          navigate('/');
+          return;
+        }
+        
+        setError(err.message || 'Error al cargar el dashboard');
+      } finally {
         setLoading(false);
-      })
-      .catch(err => {
-        setError(err.message);
-        setLoading(false);
-      });
+      }
+    };
+
+    loadDashboardData();
   }, []);
-  
 
   const handleClick = () => {
-    // Pass the alerts data when navigating
     navigate("/alertas", { state: { alerts } });
+  };
+
+  const handleInventoryClick = () => {
+    navigate("/productos-sucursal");
+  };
+
+  const handleTrackingClick = () => {
+    navigate("/orden-status");
+  };
+
+  // Si está cargando o hay error, mostrar mensaje
+  if (loading) {
+    return (
+      <div style={{ height: "100vh", padding: "0 3rem" }}>
+        <Navbar />
+        <Header title={"Tablero"} />
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "50vh" }}>
+          <p>Cargando dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Datos formateados para gráficas
+  const formatEmployeesData = (employeesData) => {
+    console.log('Formatting employees data:', employeesData);
+    
+    if (!employeesData || employeesData.length === 0) {
+      console.log('No employee data available');
+      return [{ employee: "Sin datos", sales: 0 }];
+    }
+    
+    const formatted = employeesData.slice(0, 7).map(emp => {
+      console.log('Processing employee:', emp);
+      
+      // Crear nombre completo
+      const fullName = `${emp.name || emp.NAME || ''} ${emp.lastname || emp.LASTNAME || ''}`.trim();
+      const employeeName = fullName || `Empleado #${emp.employeeID || emp.EMPLOYEEID}`;
+      
+      // Agregar rol si está disponible
+      const role = emp.role || emp.ROLE;
+      const displayName = role ? `${employeeName} (${role})` : employeeName;
+      
+      const formattedEmp = {
+        employee: displayName,
+        sales: parseFloat(emp.totalSales || emp.TOTALSALES || 0)
+      };
+      
+      console.log('Formatted employee:', formattedEmp);
+      return formattedEmp;
+    });
+    
+    console.log('Final formatted employees:', formatted);
+    return formatted;
+  };
+
+  const formatOrdersData = (ordersData) => {
+    if (!ordersData || ordersData.length === 0) {
+      return [
+        { status: "Pendientes", value: 0 },
+        { status: "Aprobadas", value: 0 },
+        { status: "Entregadas", value: 0 },
+        { status: "Canceladas", value: 0 }
+      ];
+    }
+    
+    // Agrupar por estado usando los estados en español
+    const pendientes = ordersData.find(o => o.STATUS === 'Pendiente');
+    const aprobadas = ordersData.find(o => o.STATUS === 'Aprobada');
+    const confirmadas = ordersData.find(o => o.STATUS === 'Confirmada');
+    const entregadas = ordersData.find(o => o.STATUS === 'Entregada');
+    const canceladas = ordersData.find(o => o.STATUS === 'Cancelada');
+    
+    return [
+      { status: "Pendientes", value: parseInt(pendientes?.ORDERCOUNT || 0) },
+      { status: "Aprobadas", value: parseInt(aprobadas?.ORDERCOUNT || 0) },
+      { status: "Entregadas", value: parseInt((entregadas?.ORDERCOUNT || 0) + (confirmadas?.ORDERCOUNT || 0)) },
+      { status: "Canceladas", value: parseInt(canceladas?.ORDERCOUNT || 0) }
+    ];
+  };
+
+  const getKPIValue = (title, kpis) => {
+    if (!kpis) return "Cargando...";
+    
+    switch (title) {
+      case "Ventas Totales": return "$" + (kpis.totalSales || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 });
+      case "Órdenes Pendientes": return kpis.pendingOrders || 0;
+      case "Productos Bajo Stock": return kpis.lowStockProducts || 0;
+      case "Empleados Activos": return kpis.activeEmployees || 0;
+      case "Ticket Promedio": return "$" + (kpis.avgTicket || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 });
+      default: return "N/A";
+    }
   };
 
   {error && (
@@ -142,6 +292,7 @@ export function DashboardGeneral() {
                     >
                         <Button 
                             design="Transparent" 
+                            onClick={handleInventoryClick}
                             style={{
                                 width: "100%",
                                 height: "48px",
@@ -149,7 +300,8 @@ export function DashboardGeneral() {
                                 borderRadius: "4px",
                                 backgroundColor: "#fff",
                                 fontWeight: "normal",
-                                boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
+                                boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                                cursor: "pointer"
                             }}
                         >
                             Inventario
@@ -157,6 +309,7 @@ export function DashboardGeneral() {
                         
                         <Button 
                             design="Transparent" 
+                            onClick={handleTrackingClick}
                             style={{
                                 width: "100%",
                                 height: "48px",
@@ -164,7 +317,8 @@ export function DashboardGeneral() {
                                 borderRadius: "4px",
                                 backgroundColor: "#fff",
                                 fontWeight: "normal",
-                                boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
+                                boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                                cursor: "pointer"
                             }}
                         >
                             Seguimiento
@@ -212,7 +366,7 @@ export function DashboardGeneral() {
                 >
                     
                     <Card 
-                        header={<CardHeader titleText="Ciclo de tiempo de pedido" />}
+                        header={<CardHeader titleText="Ventas por Empleado" />}
                         style={{
                             width: "100%",
                             height: "100%",
@@ -222,9 +376,9 @@ export function DashboardGeneral() {
                         }}
                         >
                             <BarChart 
-                                dimensions={[{ accessor: "month" }]}
-                                measures={[{ accessor: "data", label: "Stock Price"}]}
-                                dataset={dataset}
+                                dimensions={[{ accessor: "employee" }]}
+                                measures={[{ accessor: "sales", label: "Ventas ($)", color: "#1976d2"}]}
+                                dataset={formatEmployeesData(dashboardData?.employees)}
                                 chartConfig={{
                                 legendPosition: "bottom",
                                 }}
@@ -267,12 +421,28 @@ export function DashboardGeneral() {
                         }}
                     >
                         {[
-                        "Ciclo de tiempo de pedido",
-                        "Tasa de entrega a tiempo",
-                        "Rotación de inventario",
-                        "Tiempo de ciclo de aprobación de compras",
-                        "Tasa de cumplimiento de proveedores",
-                        ].map((title) => (
+                          "Ventas Totales",
+                          "Órdenes Pendientes", 
+                          "Productos Bajo Stock",
+                          "Empleados Activos",
+                          "Ticket Promedio",
+                        ].map((title, index) => {
+                          const cardColors = [
+                            "#e3f2fd", // Azul muy claro para ventas
+                            "#bbdefb", // Azul claro para órdenes pendientes
+                            "#90caf9", // Azul medio claro para productos bajo stock
+                            "#64b5f6", // Azul medio para empleados
+                            "#42a5f5"  // Azul para ticket promedio
+                          ];
+                          const textColors = [
+                            "#0d47a1", // Azul muy oscuro
+                            "#1565c0", // Azul oscuro
+                            "#1976d2", // Azul medio oscuro
+                            "#1e88e5", // Azul medio
+                            "#2196f3"  // Azul estándar
+                          ];
+                          
+                          return (
                         <Card
                             key={title}
                             header={<CardHeader titleText={title} />}
@@ -283,18 +453,20 @@ export function DashboardGeneral() {
                             height: "100%",
                             borderRadius: "16px",
                             textAlign:"center",
-                            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
                             border: "1px solid #e5e5e5",
-                            alignItems: "center", // Center align content
-                            justifyContent: "space-between", // Ensure even spacing
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            backgroundColor: cardColors[index],
                             }}
                         >
-                            <div style={{ fontSize: "1rem", padding:"0.5rem"}}>
-                                {calculatePercentage(title)}
+                            <div style={{ fontSize: "1.2rem", padding:"0.5rem", fontWeight: "bold", color: textColors[index] }}>
+                                {getKPIValue(title, dashboardData?.kpis)}
                             </div>
                             
                         </Card>
-                        ))}
+                        );
+                        })}
                     </FlexBox>
                     </FlexBox>
 
@@ -312,7 +484,7 @@ export function DashboardGeneral() {
                     }}
                 >
                     <Card 
-                    header={<CardHeader titleText="Ciclo de tiempo de pedido" />}
+                    header={<CardHeader titleText="Ventas Diarias (Últimos 7 Días)" />}
                     style={{
                         width: "65%",
                         height: "100%",
@@ -322,9 +494,9 @@ export function DashboardGeneral() {
                     }}
                     >
                         <LineChart
-                            dimensions={[{ accessor: "month" }]}
-                            measures={[{ accessor: "data", label: "Stock Price"}]}
-                            dataset={dataset}
+                            dimensions={[{ accessor: "day" }]}
+                            measures={[{ accessor: "sales", label: "Ventas Diarias ($)", color: "#2196f3"}]}
+                            dataset={formatChartData(dashboardData?.salesTimeline)}
                             style={{
                                 height: "30vh",
                             }}
@@ -343,7 +515,7 @@ export function DashboardGeneral() {
                             height: "100%",
                         }} >
                             <Card
-                            header={<CardHeader titleText="Tasa de cumplimiento de proveedores" />}
+                            header={<CardHeader titleText="Productos Más Vendidos" />}
                             style={{
                                 width: "100%",
                                 height: "100%",
@@ -353,9 +525,9 @@ export function DashboardGeneral() {
                             }}
                             >
                             <DonutChart
-                                dimension={{ accessor: "month" }}
-                                measure={{ accessor: "data" }}
-                                dataset={dataset}
+                                dimension={{ accessor: "product" }}
+                                measure={{ accessor: "quantity", colors: ["#0d47a1", "#1565c0", "#1976d2", "#1e88e5", "#2196f3"] }}
+                                dataset={formatProductsData(dashboardData?.topProducts)}
                                 style={{ height:"30vh", fontSize:"0.5rem"}}
                                 chartConfig={{
                                 legendPosition: "bottom",
@@ -376,7 +548,7 @@ export function DashboardGeneral() {
                     }}
                 >
                     <Card
-                    header={<CardHeader titleText="Tasa de entrega a tiempo" />}
+                    header={<CardHeader titleText="Estado de Órdenes" />}
                     style={{
                         width: "100%",
                         height: "100%",
@@ -387,14 +559,14 @@ export function DashboardGeneral() {
                     }}
                     >
                         <ColumnChart
-                            dimensions={[{ accessor: "month" }]}
-                            measures={[
-                                { accessor: "data", label: "Stock Price - Set 1" },
-                                { accessor: "data2", label: "Stock Price - Set 2" }
-                            ]}
-                            dataset={dataset}
+                            dimensions={[{ accessor: "status" }]}
+                            measures={[{ accessor: "value", label: "Cantidad de Órdenes", color: "#42a5f5" }]}
+                            dataset={formatOrdersData(dashboardData?.ordersStatus)}
                             style={{
                                 height: "25vh", 
+                            }}
+                            chartConfig={{
+                                legendPosition: "top",
                             }}
                             />
                     </Card>
