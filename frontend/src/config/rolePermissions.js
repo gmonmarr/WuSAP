@@ -77,8 +77,6 @@ export const NAVIGATION_BY_ROLE = {
     { path: '/productos-sucursal', label: 'Inventario', icon: 'inventory' },
     { path: '/solicitudes', label: 'Solicitudes', icon: 'request' },
     { path: '/orden-status', label: 'Órdenes de Producción', icon: 'workflow-tasks' },
-    { path: '/catalogo-productos', label: 'Catálogo de Productos', icon: 'filter' },
-    { path: '/solicitar-material', label: 'Solicitar Material', icon: 'basket' },
   ],
   
   [ROLES.SALES]: [

@@ -12,8 +12,6 @@ import "@ui5/webcomponents-icons/dist/product.js";
 import "@ui5/webcomponents-icons/dist/inventory.js";
 import "@ui5/webcomponents-icons/dist/request.js";
 import "@ui5/webcomponents-icons/dist/workflow-tasks.js";
-import "@ui5/webcomponents-icons/dist/filter.js";
-import "@ui5/webcomponents-icons/dist/basket.js";
 
 const WarehouseMain = () => {
   const navigate = useNavigate();
@@ -37,17 +35,11 @@ const WarehouseMain = () => {
       description: 'Gestionar solicitudes de material',
       icon: 'request'
     },
-    {
+        {
       path: '/orden-status',
       title: 'Órdenes de Producción',
       description: 'Seguimiento de órdenes',
       icon: 'workflow-tasks'
-    },
-        {
-      path: '/catalogo-productos',
-      title: 'Catálogo de Productos',
-      description: 'Explorar catálogo completo',
-      icon: 'filter'
     }
   ];
 
