@@ -44,6 +44,7 @@ jobs:
         working-directory: backend
         run: |
           npm install --omit=dev
+          npm test
           cf set-env wusap-backend HANA_SERVER_NODE "${{ secrets.HANA_SERVER_NODE }}"
           cf set-env wusap-backend HANA_USER "${{ secrets.HANA_USER }}"
           cf set-env wusap-backend HANA_PASSWORD "${{ secrets.HANA_PASSWORD }}"
