@@ -1,4 +1,4 @@
-.admin-main-container {
+.warehouse-main-container {
   padding: 2rem;
   display: flex;
   justify-content: center;
@@ -7,9 +7,9 @@
   background-color: #f8f9fa;
 }
 
-.admin-card {
+.warehouse-card {
   width: 100%;
-  max-width: 900px;
+  max-width: 1200px;
   --_ui5-v1-23-0_card_header_padding: 2rem;
   --_ui5-v1-23-0_card_content_padding: 2rem;
   border-radius: 20px !important;
@@ -18,58 +18,58 @@
   backdrop-filter: blur(10px);
 }
 
-.admin-card-content {
+.warehouse-card-content {
   padding: 2rem;
 }
 
-.admin-menu-grid {
-  display: flex;
-  justify-content: center;
-  gap: 3rem;
-  flex-wrap: wrap;
+.warehouse-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
+  justify-items: center;
 }
 
-.admin-menu-item {
+.warehouse-menu-item {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 3rem 2rem;
+  padding: 2.5rem 2rem;
   background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
-  border-radius: 20px;
+  border-radius: 16px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   cursor: pointer;
   border: 2px solid transparent;
   position: relative;
   overflow: hidden;
-  min-width: 280px;
-  max-width: 320px;
+  width: 100%;
+  max-width: 300px;
 }
 
-.admin-menu-item::before {
+.warehouse-menu-item::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
   opacity: 0;
   transition: opacity 0.3s ease;
 }
 
-.admin-menu-item:hover::before {
+.warehouse-menu-item:hover::before {
   opacity: 1;
 }
 
-.admin-menu-item:hover {
+.warehouse-menu-item:hover {
   transform: translateY(-8px) scale(1.02);
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
-  border-color: #667eea;
+  border-color: #28a745;
 }
 
-.admin-menu-item:active {
+.warehouse-menu-item:active {
   transform: translateY(-4px) scale(0.98);
 }
 
@@ -77,22 +77,22 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  width: 70px;
+  height: 70px;
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
   border-radius: 50%;
   margin-bottom: 1.5rem;
-  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 8px 24px rgba(40, 167, 69, 0.3);
   transition: all 0.3s ease;
 }
 
-.admin-menu-item:hover .menu-item-icon {
+.warehouse-menu-item:hover .menu-item-icon {
   transform: scale(1.1);
-  box-shadow: 0 12px 32px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 12px 32px rgba(40, 167, 69, 0.4);
 }
 
 .menu-item-icon ui5-icon {
-  font-size: 2rem;
+  font-size: 1.8rem;
   color: #ffffff;
 }
 
@@ -101,80 +101,90 @@
 }
 
 .menu-item-text h3 {
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   font-weight: 600;
   margin: 0 0 0.8rem 0;
   color: #2c3e50;
   transition: color 0.3s ease;
 }
 
-.admin-menu-item:hover .menu-item-text h3 {
-  color: #667eea;
+.warehouse-menu-item:hover .menu-item-text h3 {
+  color: #28a745;
 }
 
 .menu-item-text p {
-  font-size: 1rem;
+  font-size: 0.95rem;
   margin: 0;
   color: #7f8c8d;
-  line-height: 1.6;
+  line-height: 1.5;
   transition: color 0.3s ease;
 }
 
-.admin-menu-item:hover .menu-item-text p {
+.warehouse-menu-item:hover .menu-item-text p {
   color: #5a6c7d;
 }
 
-/* Responsive design mejorado */
+/* Responsive design */
+@media (max-width: 1024px) {
+  .warehouse-menu-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+}
+
 @media (max-width: 768px) {
-  .admin-main-container {
+  .warehouse-main-container {
     padding: 1rem;
     background-color: #f8f9fa;
   }
   
-  .admin-menu-grid {
-    flex-direction: column;
-    gap: 2rem;
-    align-items: center;
+  .warehouse-menu-grid {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
   }
   
-  .admin-menu-item {
-    min-width: 100%;
+  .warehouse-menu-item {
+    padding: 2rem 1.5rem;
     max-width: 100%;
-    padding: 2.5rem 1.5rem;
   }
   
   .menu-item-icon {
-    width: 70px;
-    height: 70px;
+    width: 60px;
+    height: 60px;
   }
   
   .menu-item-icon ui5-icon {
-    font-size: 1.8rem;
+    font-size: 1.6rem;
   }
   
   .menu-item-text h3 {
-    font-size: 1.3rem;
+    font-size: 1.2rem;
   }
   
   .menu-item-text p {
-    font-size: 0.95rem;
+    font-size: 0.9rem;
   }
 }
 
 @media (max-width: 480px) {
-  .admin-main-container {
+  .warehouse-main-container {
     padding: 0.5rem;
   }
   
-  .admin-card {
+  .warehouse-card {
     margin: 0 0.5rem;
   }
   
-  .admin-card-content {
+  .warehouse-card-content {
     padding: 1.5rem;
   }
   
-  .admin-menu-item {
-    padding: 2rem 1rem;
+  .warehouse-menu-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
-}
+  
+  .warehouse-menu-item {
+    padding: 1.5rem 1rem;
+  }
+} 

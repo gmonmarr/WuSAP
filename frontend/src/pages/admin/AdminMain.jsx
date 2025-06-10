@@ -12,7 +12,6 @@ import "@ui5/webcomponents/dist/Card.js";
 import "@ui5/webcomponents/dist/CardHeader.js";
 import "@ui5/webcomponents-icons/dist/menu.js";
 import "@ui5/webcomponents-icons/dist/person-placeholder.js";
-import "@ui5/webcomponents-icons/dist/product.js";
 import "@ui5/webcomponents-icons/dist/map.js";
 
 const AdminMain = () => {
@@ -41,16 +40,6 @@ const AdminMain = () => {
                 <div className="menu-item-text">
                   <h3>Usuarios</h3>
                   <p>Gestionar usuarios del sistema</p>
-                </div>
-              </div>
-              
-              <div className="admin-menu-item" onClick={() => navigate('/productos')}>
-                <div className="menu-item-icon">
-                  <ui5-icon name="product" interactive></ui5-icon>
-                </div>
-                <div className="menu-item-text">
-                  <h3>Productos</h3>
-                  <p>Administrar catálogo de productos</p>
                 </div>
               </div>
               

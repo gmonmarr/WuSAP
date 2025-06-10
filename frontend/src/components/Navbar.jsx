@@ -8,16 +8,27 @@ import { getNavigationForRole } from '../config/rolePermissions.js';
 
 import "@ui5/webcomponents/dist/Avatar.js";
 import "@ui5/webcomponents/dist/Icon.js";
-import "@ui5/webcomponents-icons/dist/message-popup.js";
-import "@ui5/webcomponents-icons/dist/bell.js";
+import "@ui5/webcomponents-icons/dist/discussion-2.js";
+import "@ui5/webcomponents-icons/dist/alert.js";
 import "@ui5/webcomponents-icons/dist/menu.js";
-import "@ui5/webcomponents-icons/dist/home.js";
+import "@ui5/webcomponents-icons/dist/grid.js";
 import "@ui5/webcomponents-icons/dist/add-employee.js";
 import "@ui5/webcomponents-icons/dist/group.js";
-import "@ui5/webcomponents-icons/dist/business-objects-experience.js";
-import "@ui5/webcomponents-icons/dist/cart.js";
+import "@ui5/webcomponents-icons/dist/product.js";
+import "@ui5/webcomponents-icons/dist/basket.js";
 import "@ui5/webcomponents-icons/dist/log.js";
-import "@ui5/webcomponents-icons/dist/map.js";
+import "@ui5/webcomponents-icons/dist/locate-me.js";
+import "@ui5/webcomponents-icons/dist/order-status.js";
+import "@ui5/webcomponents-icons/dist/inventory.js";
+import "@ui5/webcomponents-icons/dist/sales-document.js";
+import "@ui5/webcomponents-icons/dist/request.js";
+import "@ui5/webcomponents-icons/dist/filter.js";
+import "@ui5/webcomponents-icons/dist/trend-up.js";
+import "@ui5/webcomponents-icons/dist/workflow-tasks.js";
+import "@ui5/webcomponents-icons/dist/monitor-payments.js";
+import "@ui5/webcomponents-icons/dist/shipping-status.js";
+import "@ui5/webcomponents-icons/dist/manager.js";
+import "@ui5/webcomponents-icons/dist/building.js";
 
 const Navbar = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -89,10 +100,10 @@ const Navbar = () => {
         </div>
         <div className="navbar-right">
           <button className="icon-button chat-button">
-            <ui5-icon name="message-popup" class="nav-icon"></ui5-icon>
+            <ui5-icon name="discussion-2" class="nav-icon"></ui5-icon>
           </button>
           <button className="icon-button notification-button">
-            <ui5-icon name="bell" class="nav-icon"></ui5-icon>
+            <ui5-icon name="alert" class="nav-icon"></ui5-icon>
           </button>
           <button className="icon-button profile-button" onClick={() => handleNavigation('/perfil')}>
             <ui5-avatar 

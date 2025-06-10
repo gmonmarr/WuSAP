@@ -24,6 +24,7 @@ import OrderProvider from './pages/Proveedor/OrderProvider';
 import ProductsPage from './pages/general/ProductsPage';
 import ProductosSucursalPage from './pages/general/ProductosSucursalPage';
 import Alertas from './pages/general/Alertas';
+import WarehouseMain from './pages/Proveedor/WarehouseMain';
 
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -64,6 +65,13 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path='/historial-ventas' element={
           <ProtectedRoute allowedRoles={[ROLES.MANAGER, ROLES.SALES]}>
             <SalesHistory />
+          </ProtectedRoute>
+        } />
+        
+        {/* Warehouse Manager Landing Page */}
+        <Route path="/warehouse" element={
+          <ProtectedRoute allowedRoles={[ROLES.WAREHOUSE_MANAGER]}>
+            <WarehouseMain />
           </ProtectedRoute>
         } />
         
