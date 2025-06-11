@@ -15,6 +15,7 @@ import salesRoutes from './routes/salesRoutes.js';
 import prediccionRoutes from './routes/prediccionRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
 import hanaPool from './db/hanaPool.js';
+import { specs, swaggerUi } from './swagger/swaggerConfig.js';
 
 dotenv.config();
 
@@ -56,6 +57,22 @@ app.use('/api', locationRoutes);
 app.use('/api', salesRoutes);
 app.use('/api', prediccionRoutes);
 app.use('/api', dashboardRoutes);
+
+// Swagger Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
+  explorer: true,
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: "WuSAP API Documentation",
+  swaggerOptions: {
+    persistAuthorization: true,
+    displayRequestDuration: true,
+    docExpansion: "none",
+    filter: true,
+    showExtensions: true,
+    showCommonExtensions: true,
+    tryItOutEnabled: true
+  }
+}));
 
 // Test Route
 app.get('/api/test', (req, res) => {
