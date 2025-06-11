@@ -32,7 +32,6 @@ export const ROUTE_PERMISSIONS = {
   
   // Productos - Warehouse Manager
   '/productos': [ROLES.WAREHOUSE_MANAGER],
-  '/solicitar-material': [ROLES.WAREHOUSE_MANAGER],
   
   // Inventario - Owner, Manager, Warehouse Manager
   '/inventario': [ROLES.OWNER, ROLES.MANAGER, ROLES.WAREHOUSE_MANAGER],

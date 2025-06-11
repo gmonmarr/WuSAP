@@ -20,7 +20,7 @@ import Locations from './pages/admin/Locations';
 // import { ProductCatalog } from './pages/ListaProductos';
 import SalesHistory from './pages/general/SalesHistory';
 import Requests from './pages/Proveedor/Requests';
-import OrderProvider from './pages/Proveedor/OrderProvider';
+
 import ProductsPage from './pages/general/ProductsPage';
 import ProductosSucursalPage from './pages/general/ProductosSucursalPage';
 import Alertas from './pages/general/Alertas';
@@ -81,11 +81,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             <ProductsPage />
           </ProtectedRoute>
         } />
-        <Route path='/solicitar-material' element={
-          <ProtectedRoute allowedRoles={[ROLES.WAREHOUSE_MANAGER]}>
-            <OrderProvider />
-          </ProtectedRoute>
-        } />
+
         <Route path='/catalogo-productos' element={
           <ProtectedRoute allowedRoles={[ROLES.WAREHOUSE_MANAGER]}>
             <ProductsPage />

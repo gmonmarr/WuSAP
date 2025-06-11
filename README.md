@@ -170,7 +170,7 @@ WuSAP/
 │   │   │   ├── Profile.jsx
 │   │   │   └── Proveedor
 │   │   │       ├── Inventario.tsx
-│   │   │       ├── OrderProvider.jsx
+
 │   │   │       └── Requests.jsx
 │   │   └── services
 │   │       └── api.js
@@ -188,7 +188,7 @@ WuSAP/
 - **OrdenStatus**: Seguimiento de estado de órdenes
 - **OrderPage**: Gestión de pedidos
 - **Requests**: Gestión de solicitudes
-- **OrderProvider**: Interfaz para proveedores
+
 
 ### Backend
 - **AuthController**: Manejo de autenticación
