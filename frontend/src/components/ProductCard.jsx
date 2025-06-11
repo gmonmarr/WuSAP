@@ -173,6 +173,7 @@ const ProductCard = ({
                   color="primary"
                   size="small"
                   onClick={() => onEditClick && onEditClick(product)}
+                  data-testid="edit-button"
                   sx={{ 
                     bgcolor: 'rgba(25, 118, 210, 0.08)',
                     '&:hover': {
@@ -189,6 +190,7 @@ const ProductCard = ({
                   color="error"
                   size="small"
                   onClick={() => onDeleteClick && onDeleteClick(product)}
+                  data-testid="delete-button"
                   sx={{ 
                     bgcolor: 'rgba(211, 47, 47, 0.08)',
                     '&:hover': {
