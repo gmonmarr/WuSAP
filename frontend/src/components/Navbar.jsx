@@ -99,12 +99,6 @@ const Navbar = () => {
           </button>
         </div>
         <div className="navbar-right">
-          <button className="icon-button chat-button">
-            <ui5-icon name="discussion-2" class="nav-icon"></ui5-icon>
-          </button>
-          <button className="icon-button notification-button">
-            <ui5-icon name="alert" class="nav-icon"></ui5-icon>
-          </button>
           <button className="icon-button profile-button" onClick={() => handleNavigation('/perfil')}>
             <ui5-avatar 
               initials={userInitials || "?"}
