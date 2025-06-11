@@ -13,7 +13,6 @@ export const ROLES = {
 export const ROUTE_PERMISSIONS = {
   // Rutas públicas (no requieren autenticación)
   '/': [],
-  '/inicio-sesion': [],
   
   // Rutas que requieren autenticación pero sin restricción de rol específico
   '/perfil': ['authenticated'],
@@ -27,6 +26,9 @@ export const ROUTE_PERMISSIONS = {
   // Ventas - Manager, Sales
   '/registrar-ventas': [ROLES.MANAGER, ROLES.SALES],
   '/historial-ventas': [ROLES.MANAGER, ROLES.SALES],
+  
+  // Warehouse Manager Landing Page
+  '/warehouse': [ROLES.WAREHOUSE_MANAGER],
   
   // Productos - Warehouse Manager
   '/productos': [ROLES.WAREHOUSE_MANAGER],
@@ -52,44 +54,40 @@ export const ROUTE_PERMISSIONS = {
 // Configuración de navegación por rol
 export const NAVIGATION_BY_ROLE = {
   [ROLES.OWNER]: [
-    { path: '/tablero', label: 'Tablero', icon: 'home' },
-    { path: '/inventario', label: 'Estadísticas Inventario', icon: 'map' },
-    { path: '/productos-sucursal', label: 'Inventario', icon: 'business-objects-experience' },
-    { path: '/orden-status', label: 'Órdenes de Producción', icon: 'business-objects-experience' },
-    { path: '/alertas', label: 'Alertas', icon: 'bell' }
+    { path: '/tablero', label: 'Tablero', icon: 'grid' },
+    { path: '/productos-sucursal', label: 'Inventario', icon: 'inventory' },
+    { path: '/orden-status', label: 'Órdenes de Producción', icon: 'order-status' },
+    { path: '/alertas', label: 'Alertas', icon: 'alert' }
   ],
   
   [ROLES.MANAGER]: [
-    { path: '/tablero', label: 'Tablero', icon: 'home' },
-    { path: '/hacer-pedido', label: 'Hacer Pedido', icon: 'cart' },
-    { path: '/registrar-ventas', label: 'Registrar Ventas', icon: 'cart' },
-    { path: '/historial-ventas', label: 'Historial de Ventas', icon: 'business-objects-experience' },
-    { path: '/inventario', label: 'Estadísticas Inventario', icon: 'map' },
-    { path: '/productos-sucursal', label: 'Inventario', icon: 'business-objects-experience' },
-    { path: '/solicitudes', label: 'Solicitudes', icon: 'business-objects-experience' },
-    { path: '/orden-status', label: 'Órdenes de Producción', icon: 'business-objects-experience' },
-    { path: '/alertas', label: 'Alertas', icon: 'bell' }
+    { path: '/tablero', label: 'Tablero', icon: 'grid' },
+    { path: '/productos-sucursal', label: 'Inventario', icon: 'inventory' },
+    { path: '/hacer-pedido', label: 'Hacer Pedido', icon: 'basket' },
+    { path: '/orden-status', label: 'Órdenes de Producción', icon: 'order-status' },
+    { path: '/solicitudes', label: 'Solicitudes', icon: 'request' },
+    { path: '/registrar-ventas', label: 'Registrar Ventas', icon: 'sales-document' },
+    { path: '/historial-ventas', label: 'Historial de Ventas', icon: 'trend-up' },
+    { path: '/alertas', label: 'Alertas', icon: 'alert' }
   ],
   
   [ROLES.WAREHOUSE_MANAGER]: [
-    { path: '/productos', label: 'Gestión de Productos', icon: 'business-objects-experience' },
-    { path: '/solicitar-material', label: 'Remove: Solicitar Material', icon: 'cart' },
-    { path: '/inventario', label: 'Estadísticas Inventario', icon: 'map' },
-    { path: '/productos-sucursal', label: 'Inventario', icon: 'business-objects-experience' },
-    { path: '/solicitudes', label: 'Solicitudes', icon: 'business-objects-experience' },
-    { path: '/orden-status', label: 'Órdenes de Producción', icon: 'business-objects-experience' },
-    { path: '/catalogo-productos', label: 'Catálogo de Productos', icon: 'business-objects-experience' },
+    { path: '/warehouse', label: 'Panel de Almacén', icon: 'building' },
+    { path: '/productos', label: 'Gestión de Productos', icon: 'product' },
+    { path: '/productos-sucursal', label: 'Inventario', icon: 'inventory' },
+    { path: '/solicitudes', label: 'Solicitudes', icon: 'request' },
+    { path: '/orden-status', label: 'Órdenes de Producción', icon: 'workflow-tasks' },
   ],
   
   [ROLES.SALES]: [
-    { path: '/registrar-ventas', label: 'Registrar Ventas', icon: 'cart' },
-    { path: '/historial-ventas', label: 'Historial de Ventas', icon: 'business-objects-experience' }
+    { path: '/registrar-ventas', label: 'Registrar Ventas', icon: 'sales-document' },
+    { path: '/historial-ventas', label: 'Historial de Ventas', icon: 'monitor-payments' }
   ],
   
   [ROLES.ADMIN]: [
+    { path: '/admin', label: 'Panel Admin', icon: 'manager' },
     { path: '/lista-usuarios', label: 'Gestionar Usuarios', icon: 'group' },
-    { path: '/admin', label: 'Panel Admin', icon: 'group' },
-    { path: '/admin/locations', label: 'Ubicaciones', icon: 'map' }
+    { path: '/admin/locations', label: 'Ubicaciones', icon: 'building' }
   ]
 };
 
@@ -127,7 +125,7 @@ export const getDefaultPageForRole = (userRole) => {
     [ROLES.OWNER]: '/tablero',
     [ROLES.MANAGER]: '/tablero', 
     [ROLES.SALES]: '/registrar-ventas',
-    [ROLES.WAREHOUSE_MANAGER]: '/productos-sucursal',
+    [ROLES.WAREHOUSE_MANAGER]: '/warehouse',
     [ROLES.ADMIN]: '/admin'
   };
   
