@@ -16,7 +16,9 @@ export const getDashboardKPIs = async (storeID = null, userRole = null) => {
         query += ` JOIN WUSAP.Employees e ON s.employeeID = e.employeeID WHERE e.storeID = ${storeID}`;
       }
       
-      conn.exec(query, (err, result) => err ? reject(err) : resolve(result[0] || {}));
+      conn.exec(query, (err, result) => 
+        err ? reject(err instanceof Error ? err : new Error(err)) : resolve(result[0] || {})
+      );
     });
 
     // Consulta simplificada para órdenes
@@ -27,7 +29,9 @@ export const getDashboardKPIs = async (storeID = null, userRole = null) => {
         query = `SELECT COUNT(*) as pendingCount FROM WUSAP.Orders o WHERE o.storeID = ${storeID} AND o.status = 'Pendiente'`;
       }
       
-      conn.exec(query, (err, result) => err ? reject(err) : resolve(result[0] || {}));
+      conn.exec(query, (err, result) => 
+        err ? reject(err instanceof Error ? err : new Error(err)) : resolve(result[0] || {})
+      );
     });
 
     // Consulta mejorada para inventario bajo (productos críticos o con menos del 20% del stock promedio)
@@ -43,7 +47,9 @@ export const getDashboardKPIs = async (storeID = null, userRole = null) => {
                         i.quantity < (SELECT AVG(quantity) * 0.2 FROM WUSAP.Inventory WHERE quantity > 0 AND storeID = ${storeID}))`;
       }
       
-      conn.exec(query, (err, result) => err ? reject(err) : resolve(result[0] || {}));
+      conn.exec(query, (err, result) => 
+        err ? reject(err instanceof Error ? err : new Error(err)) : resolve(result[0] || {})
+      );
     });
 
     // Consulta simplificada para empleados
@@ -54,7 +60,9 @@ export const getDashboardKPIs = async (storeID = null, userRole = null) => {
         query = `SELECT COUNT(*) as employeeCount FROM WUSAP.Employees e WHERE e.storeID = ${storeID} AND e.isActive = TRUE`;
       }
       
-      conn.exec(query, (err, result) => err ? reject(err) : resolve(result[0] || {}));
+      conn.exec(query, (err, result) => 
+        err ? reject(err instanceof Error ? err : new Error(err)) : resolve(result[0] || {})
+      );
     });
 
     return {
@@ -89,7 +97,9 @@ export const getSalesByEmployee = async (storeID = null, userRole = null) => {
     }
 
     const employees = await new Promise((resolve, reject) => {
-      conn.exec(employeeQuery, (err, result) => err ? reject(err) : resolve(result || []));
+      conn.exec(employeeQuery, (err, result) => 
+        err ? reject(err instanceof Error ? err : new Error(err)) : resolve(result || [])
+      );
     });
 
     // Luego, obtener ventas por empleado
@@ -102,7 +112,9 @@ export const getSalesByEmployee = async (storeID = null, userRole = null) => {
      GROUP BY s.employeeID`;
 
     const sales = await new Promise((resolve, reject) => {
-      conn.exec(salesQuery, (err, result) => err ? reject(err) : resolve(result || []));
+      conn.exec(salesQuery, (err, result) => 
+        err ? reject(err instanceof Error ? err : new Error(err)) : resolve(result || [])
+      );
     });
 
     // Combinar datos de empleados con sus ventas
@@ -145,7 +157,9 @@ export const getTopProducts = async (storeID = null, userRole = null) => {
     query += ` GROUP BY p.productID, p.name ORDER BY totalQuantitySold DESC LIMIT 10`;
 
     return await new Promise((resolve, reject) => {
-      conn.exec(query, (err, result) => err ? reject(err) : resolve(result || []));
+      conn.exec(query, (err, result) => 
+        err ? reject(err instanceof Error ? err : new Error(err)) : resolve(result || [])
+      );
     });
   } finally {
     pool.release(conn);
@@ -169,7 +183,9 @@ export const getSalesTimeline = async (storeID = null, userRole = null) => {
     query += ` GROUP BY s.saleDate ORDER BY s.saleDate DESC`;
 
     return await new Promise((resolve, reject) => {
-      conn.exec(query, (err, result) => err ? reject(err) : resolve(result || []));
+      conn.exec(query, (err, result) => 
+        err ? reject(err instanceof Error ? err : new Error(err)) : resolve(result || [])
+      );
     });
   } finally {
     pool.release(conn);
@@ -192,7 +208,9 @@ export const getOrdersStatus = async (storeID = null, userRole = null) => {
     query += ` GROUP BY o.status ORDER BY orderCount DESC`;
 
     return await new Promise((resolve, reject) => {
-      conn.exec(query, (err, result) => err ? reject(err) : resolve(result || []));
+      conn.exec(query, (err, result) => 
+        err ? reject(err instanceof Error ? err : new Error(err)) : resolve(result || [])
+      );
     });
   } finally {
     pool.release(conn);
@@ -218,10 +236,11 @@ export const getStoreInfo = async (storeID) => {
          WHERE l.storeID = ?
          GROUP BY l.storeID, l.name, l.location`,
         [storeID],
-        (err, result) => err ? reject(err) : resolve(result[0])
+        (err, result) => 
+          err ? reject(err instanceof Error ? err : new Error(err)) : resolve(result[0])
       );
     });
   } finally {
     pool.release(conn);
   }
-}; 
+};
