@@ -57,7 +57,7 @@ import {
       const result = await assignInventoryToStore(productID, storeID, quantity, employeeID);
       res.status(201).json(result);
     } catch (error) {
-      res.status(500).json({ error: 'Error al asignar inventario' });
+      res.status(500).json({ error: `Error al asignar inventario: ${error.message || error}` });
     }
   };
   

@@ -230,8 +230,6 @@ export async function checkLocationsTable() {
     } else {
       return { exists: false, structure: null };
     }
-  } catch (err) {
-    throw err;
   } finally {
     await pool.release(conn);
   }
