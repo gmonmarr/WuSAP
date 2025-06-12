@@ -11,7 +11,7 @@ function runPythonScript(args = []) {
   return new Promise((resolve, reject) => {
     const scriptPath = path.join(__dirname, '..', 'scripts', 'predicciones.py');
 
-    const pyProcess = spawn('python', [scriptPath, ...args]);
+    const pyProcess = spawn('python3', [scriptPath, ...args]);
 
     let output = '';
     let errorOutput = '';
