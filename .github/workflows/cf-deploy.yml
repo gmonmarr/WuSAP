@@ -46,10 +46,7 @@ jobs:
           npm install
           npm run lint
           npm test --coverage
-          ls
-          ls -l coverage
 
-      # SONARQUBE SCAN: BACKEND
       - name: 🔍 SonarQube Scan (Backend)
         working-directory: backend
         env:
@@ -66,7 +63,7 @@ jobs:
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.login=$SONAR_TOKEN \
             -Dsonar.exclusions=node_modules/**,coverage/**,tests/**,middleware/**,controllers/**,routes/**,db/** \
-            -Dsonar.coverage.exclusions=**/*.test.js,**/*.config.cjs,app.js
+            -Dsonar.coverage.exclusions=**/*.test.js,**/*.config.cjs,app.js \
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
 
       - name: 🚀 Deploy Backend
