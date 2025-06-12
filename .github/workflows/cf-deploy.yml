@@ -62,7 +62,10 @@ jobs:
             -Dsonar.projectKey=$SONAR_PROJECT_KEY \
             -Dsonar.sources=. \
             -Dsonar.host.url=$SONAR_HOST_URL \
-            -Dsonar.login=$SONAR_TOKEN
+            -Dsonar.login=$SONAR_TOKEN \
+            -Dsonar.exclusions=node_modules/**,coverage/**,tests/**,middleware/**,controllers/**,routes/**,db/** \
+            -Dsonar.coverage.exclusions=**/*.test.js,**/*.config.cjs,app.js
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
 
       - name: 🚀 Deploy Backend
         working-directory: backend
@@ -113,7 +116,11 @@ jobs:
             -Dsonar.projectKey=$SONAR_PROJECT_KEY \
             -Dsonar.sources=. \
             -Dsonar.host.url=$SONAR_HOST_URL \
-            -Dsonar.login=$SONAR_TOKEN
+            -Dsonar.login=$SONAR_TOKEN \
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
+            -Dsonar.exclusions=node_modules/**,coverage/** \
+            -Dsonar.coverage.exclusions=**/*.test.js,**/*.config.cjs
+
 
       - name: 🏗️ Build Frontend
         working-directory: frontend
