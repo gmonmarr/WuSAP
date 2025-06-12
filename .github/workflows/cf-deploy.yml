@@ -45,7 +45,7 @@ jobs:
         run: |
           npm install
           npm run lint
-          npm test
+          npm test --coverage
 
       # SONARQUBE SCAN: BACKEND
       - name: 🔍 SonarQube Scan (Backend)
@@ -92,10 +92,11 @@ jobs:
             exit 1
           }
 
-      - name: 🤓☝️ Backend testing
+      - name: 🤓☝️ Frontend testing
         working-directory: frontend
         run: |
           npm install
+          npm test --coverage
           npm run lint
 
       - name: 🔍 SonarQube Scan (Frontend)
