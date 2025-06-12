@@ -46,6 +46,7 @@ jobs:
           npm install
           npm run lint
           npm test --coverage
+          ls
 
       # SONARQUBE SCAN: BACKEND
       - name: 🔍 SonarQube Scan (Backend)
