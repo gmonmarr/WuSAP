@@ -18,63 +18,25 @@ WuSAP es un sistema de gestión de materiales diseñado para facilitar el seguim
 
 ## Instalación
 
-1. Clonar el repositorio:
+Clonar el repositorio:
 ```bash
 git clone https://github.com/gmonmarr/WuSAP.git
 cd WuSAP
 ```
 
-2. Instalar dependencias del frontend:
+### Frontend
+1. Instalar dependencias del frontend
 ```bash
 cd frontend
 npm install
 ```
 
-3. Instalar dependencias del backend:
+2. Crear archivo .env
 ```bash
-cd ../backend
-npm install
+VITE_API_SERVER=http://localhost:3000
 ```
 
-## Configuración
-
-### Frontend
-1. Navegar al directorio del frontend:
-```bash
-cd frontend
-```
-
-2. Crear un archivo `.env` en la raíz del frontend con las siguientes variables:
-```
-VITE_API_URL=http://localhost:3000
-```
-
-### Backend
-1. Navegar al directorio del backend:
-```bash
-cd backend
-```
-
-2. Crear un archivo `.env` en la raíz del backend con las siguientes variables:
-```
-HANA_SERVER_NODE=[ligaHANAapi:443]
-HANA_USER=[USUARIOHANA]
-HANA_PASSWORD=[CONTRASEÑAHANA]
-HANA_SCHEMA=WUSAP
-
-JWT_SECRET=[secretoJWT]
-JWT_EXPIRATION=8h
-```
-
-## Ejecución del Proyecto
-
-### Frontend
-1. Navegar al directorio del frontend:
-```bash
-cd frontend
-```
-
-2. Iniciar el servidor de desarrollo:
+3. Correr
 ```bash
 npm run dev
 ```
@@ -82,55 +44,149 @@ npm run dev
 El frontend estará disponible en `http://localhost:5173`
 
 ### Backend
-1. Navegar al directorio del backend:
+
+1. Instalar dependencias del backend
 ```bash
-cd backend
+cd /backend
+npm install
+pip install -r requirements.txt
 ```
 
-2. Iniciar el servidor:
+2. Crear el .env
 ```bash
-npm start
+HANA_SERVER_NODE=
+HANA_USER=
+HANA_PASSWORD=
+HANA_SCHEMA=
+CORS_ALLOWED_ORIGINS=http://localhost:5173
+JWT_SECRET=
+JWT_EXPIRATION=
+```
+
+3. Correr
+```bash
+npm run dev
 ```
 
 El backend estará disponible en `http://localhost:3000`
 
+
 ## Estructura del Proyecto
 
 ```
-WuSAP/
+WuSAP
 ├── backend
 │   ├── app.js
+│   ├── babel.config.cjs
 │   ├── controllers
 │   │   ├── authController.js
+│   │   ├── dashboardController.js
+│   │   ├── employeeController.js
 │   │   ├── inventoryController.js
-│   │   └── productController.js
+│   │   ├── locationController.js
+│   │   ├── orderController.js
+│   │   ├── prediccionController.js
+│   │   ├── productController.js
+│   │   ├── salesController.js
+│   │   └── tableLogController.js
+│   ├── coverage
+│   │   ├── cobertura-coverage.xml
+│   │   ├── lcov-report
+│   │   │   ├── base.css
+│   │   │   ├── block-navigation.js
+│   │   │   ├── db
+│   │   │   │   ├── hanaPool.js.html
+│   │   │   │   └── index.html
+│   │   │   ├── favicon.png
+│   │   │   ├── index.html
+│   │   │   ├── prettify.css
+│   │   │   ├── prettify.js
+│   │   │   ├── services
+│   │   │   │   ├── authService.js.html
+│   │   │   │   ├── employeeService.js.html
+│   │   │   │   ├── index.html
+│   │   │   │   ├── inventoryService.js.html
+│   │   │   │   ├── locationService.js.html
+│   │   │   │   ├── orderService.js.html
+│   │   │   │   ├── productService.js.html
+│   │   │   │   ├── salesService.js.html
+│   │   │   │   └── tableLogService.js.html
+│   │   │   ├── sort-arrow-sprite.png
+│   │   │   └── sorter.js
+│   │   └── lcov.info
 │   ├── db
 │   │   └── hanaPool.js
+│   ├── eslint.config.js
+│   ├── jest-to-csv.js
+│   ├── jest.config.cjs
+│   ├── manifest.yml
 │   ├── middleware
 │   │   ├── authMiddleware.js
 │   │   ├── handleValidation.js
 │   │   ├── logMiddleware.js
 │   │   └── validation.js
-│   ├── models
-│   ├── node_modules
 │   ├── package-lock.json
 │   ├── package.json
+│   ├── requirements.txt
 │   ├── routes
 │   │   ├── authRoutes.js
+│   │   ├── dashboardRoutes.js
+│   │   ├── employeeRoutes.js
 │   │   ├── inventoryRoutes.js
-│   │   └── productRoutes.js
-│   └── services
-│       ├── authService.js
-│       ├── inventoryService.js
-│       └── productService.js
+│   │   ├── locationRoutes.js
+│   │   ├── orderRoutes.js
+│   │   ├── prediccionRoutes.js
+│   │   ├── productRoutes.js
+│   │   └── salesRoutes.js
+│   ├── sales_predictor.joblib
+│   ├── scripts
+│   │   ├── inserts.py
+│   │   ├── predicciones.py
+│   │   └── sales_predictor.joblib
+│   ├── services
+│   │   ├── authService.js
+│   │   ├── dashboardService.js
+│   │   ├── employeeService.js
+│   │   ├── inventoryService.js
+│   │   ├── locationService.js
+│   │   ├── orderService.js
+│   │   ├── productService.js
+│   │   ├── salesService.js
+│   │   └── tableLogService.js
+│   ├── swagger
+│   │   ├── docs
+│   │   │   ├── authEndpoints.js
+│   │   │   ├── dashboardEndpoints.js
+│   │   │   ├── orderEndpoints.js
+│   │   │   ├── otherEndpoints.js
+│   │   │   ├── productEndpoints.js
+│   │   │   ├── salesEndpoints.js
+│   │   │   └── schemas.js
+│   │   ├── README.md
+│   │   └── swaggerConfig.js
+│   └── tests
+│       ├── authService.test.js
+│       ├── createOrder.test.js
+│       ├── employeeService.test.js
+│       ├── inventoryService.test.js
+│       ├── locationService.test.js
+│       ├── orderService.test.js
+│       ├── productService.test.js
+│       ├── salesService.test.js
+│       ├── tableLogService.test.js
+│       └── updateOrder.test.js
 ├── Documentos
 │   ├── Documento de Administración.pdf
 │   ├── Plan de Pruebas.pdf
-│   └── SRS - Documento de Requerimientos con apego en estándares internacionales.pdf
+│   ├── SRS - Documento de Requerimientos con apego en estándares internacionales.pdf
+│   └── WUSAPschema.sql
 ├── frontend
+│   ├── babel.config.cjs
 │   ├── eslint.config.js
 │   ├── index.html
-│   ├── node_modules
+│   ├── jest-css-stub.js
+│   ├── jest.config.mjs
+│   ├── manifest.yml
 │   ├── package-lock.json
 │   ├── package.json
 │   ├── README.md
@@ -138,6 +194,8 @@ WuSAP/
 │   │   ├── App.css
 │   │   ├── App.jsx
 │   │   ├── components
+│   │   │   ├── __tests__
+│   │   │   │   └── ProductCard.test.jsx
 │   │   │   ├── AvisoPerdidaInfo.jsx
 │   │   │   ├── Header.jsx
 │   │   │   ├── ListComponent.css
@@ -146,38 +204,51 @@ WuSAP/
 │   │   │   ├── Navbar.css
 │   │   │   ├── Navbar.jsx
 │   │   │   ├── OrdenStatusCard.jsx
-│   │   │   └── ProductCard.jsx
+│   │   │   ├── ProductCard.jsx
+│   │   │   └── ProtectedRoute.jsx
+│   │   ├── config
+│   │   │   └── rolePermissions.js
 │   │   ├── hooks
 │   │   │   └── useBlocker.jsx
 │   │   ├── main.jsx
 │   │   ├── pages
 │   │   │   ├── admin
-│   │   │   │   ├── AddUser.css
-│   │   │   │   ├── AddUser.jsx
 │   │   │   │   ├── AdminMain.css
 │   │   │   │   ├── AdminMain.jsx
+│   │   │   │   ├── Locations.jsx
 │   │   │   │   ├── UserList.css
 │   │   │   │   └── UserList.jsx
 │   │   │   ├── Dashboard.tsx
 │   │   │   ├── general
-│   │   │   │   ├── DashVentas.txt
+│   │   │   │   ├── Alertas.jsx
 │   │   │   │   ├── OrdenStatus.jsx
 │   │   │   │   ├── OrdenStatusInfo.jsx
-│   │   │   │   ├── OrderHistory.jsx
-│   │   │   │   └── OrderPage.jsx
+│   │   │   │   ├── OrderPage.jsx
+│   │   │   │   ├── ProductosSucursalPage.jsx
+│   │   │   │   ├── ProductsPage.jsx
+│   │   │   │   ├── SalesHistory.jsx
+│   │   │   │   └── SalesPage.jsx
 │   │   │   ├── ListaProductos.txt
 │   │   │   ├── Login.jsx
+│   │   │   ├── Login.test.jsx
 │   │   │   ├── Profile.jsx
 │   │   │   └── Proveedor
 │   │   │       ├── Inventario.tsx
-
-│   │   │       └── Requests.jsx
-│   │   └── services
-│   │       └── api.js
+│   │   │       ├── Requests.jsx
+│   │   │       ├── WarehouseMain.css
+│   │   │       └── WarehouseMain.jsx
+│   │   ├── services
+│   │   │   └── api.js
+│   │   ├── setupTests.js
+│   │   └── vite-env.d.ts
+│   ├── tests
+│   │   ├── admin_navigation.py
+│   │   ├── store_manager_navigation.py
+│   │   └── warehouse_manager_navigation.py
 │   └── vite.config.js
 └── README.md
 
-20 directories, 59 files
+28 directories, 145 files
 ```
 
 ## Componentes Principales
