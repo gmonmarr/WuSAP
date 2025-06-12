@@ -1,8 +1,8 @@
 name: Deploy Backend & Frontend to SAP CF
 
 on:
-  # push:
-  #   branches: [sap-cf]
+  push:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -40,13 +40,29 @@ jobs:
           cf auth "$CF_USERNAME" "$CF_PASSWORD"
           cf target -o "$CF_ORG" -s "$CF_SPACE"
       
-      - name: Backend testing
+      - name: 🤓☝️ Backend testing
         working-directory: backend
         run: |
           npm install
           npm run lint
           npm test
-          # aquí correr sonarqube
+
+      # SONARQUBE SCAN: BACKEND
+      - name: 🔍 SonarQube Scan (Backend)
+        working-directory: backend
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_BACKEND }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_BACKEND }}
+          SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY_BACKEND }}
+        run: |
+          curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
+          unzip -q sonar-scanner.zip
+          export PATH="$PATH:$PWD/sonar-scanner-5.0.1.3006-linux/bin"
+          sonar-scanner \
+            -Dsonar.projectKey=$SONAR_PROJECT_KEY \
+            -Dsonar.sources=. \
+            -Dsonar.host.url=$SONAR_HOST_URL \
+            -Dsonar.login=$SONAR_TOKEN
 
       - name: 🚀 Deploy Backend
         working-directory: backend
@@ -75,6 +91,28 @@ jobs:
             echo "❌ /api/test-hana check failed."
             exit 1
           }
+
+      - name: 🤓☝️ Backend testing
+        working-directory: frontend
+        run: |
+          npm install
+          npm run lint
+
+      - name: 🔍 SonarQube Scan (Frontend)
+        working-directory: frontend
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_FRONTEND }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_FRONTEND }}
+          SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY_FRONTEND }}
+        run: |
+          curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
+          unzip -q sonar-scanner.zip
+          export PATH="$PATH:$PWD/sonar-scanner-5.0.1.3006-linux/bin"
+          sonar-scanner \
+            -Dsonar.projectKey=$SONAR_PROJECT_KEY \
+            -Dsonar.sources=. \
+            -Dsonar.host.url=$SONAR_HOST_URL \
+            -Dsonar.login=$SONAR_TOKEN
 
       - name: 🏗️ Build Frontend
         working-directory: frontend

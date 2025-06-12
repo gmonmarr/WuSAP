@@ -249,6 +249,7 @@ const ProductsPage = () => {
         setSuccessMessage(`Producto "${productData.name}" actualizado correctamente.`);
       } else {
         // Create new product
+        // eslint-disable-next-line no-unused-vars
         result = await productService.createProduct(productData);
         setSuccessMessage(`Producto "${productData.name}" creado correctamente.`);
       }

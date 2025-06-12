@@ -22,6 +22,7 @@ const OrdenStatus = () => {
   const [error, setError] = useState(null);
   const [selectedOrden, setSelectedOrden] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  // eslint-disable-next-line no-unused-vars
   const [user, setUser] = useState(null);
 
   // Load user and orders on component mount

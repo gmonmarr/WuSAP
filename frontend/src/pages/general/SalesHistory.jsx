@@ -173,6 +173,7 @@ const SalesHistory = () => {
   };
 
   // Calculate total items for a sale
+  // eslint-disable-next-line no-unused-vars
   const calculateTotalItems = (saleItems) => {
     if (!saleItems || !Array.isArray(saleItems)) return 0;
     return saleItems.reduce((total, item) => total + (item.QUANTITY || 0), 0);

@@ -29,6 +29,7 @@ const OrdenStatusInfo = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [open, setOpen] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const [user, setUser] = useState(null);
 
   // Load order details on component mount
@@ -167,7 +168,7 @@ const OrdenStatusInfo = () => {
       { label: "Recibido", valor: 25, color: "#1d377a", complete: progress === 100 }
     ];
   };
-
+  // eslint-disable-next-line no-unused-vars
   const handleOpen = () => {
     setOpen(true);
   };

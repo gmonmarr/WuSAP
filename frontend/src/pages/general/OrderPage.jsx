@@ -105,6 +105,7 @@ const OrderPage = () => {
     notes: "",
   });
   const [user, setUser] = useState(null);
+  // eslint-disable-next-line no-unused-vars
   const [storeName, setStoreName] = useState("");
   const [snackbar, setSnackbar] = useState({
     open: false,
