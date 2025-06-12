@@ -39,12 +39,18 @@ jobs:
           cf api "$CF_API"
           cf auth "$CF_USERNAME" "$CF_PASSWORD"
           cf target -o "$CF_ORG" -s "$CF_SPACE"
+      
+      - name: Backend testing
+        working-directory: backend
+        run: |
+          npm install
+          npm run lint
+          npm test
+          # aquí correr sonarqube
 
       - name: 🚀 Deploy Backend
         working-directory: backend
         run: |
-          npm install
-          npm test
           cf set-env wusap-backend HANA_SERVER_NODE "${{ secrets.HANA_SERVER_NODE }}"
           cf set-env wusap-backend HANA_USER "${{ secrets.HANA_USER }}"
           cf set-env wusap-backend HANA_PASSWORD "${{ secrets.HANA_PASSWORD }}"

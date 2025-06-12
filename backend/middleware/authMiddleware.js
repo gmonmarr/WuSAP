@@ -16,11 +16,12 @@ export const verifyToken = (req, res, next) => {
     req.user = decoded; // store user info in request
     next();
   } catch (error) {
-    return res.status(403).json({ message: "Token inválido o expirado" });
+    return res.status(403).json({ message: `Token inválido o expirado, con error ${error.message || error}` });
   }
 };
 
 // ✨ NUEVA: Middleware específico para verificación de tokens
+// eslint-disable-next-line no-unused-vars
 export const verifyTokenOnly = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
@@ -51,7 +52,8 @@ export const verifyTokenOnly = (req, res, next) => {
   } catch (error) {
     return res.status(403).json({ 
       success: false,
-      message: "Token inválido o expirado" 
+      message: "Token inválido o expirado",
+      error: error.message || error
     });
   }
 };
@@ -107,7 +109,7 @@ export const authMiddleware = (options = {}) => {
       next();
       
     } catch (error) {
-      const errorMsg = "Token inválido o expirado";
+      const errorMsg = `Token inválido o expirado, con error ${error.message || error}`;
       if (returnResponse) {
         return res.status(403).json({ success: false, message: errorMsg });
       }

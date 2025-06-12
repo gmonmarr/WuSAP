@@ -91,7 +91,7 @@ app.get('/api/test-hana', (req, res) => {
       hanaPool.release(conn);
     });
   }).catch((err) => {
-    res.status(500).json({ error: 'Error acquiring HANA connection' });
+    res.status(500).json({ error: `Error connecting to HANA DB: ${err.message || err}` });
   });
 });
 
