@@ -62,8 +62,8 @@ jobs:
             -Dsonar.sources=. \
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.login=$SONAR_TOKEN \
-            -Dsonar.exclusions=node_modules/**,coverage/**,tests/**,middleware/**,controllers/**,routes/**,db/** \
-            -Dsonar.coverage.exclusions=**/*.test.js,**/*.config.cjs,app.js \
+            -Dsonar.exclusions=node_modules/**,coverage/**,tests/**,middleware/**,controllers/**,routes/**,db/**,scripts/** \
+            -Dsonar.coverage.exclusions=**/*.test.js,**/*.config.cjs,app.js,jest-to-csv.js \
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
 
       - name: 🚀 Deploy Backend
