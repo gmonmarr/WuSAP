@@ -127,7 +127,7 @@ jobs:
           echo "VITE_API_SERVER=${{ env.BACKEND_URL }}" > .env.production
           npm install
           npm run build
-          echo "root: ." > dist/Staticfile
+          echo -e "root: .\npushstate: enabled" > dist/Staticfile
 
       - name: 🌍 Deploy Frontend
         working-directory: frontend
